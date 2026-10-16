@@ -185,7 +185,7 @@
       d.style.setProperty('--c',t.color);
       const sw = t.players.length===1 ? `<span class="sw"><img src="${D.avatarSrc(t.players[0].avatar)}" alt=""></span>` : `<span class="sw"></span>`;
       const nb=Object.keys(BUFFS).filter(k=>t.fx[k]!=null).length, nd=Object.keys(DEBUFFS).filter(k=>t.fx[k]!=null).length;
-      d.innerHTML=`${sw}<span><div class="nm">${esc(t.name)}${phoneOf(t)?ic('phone','tphone'):''}</div><div class="sub">${S.cardsEnabled?`${ic('cards')} ${t.hand.length}`:''}<span class="fxdots">${'<i></i>'.repeat(nb)}${'<i class="bad"></i>'.repeat(nd)}</span></div></span><span class="sc">${t.score}</span><span class="bar"><i style="width:${Math.max(0,Math.min(100,t.score/top*100))}%"></i></span>`;
+      d.innerHTML=`${sw}<span><div class="nm">${esc(t.name)}${phoneOf(t)?ic('phone','tphone'):''}</div><div class="sub">${S.cardsEnabled?`${ic('cards')} ${t.hand.length}`:''}<span class="fxdots">${'<i></i>'.repeat(nb)}${'<i class="bad"></i>'.repeat(nd)}</span></div></span><span class="sc">${t.score}</span><span class="bar"><i style="transform:scaleX(${Math.max(0,Math.min(1,t.score/top)).toFixed(3)})"></i></span>`;
       d.title=fxList(t).map(x=>x[0]).join('، ');
       sb.appendChild(d);
     });
@@ -444,7 +444,7 @@
   function stealPhase(t, item, p, {ownerCanAnswer=true, note=''}={}){
     const cands = others(t).filter(x=>x.fx.noSteal==null);
     const stTime = inFinalStretch() ? Math.max(2, Math.round(S.stealTime/2)) : S.stealTime;
-    stage(`<div class="big" style="color:var(--steal)">وقت السرقة!</div>${inFinalStretch()?'<span class="banner">الشوط الأخير: وقت السرقة بالنص</span>':''}
+    stage(`<div class="big" style="color:var(--steal-ink)">وقت السرقة!</div>${inFinalStretch()?'<span class="banner">الشوط الأخير: وقت السرقة بالنص</span>':''}
       <div class="qtext">${esc(item.q)}</div>${timerHTML(stTime,'steal')}${timeupHTML}
       <p class="muted">أي فريق يجاوب صح ياخذ ${stealPts(p)}. ${ownerCanAnswer? `${esc(t.name)} خلص وقته بدون ما يغلط — لو قالها صح ياخذ ${p} كاملة.` : `${esc(t.name)} غلط وراحت عليه.`}</p>
       <div class="row center">${ownerCanAnswer? `<button class="btn team" style="--c:${t.color}" data-owner>${ic('check')} ${esc(t.name)} (${p})</button>`:''}${cands.map(x=>`<button class="btn team" style="--c:${x.color}" data-steal="${x.id}">${ic('ninja')} ${esc(x.name)} (${x.fx.fullsteal!=null?p:stealPts(p)})</button>`).join('')}</div>
@@ -459,7 +459,7 @@
         if(s.fx.fullsteal!=null){ gain=p; delete s.fx.fullsteal; notes.push('ببلاش: كاملة'); }
         const {net,note:n2}=payout(s,gain,notes);
         play('correct'); memeSound('steal',{volume:.6}); flash('steal'); reaction('steal');
-        afterTurn(`<span style="color:var(--steal)">${esc(s.name)} سرقها</span> +${net}${n2}${note}`);
+        afterTurn(`<span style="color:var(--steal-ink)">${esc(s.name)} سرقها</span> +${net}${n2}${note}`);
       } else { play('fail',{volume:.6}); afterTurn(`ما أحد جاوب${note}. الجواب: ${esc(item.a)}`); }
     };
     startTimer(stTime);
@@ -481,7 +481,7 @@
     stage(`${head(t,item,'c',d,p,priceD)}
       <div class="big">${viaPhone?`مين بيمثّل من ${esc(t.name)}؟`:`ممثل ${esc(t.name)}: تعال شوف العبارة لحالك`}</div>
       ${viaPhone?`<div id="ch-status" class="ch-status ${G.charade.actor?'ok':''}">${G.charade.actor?`${ic('check')} الممثل جاهز — العبارة على جواله`:`${ic('phone')} واحد منكم يضغط «أنا بمثّل» من جواله — العبارة تطلع له بس`}</div>`:''}
-      <div class="covered ${viaPhone?'hidden':''}" id="cov"><div class="qtext" style="padding:22px 34px">${esc(item.t)}</div><div class="cover">${ic('eye')} اضغط عشان تشوف</div></div>
+      <div class="covered ${viaPhone?'hidden':''}" id="cov"><div class="qtext" style="padding:22px 34px">${esc(item.t)}</div><div class="cover"><span>${ic('eye')} اضغط عشان تشوف</span></div></div>
       ${viaPhone?`<button class="btn small ghost" id="btn-tvshow">${ic('eye')} عرض العبارة على الشاشة بدل الجوال</button>`:''}
       <p class="muted small">${viaPhone?'':'اضغط تظهر واضغط مرة ثانية تختفي. '}بدون كلام، بدون تهجئة، بدون إشارة لأشياء بالغرفة.</p>
       <div class="row center"><button class="btn btn-mint big" id="btn-ready">${ic('stopwatch')} جاهز — ابدأ الوقت</button>${rerollBtn(t)}</div>`);

@@ -67,12 +67,12 @@
       + `<g clip-path="url(#kh-frame)">`
       + `<polygon points="${x0},${y0} ${x1},${y0} ${mx},${my}" fill="${A}"/><polygon points="${x0},${y1} ${x1},${y1} ${mx},${my}" fill="${A}"/>`
       + `<polygon points="${x0},${y0} ${x0},${y1} ${mx},${my}" fill="${B}"/><polygon points="${x1},${y0} ${x1},${y1} ${mx},${my}" fill="${B}"/></g>`
-      + `<rect x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" rx="26" fill="none" stroke="#0E0A18" stroke-width="5"/>`;
+      + `<rect class="kh-edge" x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" rx="26"/>`;
     let backing='', cells='';
     G.cells.forEach(k=>{
       const {cx,cy}=center(k);
       // خلفية غامقة تحت الخلايا عشان الإطار ما يبان بين الخلايا
-      backing+=`<polygon points="${hexPts(cx,cy,R*1.06)}" fill="#0E0A18" stroke="#0E0A18" stroke-width="4" stroke-linejoin="round"/>`;
+      backing+=`<polygon class="kh-gap" points="${hexPts(cx,cy,R*1.06)}"/>`;
       const pts=hexPts(cx,cy,R*.95);
       const cls=['hex', k.owner!=null?'owned':'', G.sel===k?'sel':'', k.win?'winpath':''].join(' ');
       const fill = k.owner!=null ? `style="fill:${G.teams[k.owner].color}"` : '';
@@ -136,7 +136,7 @@
   }
   function renderQuestion(k){
     const q=G.q; const ph=G.phase; const a=G.answering;
-    const status = ph==='buzz' ? `<div class="kh-status" style="color:var(--steal)">مين يبز أول؟</div>`
+    const status = ph==='buzz' ? `<div class="kh-status" style="color:var(--steal-ink)">مين يبز أول؟</div>`
       : ph==='answer' ? `<div class="lower-third" style="--c:${G.teams[a].color}"><span class="lt-k">يجاوب</span><span class="lt-v">${esc(G.teams[a].name)}</span></div>${timerHTML(S.buzzTime)}`
       : `<span class="banner dim">السؤال مفتوح للفريقين — بدون وقت</span>`;
     panel(`<div class="row center"><div class="kh-letter sm">${k.l}</div><span class="pill dim">${q.d===3?'صعب':'سهل'}</span></div>

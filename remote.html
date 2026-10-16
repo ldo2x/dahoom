@@ -3,20 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#120A24">
+<meta name="theme-color" content="#0D0B14">
+<script>(function(){var t=null;try{t=localStorage.getItem('dahoom_theme');}catch(e){}if(t!=='day'&&t!=='night'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'day':'night';}document.documentElement.setAttribute('data-theme',t);if(t==='day'){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#ECEAF1');}})();</script>
 <title>دحوم — الجوال</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FF3D81'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E%D8%AF%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/remote.css">
 </head>
 <body class="remote">
 
+<!-- شريط علوي ثابت بكل الشاشات: الشعار وزر الوضع -->
+<header class="r-bar">
+  <span class="r-logo"><span class="brand-mark">د</span> دحوم</span>
+  <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
+</header>
+
 <!-- الدخول بالكود -->
 <section id="r-join" class="r-screen">
-  <div class="r-brand"><span class="brand-mark">د</span> دحوم</div>
   <h1>ادخل كود الغرفة</h1>
   <p class="muted">الكود ظاهر على الشاشة تحت زر "الجوالات"</p>
   <input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" inputmode="text">
@@ -26,14 +32,14 @@
 
 <!-- اختيار الفريق -->
 <section id="r-pick" class="r-screen hidden">
-  <div class="r-brand"><span class="brand-mark">د</span> دحوم · <span id="r-room-lbl"></span></div>
+  <div class="r-brand">الغرفة <span id="r-room-lbl" class="r-room"></span></div>
   <h1>وش فريقك؟</h1>
   <div class="r-teams" id="r-teams"></div>
 </section>
 
 <!-- تسجيل اللاعب -->
 <section id="r-reg" class="r-screen hidden">
-  <div class="r-brand"><span class="brand-mark">د</span> دحوم · <span id="r-reg-team"></span></div>
+  <div class="r-brand">فريقك <span id="r-reg-team"></span></div>
   <h1>مين انت؟</h1>
   <input type="text" id="r-name" maxlength="16" placeholder="اكتب اسمك" autocomplete="nickname">
   <div class="lbl">اختر شكلك</div>

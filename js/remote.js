@@ -19,11 +19,24 @@
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span></div></div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
     return `<div class="tcg ${c.tier} ${size}" data-id="${c.id}">${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
-      <div class="tcg-in"><div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-gem"></span></div>
+      <div class="tcg-in"><div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem"></span></div>
       <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
-      <div class="tcg-name">${esc(c.name)}</div><div class="tcg-meme">${esc(c.src||'')}</div><div class="tcg-desc">${esc(c.desc)}</div></div>
+      <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
+      <div class="tcg-desc">${esc(c.desc)}</div><div class="tcg-meme" data-no="${c.id}">${esc(c.src||'')}</div></div>
       <div class="tcg-foil"></div></div>`;
   }
+
+  // ---------- الوضع النهاري / الليلي (نفس مفتاح الشاشة: dahoom_theme) ----------
+  const getTheme = () => document.documentElement.getAttribute('data-theme')==='day' ? 'day' : 'night';
+  function setTheme(t, save){
+    document.documentElement.setAttribute('data-theme', t);
+    if(save){ try{ localStorage.setItem('dahoom_theme', t); }catch(e){} }
+    const m=$('meta[name="theme-color"]'); if(m) m.setAttribute('content', t==='day' ? '#ECEAF1' : '#0D0B14');
+    $$('.btn-theme').forEach(b=>{ const day=t==='day'; b.innerHTML = day ? ic('moon')+' ليلي' : ic('sun')+' نهاري'; b.setAttribute('aria-label', day?'الوضع الليلي':'الوضع النهاري'); });
+  }
+  $$('.btn-theme').forEach(b=>b.onclick=()=>{ vibe(10); setTheme(getTheme()==='day'?'night':'day', true); });
+  setTheme(getTheme(), false);
+  try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{ let v=null; try{ v=localStorage.getItem('dahoom_theme'); }catch(_){} if(v!=='day'&&v!=='night') setTheme(e.matches?'day':'night', false); }); }catch(e){}
 
   // ---------- الحالة ----------
   const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], teams:[] };
@@ -89,7 +102,7 @@
   let regAv=null;
   function openReg(){
     const m=me()||{}; const t=st.teams.find(x=>x.id===st.teamId)||{};
-    $('#r-reg-team').innerHTML=`<span style="color:${t.color||'inherit'}">${esc(t.name||'')}</span>`;
+    $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`;
     $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];
     drawAvatars(); show('r-reg');
   }

@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>منصة دحوم</title>
+<meta name="theme-color" content="#0D0B14">
+<script>(function(){var t=null;try{t=localStorage.getItem('dahoom_theme');}catch(e){}if(t!=='day'&&t!=='night'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'day':'night';}document.documentElement.setAttribute('data-theme',t);if(t==='day'){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#ECEAF1');}})();</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FF3D81'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E%D8%AF%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -23,6 +25,7 @@
     <p class="hint">الصوت يشتغل أول ما تدخل</p>
   </div>
   <div class="splash-cards" aria-hidden="true" id="splash-cards"></div>
+  <div class="splash-corner"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button></div>
 </section>
 
 <!-- ===== الرئيسية ===== -->
@@ -33,6 +36,7 @@
       <button class="btn ghost small btn-sound"></button>
       <input type="range" class="vol-slider" min="0" max="100" value="35" aria-label="مستوى الصوت">
       <button class="btn ghost small" id="btn-reset-used"><i class="ic" style="--i:url(../assets/icons/broom.svg)"></i> تصفير المحتوى المستخدم</button>
+      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
     </div>
   </header>
   <h1 class="page-title">وش نلعب الليلة؟</h1>
@@ -71,7 +75,7 @@
 <section id="guide-alf" class="screen">
   <header class="topbar">
     <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
-    <button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button></div>
   </header>
   <h1 class="page-title">كيف تنلعب ألف نقطة</h1>
   <div class="grid-2">
@@ -105,10 +109,10 @@
 <section id="lobby" class="screen">
   <header class="topbar">
     <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
-    <button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button></div>
   </header>
   <h1 class="page-title">مين بيلعب؟</h1>
-  <div class="row mb-s"><button class="btn small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button><span class="muted small">اختياري: كل فريق يتحكم من جواله (يبز، بطاقات سرية، رهانات)</span></div>
+  <div class="lobby-net"><button class="btn small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button><span class="muted small">اختياري: كل فريق يتحكم من جواله (يبز، بطاقات سرية، رهانات)</span></div>
   <div class="grid-2">
     <div class="panel">
       <h3>لاعب جديد</h3>
@@ -153,7 +157,7 @@
 <section id="settings" class="screen">
   <header class="topbar">
     <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
-    <button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات المباراة</h1>
   <div class="settings-grid" id="settings-form">
@@ -225,6 +229,7 @@
       <span class="pill dim" id="target-label">الهدف 1000</span>
       <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
       <button class="btn ghost small" id="btn-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
+      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
       <button class="btn ghost small" id="btn-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
     </div>
   </div>
@@ -244,7 +249,7 @@
 <section id="khaliya-settings" class="screen">
   <header class="topbar">
     <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
-    <button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات خلية الحروف</h1>
   <div class="settings-grid" id="khaliya-form">
@@ -284,6 +289,7 @@
       <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
       <button class="btn ghost small" id="kh-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
       <button class="btn ghost small" id="kh-edit"><i class="ic" style="--i:url(../assets/icons/pencil.svg)"></i> تعديل الخلايا</button>
+      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
       <button class="btn ghost small" id="kh-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
     </div>
   </div>

@@ -131,14 +131,15 @@ window.Dahoom = (function(){
     const art = c.tweet
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span><span>${ic('recycle')} ترند</span></div></div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
+    // تشريح البطاقة: لوحة الاسم ← الصورة ← سطر النوع ← النص ← المصدر ورقم البطاقة
     return `<div class="tcg ${c.tier} ${size}" data-id="${c.id}">
       ${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
       <div class="tcg-in">
-        <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-gem" title="${TIER_AR[c.tier]}"></span></div>
+        <div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem" title="${TIER_AR[c.tier]}"></span></div>
         <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
-        <div class="tcg-name">${esc(c.name)}</div>
-        <div class="tcg-meme">${esc(c.src||c.meme||'')}</div>
+        <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
         <div class="tcg-desc">${esc(c.desc)}</div>
+        <div class="tcg-meme" data-no="${c.id}">${esc(c.src||c.meme||'')}</div>
       </div>
       <div class="tcg-foil"></div>
     </div>`;
@@ -312,9 +313,28 @@ window.Dahoom = (function(){
     }
   }
 
+  // ---------- الوضع النهاري / الليلي ----------
+  // السكربت الصغير في <head> يطبّق الوضع قبل أول رسم؛ هنا الزر والحفظ ومتابعة النظام لو ما اختار المستخدم.
+  const THEME_KEY='dahoom_theme';
+  const savedTheme = () => { try{ const v=localStorage.getItem(THEME_KEY); return v==='day'||v==='night' ? v : null; }catch(e){ return null; } };
+  const getTheme = () => document.documentElement.getAttribute('data-theme')==='day' ? 'day' : 'night';
+  function applyTheme(t, save){
+    document.documentElement.setAttribute('data-theme', t);
+    if(save){ try{ localStorage.setItem(THEME_KEY, t); }catch(e){} }
+    const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', t==='day' ? '#ECEAF1' : '#0D0B14');
+    updateThemeBtns();
+  }
+  function updateThemeBtns(){
+    const day=getTheme()==='day';
+    $$('.btn-theme').forEach(b=>{ b.innerHTML = day ? ic('moon')+' ليلي' : ic('sun')+' نهاري'; b.setAttribute('aria-label', day?'الوضع الليلي':'الوضع النهاري'); b.title=b.getAttribute('aria-label'); });
+  }
+  function toggleTheme(){ applyTheme(getTheme()==='day'?'night':'day', true); play('tick',{volume:.4}); }
+  document.addEventListener('click', e=>{ if(e.target.closest('.btn-theme')) toggleTheme(); });
+  try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{ if(!savedTheme()) applyTheme(e.matches?'day':'night', false); }); }catch(e){}
+
   // ---------- تهيئة ----------
   function init(){
-    renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); decorate();
+    renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); updateThemeBtns(); decorate();
     $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); setTimeout(()=>play('meme:boom',{volume:.6}),350); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
     $$('.vol-slider').forEach(sl=>{ sl.oninput=()=>setVolume(sl.value/100); sl.onchange=()=>play('pop'); });
@@ -336,6 +356,6 @@ window.Dahoom = (function(){
   document.addEventListener('DOMContentLoaded', init);
 
   return { joinPlayer, joinable, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
-    session, competitors, avatarSrc, COLORS, setVolume, cardHTML, TIER_AR, TARGET_AR,
+    session, competitors, avatarSrc, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();
