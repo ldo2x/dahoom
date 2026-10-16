@@ -732,3 +732,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .vt-r b{margin-inline-start:auto;font-family:var(--num);font-size:1rem}
 @media (max-width:640px){ .vb-row{grid-template-columns:90px 1fr 46px;gap:8px} .ms-card{padding:14px} }
 .viz-rtl{direction:rtl;unicode-bidi:plaintext}
+/* مرحلة البطاقة */
+.tcg-phase{display:inline-block;margin-inline-start:6px;padding:0 6px;border-radius:6px;font-size:.92em;font-weight:700;background:var(--surface-2);color:var(--mute);white-space:nowrap}
+.tcg.in-phase .tcg-phase{background:var(--ok,#2FD98F);color:#120F1C}
+.tcg.in-phase{box-shadow:0 0 0 2px var(--ok,#2FD98F),0 14px 30px -12px rgba(0,0,0,.8)}

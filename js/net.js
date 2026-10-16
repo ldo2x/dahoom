@@ -62,10 +62,10 @@ window.DahoomNet = (function(){
       if(pl){ c.pid=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar}); if(H && H.roster) H.roster(); refreshUI(); }
       return; }
     if(!H) return;
-    if(d.t==='buzz' && H.buzz) H.buzz(c.teamId);
+    if(d.t==='buzz' && H.buzz) H.buzz(c.teamId, c.pid);
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
-    if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid);
+    if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
   }
   // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)
   const membersOf = id => { const ss=D.session, t=ss.teams.find(x=>x.id===id);
@@ -81,7 +81,7 @@ window.DahoomNet = (function(){
   const hasPhone = id => phonesOf(id).length>0;
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
-  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid))); }catch(e){} }
+  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
   // تحديث كل الجوالات (مجمّع عشان ما نرسل عشرات المرات بنفس اللحظة)
   function pushAll(){ if(pushT) return; pushT=setTimeout(()=>{ pushT=0; conns.forEach(push); }, 60); }
 

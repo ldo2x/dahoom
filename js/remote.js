@@ -18,11 +18,11 @@
     const art = c.tweet
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span></div></div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
-    return `<div class="tcg ${c.tier} ${size}" data-id="${c.id}">${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
+    return `<div class="tcg ${c.tier} ${size}${c.phase&&c.phase===window.DAHOOM_PHASE?' in-phase':''}" data-id="${c.id}">${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
       <div class="tcg-in"><div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem"></span></div>
       <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
       <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
-      <div class="tcg-desc">${esc(c.desc)}</div><div class="tcg-meme" data-no="${c.id}">${esc(c.src||'')}</div></div>
+      <div class="tcg-desc">${esc(c.desc)}</div><div class="tcg-meme" data-no="${c.id}">${esc(c.src||'')}${c.phase?`<span class="tcg-phase ph-${c.phase}">تلمع في ${{early:'البداية',mid:'الوسط',late:'النهاية'}[c.phase]}</span>`:''}</div></div>
       <div class="tcg-foil"></div></div>`;
   }
 
@@ -86,7 +86,7 @@
       if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
       openReg(); return; }
     if(d.t==='registered'){ const m=Object.assign(me()||{}, {pid:d.pid, name:d.name, avatar:d.avatar}); localStorage.setItem(meKey, JSON.stringify(m)); st.registeredRoom=st.room+':'+st.teamId; show('r-main'); renderMain(); return; }
-    if(d.t==='state'){ st.S=d; if(st.teamId && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
+    if(d.t==='state'){ st.S=d; window.DAHOOM_PHASE=d.phaseKey||null; if(st.teamId && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
     if(d.t==='close'){ if(st.askId===d.reqId) closeSheet(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
@@ -167,6 +167,7 @@
     else if(z.first){ b.classList.add('lost'); sub.textContent=`${z.first} سبقكم`; }
     else if(z.open){ sub.textContent='مو متاح لكم الحين'; }
     else sub.textContent='البز يفتح لما يجي وقته';
+    if(S.benched){ b.className='r-buzz lost'; b.disabled=true; sub.textContent='انت برا السالفة هالدور'; }
     // الطاقات
     $('#r-fx').innerHTML=(S.fx||[]).map(f=>`<span class="fx-tag ${f.bad?'bad':''}">${esc(f.n)}</span>`).join('');
     // اليد
@@ -197,6 +198,8 @@
       $('#ch-toggle').onclick=()=>{ showPhrase=!showPhrase; vibe(15); renderCharade(ch); };
     } else if(ch.taken){
       box.innerHTML=`<div class="ch-taken">${ic('masks')} واحد منكم بيمثّل — ${ch.acting?'خمّنوا وبزّوا!':'استعدوا تخمّنون'}</div>`;
+    } else if(st.S && st.S.benched){
+      box.innerHTML=`<div class="ch-taken">${ic('cancel')} انت برا السالفة هالدور — خلّ غيرك يمثّل</div>`;
     } else {
       box.innerHTML=`<div class="eyebrow">${ic('masks')} بدون كلام — دوركم</div>
         <button class="btn btn-hype big ch-claim" id="ch-claim">أنا بمثّل</button>

@@ -158,14 +158,14 @@ window.Dahoom = (function(){
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span><span>${ic('recycle')} ترند</span></div></div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
     // تشريح البطاقة: لوحة الاسم ← الصورة ← سطر النوع ← النص ← المصدر ورقم البطاقة
-    return `<div class="tcg ${c.tier} ${size}" data-id="${c.id}">
+    return `<div class="tcg ${c.tier} ${size}${c.phase&&c.phase===window.DAHOOM_PHASE?' in-phase':''}" data-id="${c.id}">
       ${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
       <div class="tcg-in">
         <div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem" title="${TIER_AR[c.tier]}"></span></div>
         <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
         <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
         <div class="tcg-desc">${esc(c.desc)}</div>
-        <div class="tcg-meme" data-no="${c.id}">${esc(c.src||c.meme||'')}</div>
+        <div class="tcg-meme" data-no="${c.id}">${esc(c.src||c.meme||'')}${c.phase?`<span class="tcg-phase ph-${c.phase}">تلمع في ${{early:'البداية',mid:'الوسط',late:'النهاية'}[c.phase]}</span>`:''}</div>
       </div>
       <div class="tcg-foil"></div>
     </div>`;
