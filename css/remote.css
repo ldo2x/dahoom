@@ -1,0 +1,73 @@
+/* ===== دحوم — واجهة الجوال ===== */
+body.remote{--team:var(--hype);min-height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.r-screen{max-width:520px;margin:0 auto;padding:18px 16px 32px;display:flex;flex-direction:column;gap:14px;min-height:100dvh}
+.r-screen.hidden{display:none}
+.r-brand{font-family:var(--display);font-weight:700;font-size:1.2rem;display:flex;align-items:center;gap:10px}
+#r-join,#r-pick{justify-content:center;text-align:center;align-items:center}
+#r-join h1,#r-pick h1{font-size:2.2rem}
+.r-code-in{font-family:var(--num);font-size:3rem;text-align:center;letter-spacing:.3em;width:100%;max-width:300px;direction:ltr;text-transform:uppercase;padding:14px}
+.r-err{color:#FFB3BB;font-weight:700;min-height:1.5em}
+.r-teams{display:flex;flex-direction:column;gap:12px;width:100%}
+.r-teams .btn{width:100%;font-size:1.5rem;padding:20px}
+
+/* الرأس */
+.r-head{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--team);border-radius:18px;padding:12px 14px}
+.r-team{font-family:var(--display);font-weight:700;font-size:1.4rem;color:var(--c);text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.r-score{margin-inline-start:auto;display:flex;flex-direction:column;align-items:center;line-height:1}
+.r-score b{font-family:var(--num);font-size:1.9rem}
+.r-score small{color:var(--mute);font-size:.75rem}
+.r-turn{background:var(--team);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);border-radius:8px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.r-phase{text-align:center;font-weight:700;font-size:1.1rem;min-height:1.6em;color:var(--text)}
+.r-letter{display:inline-grid;place-items:center;width:44px;height:40px;background:var(--t-medium);color:#3A2300;font-family:var(--display);font-size:1.6rem;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);vertical-align:middle;margin-inline-end:6px}
+
+/* زر البز */
+.r-buzz{align-self:center;width:min(72vw,280px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:radial-gradient(circle at 35% 30%,#4A3A6E,#241640 70%);color:#8E86A3;box-shadow:inset 0 -10px 0 rgba(0,0,0,.35),0 12px 30px rgba(0,0,0,.5);
+  transition:transform .08s;will-change:transform}
+.r-buzz .bz-main{font-family:var(--num);font-size:3.2rem;line-height:1}
+.r-buzz .bz-sub{font-weight:700;font-size:1rem;max-width:80%}
+.r-buzz.live{background:radial-gradient(circle at 35% 30%,#FF7AAD,var(--hype) 55%,#A3134B);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35);animation:buzzPulse 1s ease-in-out infinite}
+.r-buzz.pressed{transform:scale(.92);box-shadow:inset 0 -3px 0 rgba(0,0,0,.35),0 4px 10px rgba(0,0,0,.5)}
+.r-buzz.won{background:radial-gradient(circle at 35% 30%,#7CF5C6,var(--mint) 55%,#128A5B);color:#06281A}
+.r-buzz.lost{background:radial-gradient(circle at 35% 30%,#5C4A80,#2C1C52 70%);color:#C9C2D6}
+.r-buzz:disabled{cursor:default}
+@keyframes buzzPulse{50%{transform:scale(1.04)}}
+
+/* اليد */
+.r-hand-wrap.hidden{display:none}
+.r-hand-lbl{text-align:center;color:var(--mute);font-weight:600;display:flex;gap:6px;justify-content:center;align-items:center}
+.r-can{color:var(--mint)}
+.r-hand{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.r-hand .tcg{width:100%}
+.r-hand .tcg .tcg-name{font-size:.85rem}
+.r-hand.can .tcg{box-shadow:0 0 0 2px var(--mint),0 10px 20px -8px rgba(0,0,0,.8)}
+.r-fuse{grid-column:1/-1}
+
+/* النقاط */
+.r-scores{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.r-sc{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 10px;font-weight:600;font-size:.9rem}
+.r-sc i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.r-sc b{font-family:var(--num);font-size:.95rem}
+.r-sc small{color:var(--mute);display:inline-flex;gap:2px;align-items:center}
+.r-sc.me{border-color:var(--c)}
+.r-sc.turn{background:color-mix(in srgb,var(--c) 25%,var(--panel))}
+.r-switch{align-self:center;margin-top:auto}
+
+/* الورقة المنبثقة */
+.r-sheet{position:fixed;inset:0;z-index:50;background:rgba(8,4,18,.88);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+.r-sheet.hidden{display:none}
+.r-sheet-in{width:100%;max-width:520px;max-height:92dvh;overflow:auto;background:linear-gradient(180deg,var(--panel),var(--night-2));border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;animation:sheetUp .3s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:.4}}
+.r-sheet h3{font-size:1.35rem}
+.r-big{display:flex;justify-content:center}
+.r-big .tcg.big{width:min(300px,82vw)}
+.r-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.r-opts{display:flex;flex-direction:column;gap:10px}
+.r-opts .btn{width:100%}
+.r-opts-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.r-opts-cards .tcg{width:100%}
+.center{text-align:center}
+.r-drawn .tcg{animation:popIn .5s cubic-bezier(.2,1.4,.4,1)}
+
+.r-status{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:60;background:var(--text);color:var(--night);font-weight:700;border-radius:12px;padding:8px 16px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:92vw;text-align:center}
+.r-status.hidden{display:none}

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>منصة دحوم</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FF3D81'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E%D8%AF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== شاشة البداية ===== -->
+<section id="splash" class="screen active">
+  <div class="splash-in">
+    <div class="logo-plat" aria-label="دحوم">
+      <span class="lp-word" data-text="دحوم">دحوم</span>
+      <span class="lp-tag">منصة ألعاب الجَمعة</span>
+    </div>
+    <button class="btn btn-hype big" id="btn-enter"><i class="ic" style="--i:url(../assets/icons/next.svg)"></i> ادخل</button>
+    <p class="hint">الصوت يشتغل أول ما تدخل</p>
+  </div>
+  <div class="splash-cards" aria-hidden="true" id="splash-cards"></div>
+</section>
+
+<!-- ===== الرئيسية ===== -->
+<section id="home" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="row">
+      <button class="btn ghost small btn-sound"></button>
+      <input type="range" class="vol-slider" min="0" max="100" value="35" aria-label="مستوى الصوت">
+      <button class="btn ghost small" id="btn-reset-used"><i class="ic" style="--i:url(../assets/icons/broom.svg)"></i> تصفير المحتوى المستخدم</button>
+    </div>
+  </header>
+  <h1 class="page-title">وش نلعب الليلة؟</h1>
+  <div class="games">
+    <article class="game-tile alf" id="card-alf" tabindex="0">
+      <div class="gt-art">
+        <div class="alf-logo"><span class="n">1000</span><span class="w">ألف نقطة</span></div>
+        <div class="gt-fan" id="home-fan"></div>
+      </div>
+      <div class="gt-body">
+        <h3>ألف نقطة</h3>
+        <p>أسئلة، تمثيل بدون كلام، تحديات… و40 بطاقة من ترندات ونكت سعودية تقلب الطاولة. أول فريق يوصل ألف يفوز.</p>
+        <div class="row">
+          <span class="chip">فرق أو أفراد</span><span class="chip">بطاقات هجوم ورد فعل</span><span class="chip">المضيف هو الحكم</span>
+        </div>
+        <div class="row mt-s">
+          <button class="btn small" id="btn-guide-alf"><i class="ic" style="--i:url(../assets/icons/book.svg)"></i> الشرح ومعرض البطاقات</button>
+        </div>
+      </div>
+    </article>
+    <article class="game-tile kh" id="card-khaliya" tabindex="0">
+      <div class="gt-art">
+        <div class="kh-logo"><svg viewBox="0 0 120 104" aria-hidden="true"><polygon points="30,2 90,2 118,52 90,102 30,102 2,52"/></svg><span>خ</span></div>
+        <div class="kh-logo-w">خلية الحروف</div>
+      </div>
+      <div class="gt-body">
+        <h3>خلية الحروف</h3>
+        <p>شبكة سداسية، حرف في كل خلية، وسباق مين يوصل الطرف الثاني أول. 1800 سؤال بالحروف.</p>
+        <div class="row"><span class="chip">فريقين بالضبط</span><span class="chip">اللي يبز أول يجاوب</span></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ===== شرح ألف نقطة + معرض البطاقات ===== -->
+<section id="guide-alf" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button>
+  </header>
+  <h1 class="page-title">كيف تنلعب ألف نقطة</h1>
+  <div class="grid-2">
+    <div class="panel"><h3>الفكرة</h3><div class="help-list" id="guide-rules"></div></div>
+    <div class="panel">
+      <h3>نظام البطاقات</h3>
+      <div class="help-list">
+        <p>بعد أول لفتين، كل فريق يسحب بطاقة بداية دوره. تقدر تخزّن لين 3 بطاقات، بس <b>تلعب وحدة بس كل دور</b>.</p>
+        <p>فيه خمس أنواع: <b>هجوم</b> يضرب خصم محدد، <b>دفاع</b> يحميك، <b>دعم</b> يقويك، <b>فوضى</b> تخلط الأوراق، و<b>رد فعل</b> تنلعب برا دورك لحظة ما أحد يهاجمك.</p>
+        <p>بعض البطاقات تحدد هدفها بنفسها (اللي قبلك، اللي بعدك، المتصدر)، وبعضها <b>تختار الهدف انت</b> — مثل طقطقة، خذ وهات، أراهنك، وروح انت أول.</p>
+        <p>السودا ما تسوي شي… بس <b>كل سودتين تقدر تدمجهم</b> وتطلع بطاقة زرقا عشوائية، أو ترميها على خصمك بـ"خذ وهات".</p>
+        <div class="tier-legend">
+          <span class="tl legendary">حمراء · نادرة جدًا</span><span class="tl medium">ذهبية · قوية</span><span class="tl normal">زرقاء · كثيرة</span><span class="tl black">سودا · شكلها بس</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel mt">
+    <div class="row between">
+      <h3>المعرض (<span id="guide-count">40</span>)</h3>
+      <div class="row" id="guide-filters"></div>
+    </div>
+    <div class="gallery mt" id="guide-cards"></div>
+  </div>
+  <div class="row center mt">
+    <button class="btn btn-hype big" id="btn-guide-play">يلا نلعب</button>
+  </div>
+</section>
+
+<!-- ===== اللاعبين والفرق ===== -->
+<section id="lobby" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button>
+  </header>
+  <h1 class="page-title">مين بيلعب؟</h1>
+  <div class="row mb-s"><button class="btn small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button><span class="muted small">اختياري: كل فريق يتحكم من جواله (يبز، بطاقات سرية، رهانات)</span></div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>لاعب جديد</h3>
+      <div class="stack mt-s">
+        <label class="field">الاسم <input type="text" id="p-name" maxlength="16" placeholder="اكتب اسمك"></label>
+        <div><div class="lbl">لونك</div><div class="colors" id="p-colors"></div></div>
+        <div><div class="lbl">شكلك</div><div class="avatars" id="p-avatars"></div></div>
+        <button class="btn btn-mint" id="btn-add-player"><i class="ic" style="--i:url(../assets/icons/plus.svg)"></i> أضف اللاعب</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>اللاعبين <span class="count" id="p-count">0</span></h3>
+      <div class="players-grid mt-s" id="players-grid"></div>
+      <p class="muted" id="players-empty">ما فيه أحد بعد. أضف أول لاعب.</p>
+    </div>
+  </div>
+  <div class="panel mt">
+    <div class="row between">
+      <h3>الفرق <span class="muted small" id="lobby-mode-note"></span></h3>
+      <div class="seg" role="radiogroup">
+        <label><input type="radio" name="mode" value="teams" checked><span>فرق</span></label>
+        <label><input type="radio" name="mode" value="solo"><span>كل واحد لحاله</span></label>
+      </div>
+    </div>
+    <div id="teams-area" class="mt-s">
+      <div class="row mb-s">
+        <button class="btn small" id="btn-add-team"><i class="ic" style="--i:url(../assets/icons/plus.svg)"></i> فريق جديد</button>
+        <button class="btn small" id="btn-auto-teams"><i class="ic" style="--i:url(../assets/icons/dice.svg)"></i> وزّع عشوائي</button>
+        <span class="muted small">اسحب اللاعب لفريقه، أو اضغطه وبعدين اضغط الفريق</span>
+      </div>
+      <div class="lbl">بدون فريق</div>
+      <div class="pool" id="pool"></div>
+      <div class="teams-grid mt-s" id="teams-grid"></div>
+    </div>
+  </div>
+  <div class="row center mt">
+    <button class="btn btn-hype big" id="btn-to-settings">الإعدادات <i class="ic" style="--i:url(../assets/icons/next.svg)"></i></button>
+  </div>
+</section>
+
+<!-- ===== إعدادات ألف نقطة ===== -->
+<section id="settings" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button>
+  </header>
+  <h1 class="page-title">إعدادات المباراة</h1>
+  <div class="settings-grid" id="settings-form">
+    <div class="panel stack">
+      <h3>المباراة</h3>
+      <label class="field">النقاط للفوز <input type="number" data-s="target" min="200" step="50"></label>
+      <label class="field">مدة الإجابة (ثواني) <input type="number" data-s="answerTime" min="3"></label>
+      <label class="field">مدة السرقة (ثواني) <input type="number" data-s="stealTime" min="2"></label>
+      <label class="field">مدة التمثيل بدون كلام (ثواني) <input type="number" data-s="charadeTime" min="15"></label>
+      <label class="switch"><input type="checkbox" data-s="stealEnabled"><span></span> السرقة مفعّلة في الأسئلة</label>
+      <label class="switch"><input type="checkbox" data-s="noRepeat"><span></span> لا تكرر المحتوى اللي انلعب قبل</label>
+    </div>
+    <div class="panel stack">
+      <h3>النقاط حسب الصعوبة</h3>
+      <label class="field">سهل <input type="number" data-s="pts1" step="10"></label>
+      <label class="field">متوسط <input type="number" data-s="pts2" step="10"></label>
+      <label class="field">صعب <input type="number" data-s="pts3" step="10"></label>
+      <p class="muted small">السرقة تعطي نص النقاط مقربة لأقرب 50 (سؤال الـ50 يعطي 50 كامل).</p>
+    </div>
+    <div class="panel stack">
+      <h3>البطاقات</h3>
+      <label class="switch"><input type="checkbox" data-s="cardsEnabled"><span></span> نظام البطاقات مفعّل</label>
+      <label class="switch"><input type="checkbox" data-s="cardFxEnabled"><span></span> مؤثرات وأصوات وميمز البطاقات</label>
+      <label class="switch"><input type="checkbox" data-s="reactionsEnabled"><span></span> بطاقات رد الفعل (ريفيرس، سين)</label>
+      <label class="switch"><input type="checkbox" data-s="fuseBlack"><span></span> دمج كل سودتين = بطاقة زرقا</label>
+      <label class="field">لفات بدون بطاقات في البداية <input type="number" data-s="noCardRounds" min="0"></label>
+      <label class="field">أقصى عدد بطاقات في اليد <input type="number" data-s="handMax" min="1" max="6"></label>
+      <div class="lbl">نسب السحب</div>
+      <div class="weights">
+        <label class="field w-legendary">حمراء <input type="number" data-s="wLegendary" min="0"></label>
+        <label class="field w-medium">ذهبية <input type="number" data-s="wMedium" min="0"></label>
+        <label class="field w-normal">زرقاء <input type="number" data-s="wNormal" min="0"></label>
+        <label class="field w-black">سودا <input type="number" data-s="wBlack" min="0"></label>
+      </div>
+    </div>
+    <div class="panel stack">
+      <h3>شدة النهاية</h3>
+      <label class="switch"><input type="checkbox" data-s="climaxEnabled"><span></span> الجولة الحاسمة</label>
+      <p class="muted small">أول ما فريق يوصل النقطة المحددة، أسئلته العامة ما فيها "سهل".</p>
+      <label class="field">تفعّل من نقطة <input type="number" data-s="climaxThreshold" min="0" step="50"></label>
+      <label class="switch"><input type="checkbox" data-s="finalStretchEnabled"><span></span> الشوط الأخير</label>
+      <p class="muted small">أول ما أي فريق يوصل النقطة المحددة، وقت السرقة للكل ينقص للنص.</p>
+      <label class="field">تفعّل من نقطة <input type="number" data-s="finalStretchThreshold" min="0" step="50"></label>
+      <label class="switch"><input type="checkbox" data-s="comebackEnabled"><span></span> دفعة الرجعة</label>
+      <p class="muted small">الفريق الأخير بفارق 300+ يسحب بطاقتين ويختار وحدة.</p>
+    </div>
+    <div class="panel stack span-all">
+      <h3>تصنيفات الأسئلة العامة</h3>
+      <p class="muted small">اضغط التصنيف عشان تعطله أو تفعله.</p>
+      <div class="tags-wrap" id="tags-q"></div>
+      <h3 class="mt-s">تصنيفات بدون كلام</h3>
+      <div class="tags-wrap" id="tags-c"></div>
+      <h3 class="mt-s">تصنيفات التحديات</h3>
+      <div class="tags-wrap" id="tags-t"></div>
+    </div>
+  </div>
+  <div class="row center mt">
+    <button class="btn ghost" id="btn-defaults">الإعدادات الافتراضية</button>
+    <button class="btn btn-hype big" id="btn-start">ابدأ المباراة</button>
+  </div>
+</section>
+
+<!-- ===== مسرح ألف نقطة ===== -->
+<section id="game" class="screen wide">
+  <div class="roundbar">
+    <div class="brand small"><span class="brand-mark alf">1K</span> ألف نقطة</div>
+    <div class="row">
+      <span class="pill" id="round-label">اللفة 1</span>
+      <span class="pill dim" id="target-label">الهدف 1000</span>
+      <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
+      <button class="btn ghost small" id="btn-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
+      <button class="btn ghost small" id="btn-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
+    </div>
+  </div>
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="stage" id="stage"></div>
+  <div class="hand-zone">
+    <div class="hand-label" id="hand-label"></div>
+    <div class="hand" id="hand-panel"></div>
+  </div>
+  <div class="hostbar">
+    <button class="btn ghost small" id="btn-adjust"><i class="ic" style="--i:url(../assets/icons/pencil.svg)"></i> تعديل نقاط</button>
+    <button class="btn ghost small" id="btn-skip"><i class="ic" style="--i:url(../assets/icons/next.svg)"></i> تخطي الدور</button>
+  </div>
+</section>
+
+<!-- ===== إعدادات خلية الحروف ===== -->
+<section id="khaliya-settings" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button>
+  </header>
+  <h1 class="page-title">إعدادات خلية الحروف</h1>
+  <div class="settings-grid" id="khaliya-form">
+    <div class="panel stack">
+      <h3>اللوحة</h3>
+      <label class="field">حجم اللوحة
+        <select data-k="size"><option value="4">4 × 4 (16 خلية)</option><option value="5">5 × 5 (25 خلية)</option><option value="6">6 × 6 (36 خلية)</option><option value="7">7 × 7 (49 خلية)</option></select>
+      </label>
+      <label class="field">عدد الجولات للفوز
+        <select data-k="rounds"><option value="1">جولة وحدة</option><option value="2">أول من يفوز بجولتين</option><option value="3">أول من يفوز بثلاث</option></select>
+      </label>
+      <label class="switch"><input type="checkbox" data-k="noRepeat"><span></span> لا تكرر الأسئلة اللي انلعبت قبل</label>
+      <label class="switch"><input type="checkbox" data-k="hardLetters"><span></span> تضمين الحروف الصعبة (ث ذ ظ ض غ)</label>
+      <label class="field">صعوبة الأسئلة
+        <select data-k="difficulty"><option value="easy">سهلة</option><option value="hard">صعبة</option><option value="mixed">مخلوطة</option></select>
+      </label>
+      <label class="field">وقت الإجابة بعد البز (ثواني) <input type="number" data-k="buzzTime" min="2"></label>
+    </div>
+    <div class="panel stack">
+      <h3>الفريقين</h3>
+      <p class="muted small">أول فريقين من شاشة اللاعبين. غيّر الأسماء والألوان من هناك.</p>
+      <div id="khaliya-teams-preview" class="stack"></div>
+      <p class="muted small">الفريق الأول يوصل من فوق لتحت، والثاني من اليمين لليسار. بعد ما يقرأ المضيف السؤال، اللي يبز أول يجاوب. الكيبورد: <kbd>1</kbd> للفريق الأول و<kbd>2</kbd> للثاني.</p>
+    </div>
+  </div>
+  <div class="row center mt">
+    <button class="btn btn-sky big" id="btn-khaliya-start">ابدأ خلية الحروف</button>
+  </div>
+</section>
+
+<!-- ===== لعبة خلية الحروف ===== -->
+<section id="khaliya" class="screen wide">
+  <div class="roundbar">
+    <div class="brand small"><span class="brand-mark kh">خ</span> خلية الحروف</div>
+    <div class="row">
+      <span class="pill" id="kh-round">الجولة 1</span>
+      <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
+      <button class="btn ghost small" id="kh-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
+      <button class="btn ghost small" id="kh-edit"><i class="ic" style="--i:url(../assets/icons/pencil.svg)"></i> تعديل الخلايا</button>
+      <button class="btn ghost small" id="kh-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
+    </div>
+  </div>
+  <div class="scoreboard" id="kh-score"></div>
+  <div class="kh-layout">
+    <div class="panel kh-board-wrap"><div id="kh-board"></div></div>
+    <div class="panel kh-panel" id="kh-panel"></div>
+  </div>
+</section>
+
+<!-- ===== النتائج ===== -->
+<section id="results" class="screen">
+  <div class="results-in">
+    <div class="eyebrow">انتهت المباراة</div>
+    <h1 id="winner-title"></h1>
+    <div class="podium" id="podium"></div>
+    <div class="row center mt">
+      <button class="btn btn-hype big" id="btn-again">مرة ثانية بنفس اللاعبين</button>
+      <button class="btn ghost big" data-go="home">الرئيسية</button>
+    </div>
+  </div>
+</section>
+
+<div id="overlay-root"></div>
+<canvas class="confetti-canvas" id="confetti"></canvas>
+
+<script src="data/questions.js"></script>
+<script src="data/charades.js"></script>
+<script src="data/challenges.js"></script>
+<script src="data/cards.js"></script>
+<script src="data/memes.js"></script>
+<script src="data/letters-1.js"></script>
+<script src="data/letters-2.js"></script>
+<script src="data/letters-3.js"></script>
+<script src="data/letters-4.js"></script>
+<script src="data/letters-hard-1.js"></script>
+<script src="data/letters-hard-2.js"></script>
+<script src="js/vendor/peerjs.min.js"></script>
+<script src="js/vendor/qrcode.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/net.js"></script>
+<script src="js/cardfx.js"></script>
+<script src="js/alf.js"></script>
+<script src="js/khaliya.js"></script>
+</body>
+</html>
