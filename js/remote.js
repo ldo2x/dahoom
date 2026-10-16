@@ -87,6 +87,8 @@
       <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':'نقطة'}</small></span>
       ${S.myTurn?'<span class="r-turn">دوركم</span>':''}`;
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
+    // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
+    renderCharade(S.charade);
     // البز
     const b=$('#r-buzz'), sub=$('#r-buzz-sub'), z=S.buzz||{};
     b.className='r-buzz'; b.disabled=true;
@@ -110,6 +112,27 @@
     }
     // النقاط
     $('#r-scores').innerHTML=(S.scores||[]).map(x=>`<span class="r-sc ${x.id===t.id?'me':''} ${x.turn?'turn':''}" style="--c:${x.color}"><i></i>${esc(x.name)} <b>${x.score}</b>${S.game==='alf'?`<small>${ic('cards')}${x.hand}</small>`:''}</span>`).join('');
+  }
+  let showPhrase=false, lastPhrase=null;
+  function renderCharade(ch){
+    const box=$('#r-charade');
+    if(!ch){ box.classList.add('hidden'); box.innerHTML=''; showPhrase=false; lastPhrase=null; return; }
+    box.classList.remove('hidden');
+    if(ch.mine){
+      if(ch.text!==lastPhrase){ lastPhrase=ch.text; showPhrase=false; vibe([60,40,60]); }
+      box.innerHTML=`<div class="eyebrow">${ic('masks')} انت الممثل — لا تخلي أحد يشوف</div>
+        <div class="ch-phrase ${showPhrase?'':'blur'}" id="ch-phrase">${showPhrase?esc(ch.text):'العبارة مخفية'}</div>
+        <button class="btn ${showPhrase?'ghost':'btn-hype big'}" id="ch-toggle">${ic('eye')} ${showPhrase?'اخفها':'اظهر العبارة'}</button>
+        <p class="muted small center">${ch.acting?'الوقت شغّال — مثّل بدون كلام!':'احفظها وبعدين المضيف يبدأ الوقت'}</p>`;
+      $('#ch-toggle').onclick=()=>{ showPhrase=!showPhrase; vibe(15); renderCharade(ch); };
+    } else if(ch.taken){
+      box.innerHTML=`<div class="ch-taken">${ic('masks')} واحد منكم بيمثّل — ${ch.acting?'خمّنوا وبزّوا!':'استعدوا تخمّنون'}</div>`;
+    } else {
+      box.innerHTML=`<div class="eyebrow">${ic('masks')} بدون كلام — دوركم</div>
+        <button class="btn btn-hype big ch-claim" id="ch-claim">أنا بمثّل</button>
+        <p class="muted small center">أول واحد يضغط تطلع له العبارة بجواله بس</p>`;
+      $('#ch-claim').onclick=()=>{ vibe([40,20,40]); send({t:'claim'}); };
+    }
   }
   $('#r-buzz').addEventListener('pointerdown', e=>{
     const b=e.currentTarget; if(b.disabled) return;

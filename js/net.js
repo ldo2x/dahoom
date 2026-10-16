@@ -12,7 +12,7 @@ window.DahoomNet = (function(){
   const conns=new Set();               // كل اتصال: conn.teamId
   let H = null;                        // معالجات اللعبة الحالية
   const pending=new Map();             // reqId -> {teamId, cb}
-  let reqSeq=0, pushT=0;
+  let reqSeq=0, pushT=0, cidSeq=0;
 
   const genCode = () => Array.from({length:4},()=> 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*31)]).join('');
   const baseUrl = () => /^https?:/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.href.replace(/[^/]*([?#].*)?$/,'') : PUBLIC_URL;
@@ -24,6 +24,7 @@ window.DahoomNet = (function(){
     peer = new window.Peer(PREFIX+code, {debug:0});
     peer.on('open', ()=>{ ready=true; tries=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); });
     peer.on('connection', c=>{
+      c.cid='c'+(++cidSeq);
       c.on('open', ()=>{ conns.add(c); });
       c.on('data', d=>onMsg(c,d));
       c.on('close', ()=>{ conns.delete(c); refreshUI(); });
@@ -56,12 +57,14 @@ window.DahoomNet = (function(){
     if(d.t==='buzz' && H.buzz) H.buzz(c.teamId);
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
+    if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid);
   }
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
   const hasPhone = id => phonesOf(id).length>0;
+  const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
-  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state'}, H.state(c.teamId))); }catch(e){} }
+  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state'}, H.state(c.teamId, c.cid))); }catch(e){} }
   // تحديث كل الجوالات (مجمّع عشان ما نرسل عشرات المرات بنفس اللحظة)
   function pushAll(){ if(pushT) return; pushT=setTimeout(()=>{ pushT=0; conns.forEach(push); }, 60); }
 
@@ -102,5 +105,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

@@ -71,3 +71,12 @@ body.remote{--team:var(--hype);min-height:100dvh;padding:env(safe-area-inset-top
 
 .r-status{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:60;background:var(--text);color:var(--night);font-weight:700;border-radius:12px;padding:8px 16px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:92vw;text-align:center}
 .r-status.hidden{display:none}
+
+/* التمثيل */
+.r-charade{background:var(--panel);border:2px solid var(--team);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:stretch;text-align:center}
+.r-charade.hidden{display:none}
+.r-charade .eyebrow{display:flex;gap:6px;justify-content:center;align-items:center}
+.ch-claim{font-size:1.6rem;padding:18px}
+.ch-phrase{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1.4;padding:18px 10px;background:var(--night);border-radius:14px;min-height:90px;display:grid;place-items:center}
+.ch-phrase.blur{color:var(--mute);font-size:1.1rem;background:repeating-linear-gradient(45deg,var(--panel-2) 0 12px,var(--night) 12px 24px)}
+.ch-taken{font-weight:700;font-size:1.1rem;display:flex;gap:8px;justify-content:center;align-items:center}

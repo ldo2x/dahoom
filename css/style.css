@@ -494,3 +494,5 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:600;color:var
 .secret-card .tcg-gem{width:46px;height:46px;border-radius:8px}
 .secret-card .sc-t{font-family:var(--display);font-weight:700;font-size:2rem;color:var(--a)}
 .secret-card .sc-s{display:flex;gap:8px;align-items:center;font-weight:700}
+.ch-status{display:inline-flex;gap:8px;align-items:center;background:var(--panel-2);border:1px dashed rgba(236,226,255,.3);border-radius:14px;padding:10px 16px;font-weight:700;font-size:1.1rem}
+.ch-status.ok{border:1px solid var(--mint);background:rgba(46,229,157,.14);color:#C8FBE6}

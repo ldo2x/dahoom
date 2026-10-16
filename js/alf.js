@@ -81,7 +81,7 @@
   }
 
   // ---------- حالة الجوال ----------
-  function phoneState(id){
+  function phoneState(id, cid){
     const t=G && G.teams.find(x=>x.id===id);
     if(!t) return { game:'alf', waiting:true };
     const mine = cur()===t, can = !!(G.canPlayNow && mine && canPlayCard(t));
@@ -93,7 +93,8 @@
       hand:t.hand.map(c=>c.id), canPlay:can, myTurn:mine,
       fuse: can && S.fuseBlack && t.hand.filter(c=>c.tier==='black').length>=2,
       fx: fxList(t).map(([n,bad])=>({n,bad})),
-      buzz: b ? { open:true, can: b.eligible.includes(id) && !b.tried.includes(id) && !b.first, first: first?first.name:null, mine: b.first===id } : { open:false },
+      buzz: b ? { open:true, can: b.eligible.includes(id) && !b.tried.includes(id) && !b.first && !(G.charade && G.charade.actor===cid), first: first?first.name:null, mine: b.first===id } : { open:false },
+      charade: G.charade && G.charade.team===id ? { taken:!!G.charade.actor, mine:G.charade.actor===cid, acting:!!G.charade.acting, text: G.charade.actor===cid ? G.charade.text : null } : null,
       phase: strip(($('#stage .big')||{}).innerText||'').slice(0,90) };
   }
   async function onPhonePlay(id, idx){
@@ -103,7 +104,13 @@
     if(cur()===t && !t.playedCard){ G.canPlayNow=true; pushAll(); }
   }
   function onPhoneFuse(id){ const t=cur(); if(G && G.canPlayNow && t && t.id===id && canPlayCard(t)) fuseBlack(t); }
-  function registerNet(){ const n=NET(); if(n) n.use({ teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse,
+  // واحد من الفريق يضغط "أنا بمثّل" من جواله — أول واحد ياخذها
+  function onClaim(teamId, cid){
+    const ch=G && G.charade; if(!ch || ch.team!==teamId || ch.actor) return;
+    ch.actor=cid; play('game:g_zelda',{volume:.7}); pushAll();
+    const st=$('#ch-status'); if(st){ st.classList.add('ok'); st.innerHTML=`${ic('check')} الممثل جاهز — العبارة على جواله`; }
+  }
+  function registerNet(){ const n=NET(); if(n) n.use({ teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse, claim:onClaim,
     onPhones:()=>{ if(G && $('#game').classList.contains('active')){ renderBoard(); renderHand(cur(), !!(G.canPlayNow && canPlayCard(cur()))); } } }); }
 
   // بطاقة انلعبت: تنعرض للكل على الشاشة ثواني
@@ -316,7 +323,7 @@
     turnIntro();
   }
   function turnIntro(){
-    const t=cur();
+    const t=cur(); G.charade=null;
     const npc = t.fx.npc, choose = t.fx.choose;
     stage(`<div class="row center">${G.finalRound?'<span class="banner">اللفة الأخيرة — الحسم بنهايتها</span>':''}${inFinalStretch()?'<span class="banner">الشوط الأخير: وقت السرقة بالنص</span>':''}${inClimax(t)&&!inFinalStretch()?'<span class="banner dim">الجولة الحاسمة: ما فيه سهل بالأسئلة</span>':''}${G.pot?`<span class="banner dim">${ic('coins')} القطة: ${G.pot} لأول واحد ينجح</span>`:''}</div>
       <div class="eyebrow">اللفة ${G.round}</div>
@@ -442,14 +449,20 @@
     item = item || pickContent('c', d, 'tagsC');
     const p=pts(priceD||d), half=Math.round(p/2);
     const time = lag ? Math.ceil(S.charadeTime/2) : S.charadeTime;
+    const viaPhone = phoneOf(t);
+    G.charade = { team:t.id, text:item.t, actor: G.charade && G.charade.team===t.id && NET() && NET().cidOpen(G.charade.actor) ? G.charade.actor : null, acting:false };
     stage(`${head(t,item,'c',d,p,priceD)}
-      <div class="big">ممثل ${esc(t.name)}: تعال شوف العبارة لحالك</div>
-      <div class="covered" id="cov"><div class="qtext" style="padding:22px 34px">${esc(item.t)}</div><div class="cover">${ic('eye')} اضغط عشان تشوف</div></div>
-      <p class="muted small">اضغط تظهر واضغط مرة ثانية تختفي. بدون كلام، بدون تهجئة، بدون إشارة لأشياء بالغرفة.</p>
+      <div class="big">${viaPhone?`مين بيمثّل من ${esc(t.name)}؟`:`ممثل ${esc(t.name)}: تعال شوف العبارة لحالك`}</div>
+      ${viaPhone?`<div id="ch-status" class="ch-status ${G.charade.actor?'ok':''}">${G.charade.actor?`${ic('check')} الممثل جاهز — العبارة على جواله`:`${ic('phone')} واحد منكم يضغط «أنا بمثّل» من جواله — العبارة تطلع له بس`}</div>`:''}
+      <div class="covered ${viaPhone?'hidden':''}" id="cov"><div class="qtext" style="padding:22px 34px">${esc(item.t)}</div><div class="cover">${ic('eye')} اضغط عشان تشوف</div></div>
+      ${viaPhone?`<button class="btn small ghost" id="btn-tvshow">${ic('eye')} عرض العبارة على الشاشة بدل الجوال</button>`:''}
+      <p class="muted small">${viaPhone?'':'اضغط تظهر واضغط مرة ثانية تختفي. '}بدون كلام، بدون تهجئة، بدون إشارة لأشياء بالغرفة.</p>
       <div class="row center"><button class="btn btn-mint big" id="btn-ready">${ic('stopwatch')} جاهز — ابدأ الوقت</button>${rerollBtn(t)}</div>`);
     $('#cov').onclick=()=>{ const c=$('#cov .cover'); c.style.display = c.style.display==='none' ? 'flex' : 'none'; play('pop'); };
+    const tvs=$('#btn-tvshow'); if(tvs) tvs.onclick=()=>{ $('#cov').classList.remove('hidden'); tvs.remove(); };
     const rb=$('#btn-reroll'); if(rb) rb.onclick=()=>{ useReroll(t); runCharade(t,d,null,{priceD,lag}); };
     $('#btn-ready').onclick=()=>{
+      if(G.charade) G.charade.acting=true;
       stage(`<div class="row center"><span class="pill">${ic('masks')} ${esc(item.tag)}</span><span class="pill dim">${p} نقطة · نص للممثل ونص للي يخمّن</span></div>
         <div class="big">مثّل… والباقين يخمّنون</div>${t.fx.sawalif!=null?'<span class="fx-tag">سواليف: مسموح للممثل يقول كلمة وحدة</span>':''}${timerHTML(time)}${timeupHTML}
         <p class="muted small">أول فريق يقولها صح: اضغط اسمه (حتى فريق الممثل).</p>
@@ -514,6 +527,7 @@
   function afterTurn(msg){
     stopAll();
     const t=cur();
+    G.charade=null;
     t.lastGain = Math.max(0, t.score - t.turnStart);
     delete t.fx.noCard;
     const ok = t.lastGain>0, extra=[];
