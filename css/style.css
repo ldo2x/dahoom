@@ -660,3 +660,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 #lobby .grid-2{align-items:start}
+/* صف رأس الفريق: الاسم ياخذ الباقي، واللون وزر الحذف دايم ظاهرين */
+.team-box .head input[type=text]{flex:1 1 auto;width:auto;min-width:0}
+.team-box .head input[type=color]{flex:none;cursor:pointer}
+.team-box .head .btn{flex:none;color:var(--bad-ink,#FF8796);border:1px solid var(--line)}
+.team-box .head .btn:hover{border-color:var(--bad-ink,#FF8796)}
