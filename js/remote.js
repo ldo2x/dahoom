@@ -44,6 +44,9 @@
   const meKey = 'dahoom_me';   // الاسم والصورة يتذكرهم الجوال لكل الغرف
   const me = () => { try{ return JSON.parse(localStorage.getItem(meKey)||'null'); }catch(e){ return null; } };
   const avSrc = a => 'assets/avatars/'+a+'.webp';
+  // نسخة احتياطية من قائمة الصور لو الشاشة ما أرسلتها
+  const AV_FALLBACK = ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
+    'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk'];
   function show(id){ $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
   function status(msg){ const s=$('#r-status'); s.textContent=msg||''; s.classList.toggle('hidden', !msg); }
 
@@ -77,7 +80,7 @@
   function onData(d){
     if(!d) return;
     if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; renderTeams(d.teams); return; }
-    if(d.t==='joined'){ st.teamId=d.teamId; localStorage.setItem(teamKey(), d.teamId); keepAwake();
+    if(d.t==='joined'){ st.teamId=d.teamId; if(d.mode) st.mode=d.mode; if(d.avatars&&d.avatars.length) st.avatars=d.avatars; if(d.teams) st.teams=d.teams; localStorage.setItem(teamKey(), d.teamId); keepAwake();
       const m=me(); if(st.mode==='solo'){ show('r-main'); return; }
       if(m && m.name && st.registeredRoom===st.room+':'+d.teamId){ show('r-main'); return; }
       if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
@@ -101,6 +104,7 @@
   // ---------- تسجيل اللاعب ----------
   let regAv=null;
   function openReg(){
+    if(!st.avatars.length) st.avatars=AV_FALLBACK.slice();
     const m=me()||{}; const t=st.teams.find(x=>x.id===st.teamId)||{};
     $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`;
     $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];

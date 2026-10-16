@@ -46,7 +46,7 @@ window.DahoomNet = (function(){
     if(!d || typeof d!=='object') return;
     if(d.t==='hello'){
       const teams = teamList();
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams});
       refreshUI(); return;
     }
