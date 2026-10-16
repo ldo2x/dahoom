@@ -182,7 +182,8 @@ window.Dahoom = (function(){
   const COLORS = ['#FF3D81','#38B6FF','#FFC23A','#2EE59D','#B07CFF','#FF8A3D','#2EC4B6','#FF5A5F','#C6F432','#F72585','#5B8CFF','#FFD166'];
   // صور اللاعبين: وجوه ميمز (assets/avatars) — الأسماء القديمة تتحول لصورة ثابتة حسب الاسم
   const AVATARS = ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
-    'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk'];
+    'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
+    'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
   const avatarSrc = a => { if(!AVATARS.includes(a)){ let h=0; for(const ch of String(a||'')) h=(h*31+ch.charCodeAt(0))>>>0; a=AVATARS[h%AVATARS.length]; } return 'assets/avatars/'+a+'.webp'; };
 
   const session = {
