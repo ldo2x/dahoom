@@ -26,8 +26,11 @@
   }
 
   // ---------- الحالة ----------
-  const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false };
+  const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], teams:[] };
   const teamKey = () => 'dahoom_team_'+st.room;
+  const meKey = 'dahoom_me';   // الاسم والصورة يتذكرهم الجوال لكل الغرف
+  const me = () => { try{ return JSON.parse(localStorage.getItem(meKey)||'null'); }catch(e){ return null; } };
+  const avSrc = a => 'assets/avatars/'+a+'.webp';
   function show(id){ $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
   function status(msg){ const s=$('#r-status'); s.textContent=msg||''; s.classList.toggle('hidden', !msg); }
 
@@ -60,9 +63,14 @@
   // ---------- الرسائل ----------
   function onData(d){
     if(!d) return;
-    if(d.t==='teams'){ st.teamId=null; renderTeams(d.teams); return; }
-    if(d.t==='joined'){ st.teamId=d.teamId; localStorage.setItem(teamKey(), d.teamId); show('r-main'); keepAwake(); return; }
-    if(d.t==='state'){ st.S=d; if(st.teamId) show('r-main'); renderMain(); return; }
+    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; renderTeams(d.teams); return; }
+    if(d.t==='joined'){ st.teamId=d.teamId; localStorage.setItem(teamKey(), d.teamId); keepAwake();
+      const m=me(); if(st.mode==='solo'){ show('r-main'); return; }
+      if(m && m.name && st.registeredRoom===st.room+':'+d.teamId){ show('r-main'); return; }
+      if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
+      openReg(); return; }
+    if(d.t==='registered'){ const m=Object.assign(me()||{}, {pid:d.pid, name:d.name, avatar:d.avatar}); localStorage.setItem(meKey, JSON.stringify(m)); st.registeredRoom=st.room+':'+st.teamId; show('r-main'); renderMain(); return; }
+    if(d.t==='state'){ st.S=d; if(st.teamId && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
     if(d.t==='close'){ if(st.askId===d.reqId) closeSheet(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
@@ -77,23 +85,46 @@
     show('r-pick');
   }
 
+  // ---------- تسجيل اللاعب ----------
+  let regAv=null;
+  function openReg(){
+    const m=me()||{}; const t=st.teams.find(x=>x.id===st.teamId)||{};
+    $('#r-reg-team').innerHTML=`<span style="color:${t.color||'inherit'}">${esc(t.name||'')}</span>`;
+    $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];
+    drawAvatars(); show('r-reg');
+  }
+  function drawAvatars(){
+    $('#r-avatars').innerHTML=st.avatars.map(a=>`<button class="r-av ${a===regAv?'sel':''}" data-a="${a}"><img src="${avSrc(a)}" alt=""></button>`).join('');
+    $$('#r-avatars .r-av').forEach(b=>b.onclick=()=>{ regAv=b.dataset.a; vibe(10); drawAvatars(); });
+  }
+  $('#r-reg-go').onclick=()=>{
+    const name=$('#r-name').value.trim();
+    if(!name){ $('#r-reg-err').textContent='اكتب اسمك'; return; }
+    $('#r-reg-err').textContent=''; vibe(30);
+    const m=me()||{}; localStorage.setItem(meKey, JSON.stringify(Object.assign(m,{name, avatar:regAv})));
+    send({t:'register', pid:m.pid, name, avatar:regAv});
+  };
+
   // ---------- الشاشة الرئيسية ----------
   let buzzSent = 0;
   function renderMain(){
     const S=st.S; if(!S || S.waiting){ $('#r-phase').textContent='بانتظار ما تبدأ المباراة…'; return; }
     const t=S.team;
     document.body.style.setProperty('--team', t.color);
-    $('#r-head').innerHTML=`<span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>
+    const m=me();
+    $('#r-head').innerHTML=`${m&&m.avatar&&st.mode!=='solo'?`<button class="r-me" id="r-me"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
       <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':'نقطة'}</small></span>
       ${S.myTurn?'<span class="r-turn">دوركم</span>':''}`;
+    const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=openReg;
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
     // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
     renderCharade(S.charade);
     // البز
     const b=$('#r-buzz'), sub=$('#r-buzz-sub'), z=S.buzz||{};
     b.className='r-buzz'; b.disabled=true;
-    if(z.open && z.can){ b.disabled=false; b.classList.add('live'); sub.textContent='اضغط أول!'; }
-    else if(z.mine){ b.classList.add('won'); sub.textContent='بزّيت أول! جاوب'; }
+    if(z.open && z.can){ b.disabled=false; b.classList.add('live'); sub.textContent= z.first ? `${z.first} سبقكم — اضغط تاخذ دورك` : 'اضغط أول!'; }
+    else if(z.mine){ b.classList.add('won'); sub.textContent= z.rank>1 ? `دوركم تجاوبون (ترتيبكم #${z.rank})` : 'بزّيت أول! جاوب'; }
+    else if(z.rank){ b.classList.add('lost'); sub.textContent=`ترتيبكم #${z.rank} · متأخرين ${z.gap.toFixed(3)} ث`; }
     else if(z.first){ b.classList.add('lost'); sub.textContent=`${z.first} سبقكم`; }
     else if(z.open){ sub.textContent='مو متاح لكم الحين'; }
     else sub.textContent='البز يفتح لما يجي وقته';

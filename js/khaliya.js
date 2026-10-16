@@ -90,8 +90,9 @@
     return { game:'khaliya', team:{id:t.id,name:t.name,color:t.color,score:t.wins},
       scores:G.teams.map((x,k)=>({id:x.id,name:x.name,color:x.color,score:x.wins,turn:k===G.turn&&!G.over})),
       hand:[], canPlay:false, myTurn:i===G.turn,
-      buzz: G.phase==='buzz' ? { open:true, can:!G.tried.includes(i), first:null, mine:false }
-           : ans ? { open:true, can:false, first:ans.name, mine:ans===t } : { open:false },
+      buzz: (()=>{ const l=G.blog||[], k=l.findIndex(o=>o.i===i); const r={ rank:k>=0?k+1:0, gap:k>0?+((l[k].t-l[0].t)/1000).toFixed(3):0 };
+        return G.phase==='buzz' ? { open:true, can:!G.tried.includes(i)&&k<0, first:null, mine:false, ...r }
+          : ans ? { open:true, can:k<0, first:ans.name, mine:ans===t, ...r } : { open:false }; })(),
       letter: G.sel ? G.sel.l : null,
       phase: G.phase==='buzz' ? 'السؤال مقروء — بز!' : G.phase==='pick' ? `دور ${G.teams[G.turn].name} يختار حرف` : G.phase==='open' ? 'السؤال مفتوح للفريقين' : '' };
   }
@@ -130,7 +131,7 @@
     const q=rnd(fresh); G.used.add(q.id); usedL.save(G.used); return q;
   }
   function startQuestion(k, q){
-    q = q || pickQ(k.l); G.q=q; G.phase='buzz'; G.answering=null; G.tried=[];
+    q = q || pickQ(k.l); G.q=q; G.phase='buzz'; G.answering=null; G.tried=[]; G.blog=[];
     renderQuestion(k);
   }
   function renderQuestion(k){
@@ -140,6 +141,7 @@
       : `<span class="banner dim">السؤال مفتوح للفريقين — بدون وقت</span>`;
     panel(`<div class="row center"><div class="kh-letter sm">${k.l}</div><span class="pill dim">${q.d===3?'صعب':'سهل'}</span></div>
       <div class="kh-q">${esc(q.q)}</div>
+      <div id="kh-order">${orderHTML()}</div>
       <div class="answer hidden" id="kh-answer">${esc(q.a)}</div>
       ${status}
       ${ph==='buzz' ? `<div class="row center">${G.teams.map((x,i)=>`<button class="btn big team" style="--c:${x.color}" data-buzz="${i}" ${G.tried.includes(i)?'disabled':''}>${ic('whistle')} ${esc(x.name)} <kbd>${i+1}</kbd></button>`).join('')}</div>` : ''}
@@ -157,7 +159,16 @@
     $('#kh-change').onclick=()=>{ clearT(); play('card'); startQuestion(k); };
     $('#kh-cancel').onclick=()=>{ clearT(); G.sel=null; G.phase='pick'; renderBoard(); panelIdle(); };
   }
+  // ترتيب البز بأجزاء الثانية (يتسجل حتى لو الثاني ضغط بعد الأول)
+  function orderHTML(){
+    const l=G.blog||[]; if(!l.length) return '';
+    return `<div class="bz-order">${l.map((o,k)=>{ const x=G.teams[o.i]; return `<span class="bz-row ${k===0?'first':''}" style="--c:${x.color}"><b>${k+1}</b>${esc(x.name)}<i>${k===0?'الأول':'<bdi dir="ltr">+'+((o.t-l[0].t)/1000).toFixed(3)+'</bdi> ث'}</i></span>`; }).join('')}</div>`;
+  }
   function buzz(i){
+    if((G.phase==='buzz'||G.phase==='answer') && G.blog && !G.blog.some(o=>o.i===i)){
+      G.blog.push({i, t:performance.now()});
+      if(G.phase!=='buzz'){ const el=$('#kh-order'); if(el) el.innerHTML=orderHTML(); play('tick',{volume:.6}); const n=window.DahoomNet; if(n) n.pushAll(); }
+    }
     if(G.phase!=='buzz' || G.tried.includes(i)) return;
     G.answering=i; G.phase='answer'; play('bling',{volume:.9}); flash('good');
     renderQuestion(G.sel);

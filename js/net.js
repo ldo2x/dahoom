@@ -45,20 +45,26 @@ window.DahoomNet = (function(){
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     if(d.t==='hello'){
-      const teams = H ? H.teams() : D.competitors();
+      const teams = teamList();
       if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
-      else c.send({t:'teams', teams: teams.map(t=>({id:t.id,name:t.name,color:t.color}))});
+      else c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams});
       refreshUI(); return;
     }
     if(!c.teamId) return;
     if(d.t==='answer'){ const p=pending.get(d.reqId); if(p && p.teamId===c.teamId){ pending.delete(d.reqId); closeAsk(d.reqId); p.cb(d.value); } return; }
-    if(d.t==='leave'){ c.teamId=null; c.send({t:'teams', teams:(H?H.teams():D.competitors()).map(t=>({id:t.id,name:t.name,color:t.color}))}); refreshUI(); return; }
+    if(d.t==='leave'){ c.teamId=null; c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); refreshUI(); return; }
+    if(d.t==='register'){ // اللاعب يسجل اسمه وصورته من جواله
+      if(D.session.mode==='solo') return;
+      const pl=D.joinPlayer({pid:d.pid, name:d.name, avatar:d.avatar, teamId:c.teamId});
+      if(pl){ c.pid=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar}); if(H && H.roster) H.roster(); refreshUI(); }
+      return; }
     if(!H) return;
     if(d.t==='buzz' && H.buzz) H.buzz(c.teamId);
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid);
   }
+  const teamList = () => (H ? H.teams().map(t=>({id:t.id,name:t.name,color:t.color})) : D.joinable());
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
   const hasPhone = id => phonesOf(id).length>0;

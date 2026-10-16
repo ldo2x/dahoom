@@ -66,18 +66,38 @@
   }
 
   // ---------- البز من الجوالات ----------
-  function openBuzz(ids, onFirst, {retry=false}={}){ G.buzz={open:true, eligible:ids, tried:[], first:null, onFirst, retry}; pushAll(); }
+  // كل ضغطة بز تنسجل بوقت وصولها للشاشة — الترتيب والفرق بأجزاء الثانية يطلعون على الشاشة
+  function openBuzz(ids, onFirst, {retry=false}={}){ G.buzz={open:true, eligible:ids, tried:[], first:null, onFirst, onRight:null, retry, order:[]}; pushAll(); }
   function closeBuzz(){ if(G && G.buzz) G.buzz.open=false; }
   function onBuzz(id){
-    const b=G && G.buzz; if(!b || !b.open || b.first || !b.eligible.includes(id) || b.tried.includes(id)) return;
-    b.first=id; const t=G.teams.find(x=>x.id===id);
-    play('game:g_mgs',{volume:.9}); flash('steal'); pushAll(); b.onFirst(t);
+    const b=G && G.buzz; if(!b || !b.open || !b.eligible.includes(id) || b.tried.includes(id) || b.order.some(o=>o.id===id)) return;
+    b.order.push({id, t:performance.now()});
+    if(!b.first){ b.first=id; const t=G.teams.find(x=>x.id===id); play('game:g_mgs',{volume:.9}); flash('steal'); b.onFirst(t); }
+    else play('tick',{volume:.6});
+    renderBuzzOrder(); pushAll();
+  }
+  const fmtGap = ms => (ms/1000).toFixed(3).replace(/^0/,'0');
+  function renderBuzzOrder(){
+    const el=$('#buzz-order'), b=G && G.buzz; if(!el || !b) return;
+    const t0 = b.order.length ? b.order[0].t : 0;
+    el.innerHTML = b.order.length ? `<div class="bz-order">${b.order.map((o,i)=>{ const x=G.teams.find(t=>t.id===o.id); const out=b.tried.includes(o.id);
+      return `<span class="bz-row ${i===0?'first':''} ${out?'out':''} ${b.first===o.id?'now':''}" style="--c:${x.color}"><b>${i+1}</b>${esc(x.name)}<i>${i===0?'الأول':'<bdi dir="ltr">+'+fmtGap(o.t-t0)+'</bdi> ث'}</i></span>`; }).join('')}</div>` : '';
   }
   function buzzBox(t, onRight){
     const box=$('#buzzbox'); if(!box) return;
-    box.innerHTML=`<div class="buzzbox" style="--c:${t.color}"><span class="bz-t">${ic('whistle')} ${esc(t.name)} بزّ أول!</span><button class="btn btn-mint" data-bz="1">${ic('check')} صح</button><button class="btn btn-bad" data-bz="0">${ic('cancel')} غلط</button></div>`;
-    box.querySelector('[data-bz="1"]').onclick=()=>{ box.innerHTML=''; onRight(t); };
-    box.querySelector('[data-bz="0"]').onclick=()=>{ box.innerHTML=''; const b=G.buzz; if(!b.retry) b.tried.push(b.first); b.first=null; play('wrong',{volume:.6}); pushAll(); };
+    if(onRight) G.buzz.onRight=onRight;
+    box.innerHTML=`<div id="buzz-order"></div><div class="buzzbox" style="--c:${t.color}"><span class="bz-t">${ic('whistle')} ${esc(t.name)} ${G.buzz.order.length>1&&G.buzz.order[0].id!==t.id?'دوره يجاوب':'بزّ أول!'}</span><button class="btn btn-mint" data-bz="1">${ic('check')} صح</button><button class="btn btn-bad" data-bz="0">${ic('cancel')} غلط</button></div>`;
+    renderBuzzOrder();
+    box.querySelector('[data-bz="1"]').onclick=()=>{ box.innerHTML=''; G.buzz.onRight(t); };
+    box.querySelector('[data-bz="0"]').onclick=()=>{
+      const b=G.buzz; play('wrong',{volume:.6});
+      if(b.retry) b.order=b.order.filter(o=>o.id!==b.first); else b.tried.push(b.first);
+      // اللي بعده بالترتيب ياخذ فرصته على طول
+      const next=b.order.find(o=>!b.tried.includes(o.id) && o.id!==b.first);
+      b.first=null;
+      if(next){ b.first=next.id; buzzBox(G.teams.find(x=>x.id===next.id)); }
+      else { box.innerHTML=`<div id="buzz-order"></div>`; renderBuzzOrder(); }
+      pushAll(); };
   }
 
   // ---------- حالة الجوال ----------
@@ -93,7 +113,9 @@
       hand:t.hand.map(c=>c.id), canPlay:can, myTurn:mine,
       fuse: can && S.fuseBlack && t.hand.filter(c=>c.tier==='black').length>=2,
       fx: fxList(t).map(([n,bad])=>({n,bad})),
-      buzz: b ? { open:true, can: b.eligible.includes(id) && !b.tried.includes(id) && !b.first && !(G.charade && G.charade.actor===cid), first: first?first.name:null, mine: b.first===id } : { open:false },
+      buzz: b ? (()=>{ const k=b.order.findIndex(o=>o.id===id);
+        return { open:true, can: b.eligible.includes(id) && !b.tried.includes(id) && k<0 && !(G.charade && G.charade.actor===cid),
+          first: first?first.name:null, mine: b.first===id, rank: k>=0?k+1:0, gap: k>0?+((b.order[k].t-b.order[0].t)/1000).toFixed(3):0 }; })() : { open:false },
       charade: G.charade && G.charade.team===id ? { taken:!!G.charade.actor, mine:G.charade.actor===cid, acting:!!G.charade.acting, text: G.charade.actor===cid ? G.charade.text : null } : null,
       phase: strip(($('#stage .big')||{}).innerText||'').slice(0,90) };
   }
@@ -110,7 +132,12 @@
     ch.actor=cid; play('game:g_zelda',{volume:.7}); pushAll();
     const st=$('#ch-status'); if(st){ st.classList.add('ok'); st.innerHTML=`${ic('check')} الممثل جاهز — العبارة على جواله`; }
   }
-  function registerNet(){ const n=NET(); if(n) n.use({ teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse, claim:onClaim,
+  function syncRoster(){
+    if(!G) return; const ss=D.session;
+    G.teams.forEach(t=>{ const tm=ss.teams.find(x=>x.id===t.id); if(tm) t.players=tm.members.map(id=>ss.players.find(p=>p.id===id)).filter(Boolean); });
+    if($('#game').classList.contains('active') && G.canPlayNow) turnIntro();
+  }
+  function registerNet(){ const n=NET(); if(n) n.use({ roster:syncRoster, teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse, claim:onClaim,
     onPhones:()=>{ if(G && $('#game').classList.contains('active')){ renderBoard(); renderHand(cur(), !!(G.canPlayNow && canPlayCard(cur()))); } } }); }
 
   // بطاقة انلعبت: تنعرض للكل على الشاشة ثواني

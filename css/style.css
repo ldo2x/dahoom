@@ -496,3 +496,12 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:600;color:var
 .secret-card .sc-s{display:flex;gap:8px;align-items:center;font-weight:700}
 .ch-status{display:inline-flex;gap:8px;align-items:center;background:var(--panel-2);border:1px dashed rgba(236,226,255,.3);border-radius:14px;padding:10px 16px;font-weight:700;font-size:1.1rem}
 .ch-status.ok{border:1px solid var(--mint);background:rgba(46,229,157,.14);color:#C8FBE6}
+/* ترتيب البز على الشاشة */
+.bz-order{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.bz-row{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-inline-start:5px solid var(--c);border-radius:12px;padding:6px 12px;font-weight:700}
+.bz-row b{font-family:var(--num);font-size:1.1rem;color:var(--c)}
+.bz-row i{font-style:normal;font-family:var(--num);font-size:.85rem;color:var(--mute)}
+.bz-row.first{background:color-mix(in srgb,var(--c) 22%,var(--panel))}
+.bz-row.first i{color:var(--mint)}
+.bz-row.now{box-shadow:0 0 0 2px var(--c)}
+.bz-row.out{opacity:.45;text-decoration:line-through}

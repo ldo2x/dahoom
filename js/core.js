@@ -153,8 +153,10 @@ window.Dahoom = (function(){
 
   // ---------- اللاعبين ----------
   const COLORS = ['#FF3D81','#38B6FF','#FFC23A','#2EE59D','#B07CFF','#FF8A3D','#2EC4B6','#FF5A5F','#C6F432','#F72585','#5B8CFF','#FFD166'];
-  const AVATARS = ['Aneka','Bandit','Bear','Bolt','Coco','Felix','Jasper','Kiki','Luna','Maxi','Milo','Nala','Nova','Pepper','Rex','Sasha','Sunny','Tigger','Zack','Ziggy'];
-  const avatarSrc = a => 'assets/avatars/big-smile_'+a+'.svg';
+  // صور اللاعبين: وجوه ميمز (assets/avatars) — الأسماء القديمة تتحول لصورة ثابتة حسب الاسم
+  const AVATARS = ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
+    'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk'];
+  const avatarSrc = a => { if(!AVATARS.includes(a)){ let h=0; for(const ch of String(a||'')) h=(h*31+ch.charCodeAt(0))>>>0; a=AVATARS[h%AVATARS.length]; } return 'assets/avatars/'+a+'.webp'; };
 
   const session = {
     players: store.get('players', []),
@@ -173,6 +175,21 @@ window.Dahoom = (function(){
     const aw=$('#p-avatars'); aw.innerHTML='';
     AVATARS.forEach(a=>{ const b=document.createElement('button'); b.className=a===pick.avatar?'sel':''; b.style.background=pick.color+'40'; b.innerHTML=`<img src="${avatarSrc(a)}" alt="${a}">`; b.onclick=()=>{pick.avatar=a; renderPickers(); play('pop',{volume:.4});}; aw.appendChild(b); });
   }
+  // لاعب ينضم من جواله: يضاف (أو يتحدث) وينحط بفريقه
+  function joinPlayer({pid, name, avatar, teamId}){
+    name=String(name||'').trim().slice(0,16); if(!name) return null;
+    if(!AVATARS.includes(avatar)) avatar=rnd(AVATARS);
+    let p=session.players.find(x=>x.id===pid) || session.players.find(x=>x.name===name);
+    const team=session.teams.find(t=>t.id===teamId);
+    if(!p){ if(session.players.length>=16){ toast('الحد الأقصى 16 لاعب'); return null; }
+      p={id:'p'+Date.now()+Math.floor(Math.random()*999), name, color: team?team.color:nextFreeColor(), avatar}; session.players.push(p); toast(`${name} دخل من جواله`); play('unlock',{volume:.7}); }
+    else { p.name=name; p.avatar=avatar; }
+    if(team && session.mode==='teams'){ session.teams.forEach(t=>t.members=t.members.filter(m=>m!==p.id)); team.members.push(p.id); }
+    session.save(); renderPlayers(); renderTeams();
+    return p;
+  }
+  // الفرق اللي يقدر الجوال يختارها (قبل بداية اللعبة)
+  const joinable = () => session.mode==='solo' ? session.players.map(p=>({id:p.id,name:p.name,color:p.color})) : session.teams.map(t=>({id:t.id,name:t.name,color:t.color}));
   function nextFreeColor(){ const used=session.players.map(p=>p.color); return COLORS.find(c=>!used.includes(c)) || rnd(COLORS); }
   function addPlayer(){
     const name=$('#p-name').value.trim();
@@ -318,7 +335,7 @@ window.Dahoom = (function(){
   }
   document.addEventListener('DOMContentLoaded', init);
 
-  return { $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
+  return { joinPlayer, joinable, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
     session, competitors, avatarSrc, COLORS, setVolume, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();
