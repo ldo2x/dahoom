@@ -67,11 +67,12 @@
 
   // ---------- البز من الجوالات ----------
   // كل ضغطة بز تنسجل بوقت وصولها للشاشة — الترتيب والفرق بأجزاء الثانية يطلعون على الشاشة
-  function openBuzz(ids, onFirst, {retry=false}={}){ G.buzz={open:true, eligible:ids, tried:[], first:null, onFirst, onRight:null, retry, order:[]}; pushAll(); }
+  function openBuzz(ids, onFirst, {retry=false}={}){ G.buzz={open:true, eligible:ids, tried:[], first:null, onFirst, onRight:null, retry, order:[], t0:performance.now()}; pushAll(); }
   function closeBuzz(){ if(G && G.buzz) G.buzz.open=false; }
   function onBuzz(id){
     const b=G && G.buzz; if(!b || !b.open || !b.eligible.includes(id) || b.tried.includes(id) || b.order.some(o=>o.id===id)) return;
     b.order.push({id, t:performance.now()});
+    { const o=ST(G.teams.find(x=>x.id===id)); if(o) o.buzz.push(performance.now()-b.t0); }
     if(!b.first){ b.first=id; const t=G.teams.find(x=>x.id===id); play('game:g_mgs',{volume:.9}); flash('steal'); b.onFirst(t); }
     else play('tick',{volume:.6});
     renderBuzzOrder(); pushAll();
@@ -104,6 +105,10 @@
   function phoneState(id, cid){
     const t=G && G.teams.find(x=>x.id===id);
     if(!t) return { game:'alf', waiting:true };
+    if(G.ended){ const sorted=[...G.teams].sort((a,b)=>b.score-a.score), o=G.stats.T[id];
+      return { game:'alf', team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores:sorted.map(x=>({id:x.id,name:x.name,color:x.color,score:x.score})),
+        final:{ rank:sorted.indexOf(t)+1, of:sorted.length, awards:(G.stats.awards||[]).filter(a=>a.team.id===id).map(a=>({title:a.title,value:a.value})),
+          rows:[['أسئلة صح',`${o.ok.q}/${o.tries.q}`],['بدون كلام',`${o.ok.c}/${o.tries.c}`],['تحديات',`${o.ok.t}/${o.tries.t}`],['سرقات',o.steals],['بطاقات لعبتوها',o.cards],['ضربات جتكم',o.hits],['أفضل دور','+'+o.bestTurn],['أطول سلسلة',o.maxCombo]] } }; }
     const mine = cur()===t, can = !!(G.canPlayNow && mine && canPlayCard(t));
     const b=G.buzz && G.buzz.open ? G.buzz : null;
     const first = b && b.first ? G.teams.find(x=>x.id===b.first) : null;
@@ -158,6 +163,8 @@
       round:1, order:[], turn:0, used: used.load(), finalRound:false
     };
     G.order = shuffle(G.teams.map((_,i)=>i));
+    G.stats = { T:{}, series:[{label:'البداية', round:0, scores:Object.fromEntries(G.teams.map(t=>[t.id,0]))}], moments:[] };
+    G.teams.forEach(t=>G.stats.T[t.id]={ pts:{q:0,c:0,t:0,steal:0}, tries:{q:0,c:0,t:0}, ok:{q:0,c:0,t:0}, steals:0, stolenFrom:0, cards:0, attacks:0, hits:0, reactions:0, bestTurn:0, maxCombo:0, fails:0, buzz:[] });
     $('#target-label').textContent='الهدف '+S.target;
     const fx=window.DahoomFX; if(fx) fx.setEnabled(S.cardFxEnabled!==false);
     D.setReactions(S.cardFxEnabled!==false);
@@ -165,6 +172,8 @@
     go('game'); introDraw();
   }
   const cur = () => G.teams[G.order[G.turn]];
+  const ST = t => (G && G.stats && t && G.stats.T[t.id]) || null;
+  const moment = (text, t) => { if(G && G.stats) G.stats.moments.push({ round:G.round, text, color:t?t.color:null }); };
   const others = t => G.teams.filter(x=>x!==t);
   const stealPts = p => Math.max(50, Math.ceil((p/2)/50)*50);
   const inFinalStretch = () => S.finalStretchEnabled && G.teams.some(x=>x.score>=S.finalStretchThreshold);
@@ -292,9 +301,12 @@
     if(f.flatBonus){ gain+=f.flatBonus; notes.push((f.hayatFail?'هياط':'واسطة')+' +'+f.flatBonus); delete f.flatBonus; }
     delete f.hayatFail; delete f.copium;
     announce(t, true);
-    return payout(t, gain, notes);
+    const res = payout(t, gain, notes), o=ST(t);
+    if(o){ const k=section||'q'; o.pts[k]+=res.net; o.ok[k]++; if(section) o.tries[k]++; else if(o.fails) o.fails--; }
+    return res;
   }
-  function resolveFail(t, base){
+  function resolveFail(t, base, section){
+    { const o=ST(t); if(o && section){ o.tries[section]++; o.fails++; } }
     const f=t.fx; const notes=[];
     delete f.x2next; delete f.nocap; delete f.speedrun; delete f.flatBonus;
     if(f.jackpot){ delete f.jackpot; addScore(t,-base,{silent:true,allowNegative:true}); notes.push(`يا طخه: كسر مخه −${base}`); reaction('jackpotLose',2800); }
@@ -309,6 +321,7 @@
   function announce(t, ok){
     if(!ok){ t.combo=0; return; }
     t.combo=(t.combo||0)+1;
+    { const o=ST(t); if(o) o.maxCombo=Math.max(o.maxCombo,t.combo); if(t.combo===3) moment(`${esc(t.name)} ولّعت: 3 نجاحات ورا بعض`, t); }
     const s = t.combo>=6 ? 'g_godlike' : ANN[t.combo];
     if(s){ setTimeout(()=>play('game:'+s,{volume:1}),500); toast(`${t.name}: ${t.combo} نجاحات ورا بعض`); }
   }
@@ -427,7 +440,7 @@
       if(ended) return; ended=true; clearTimer(); delete t.fx.spoiler;
       if(ok){ const {net,note}=resolveSuccess(t,p,{hard,section:'q'}); play('correct'); memeSound('correct',{volume:.5}); flash('good'); reaction('correct'); confetti(60,1500);
         return afterTurn(`<span style="color:var(--mint)">صح!</span> +${net} لـ ${esc(t.name)}${note}`); }
-      const notes=resolveFail(t,p); const nt=notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:'';
+      const notes=resolveFail(t,p,'q'); const nt=notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:'';
       if(!timedOut){ play('wrong'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); }
       if(t.fx.lock){ delete t.fx.lock; return afterTurn(`ضاع السؤال${nt}. قفل الشات: ما أحد يسرق. الجواب: ${esc(item.a)}`); }
       if(S.stealEnabled) stealPhase(t, item, p, {ownerCanAnswer:!!timedOut, note:nt});
@@ -458,6 +471,7 @@
       if(sid){ const s=G.teams.find(x=>x.id===sid); let gain=stealPts(p); const notes=[];
         if(s.fx.fullsteal!=null){ gain=p; delete s.fx.fullsteal; notes.push('ببلاش: كاملة'); }
         const {net,note:n2}=payout(s,gain,notes);
+        { const o=ST(s); if(o){ o.pts.steal+=net; o.steals++; } const v=ST(t); if(v) v.stolenFrom++; moment(`${esc(s.name)} سرق سؤال ${esc(t.name)} (+${net})`, s); }
         play('correct'); memeSound('steal',{volume:.6}); flash('steal'); reaction('steal');
         afterTurn(`<span style="color:var(--steal-ink)">${esc(s.name)} سرقها</span> +${net}${n2}${note}`);
       } else { play('fail',{volume:.6}); afterTurn(`ما أحد جاوب${note}. الجواب: ${esc(item.a)}`); }
@@ -504,13 +518,13 @@
           if(t.fx.sawalif!=null){ a+=25; delete t.fx.sawalif; an.push('سواليف +25'); }
           const ra=resolveSuccess(t,a,{hard:d===3,section:'c'});
           let msg;
-          if(g===t){ const rb2=payout(t,half,[]); msg=`فريق الممثل نفسه خمّنها! +${ra.net+rb2.net} لـ ${esc(t.name)}${ra.note}`; }
+          if(g===t){ const rb2=payout(t,half,[]); { const o=ST(t); if(o) o.pts.c+=rb2.net; } msg=`فريق الممثل نفسه خمّنها! +${ra.net+rb2.net} لـ ${esc(t.name)}${ra.note}`; }
           else { let b=half; const bn=[]; if(g.fx.rizz!=null){ b=p; delete g.fx.rizz; bn.push('فنّان: نصيب كامل'); }
-            const rb2=payout(g,b,bn); msg=`${esc(g.name)} خمّنها! +${rb2.net} لهم${rb2.note} و+${ra.net} لـ ${esc(t.name)}${ra.note}`; }
+            const rb2=payout(g,b,bn); { const o=ST(g); if(o) o.pts.c+=rb2.net; } msg=`${esc(g.name)} خمّنها! +${rb2.net} لهم${rb2.note} و+${ra.net} لـ ${esc(t.name)}${ra.note}`; }
           if(an.length) msg+=` <span class="muted">(${an.join('')})</span>`;
           play('correct'); flash('good'); reaction('correct'); confetti(60,1500); afterTurn(msg);
         } else {
-          delete t.fx.sawalif; const notes=resolveFail(t,p); play('fail',{volume:.6}); flash('bad'); reaction('wrong');
+          delete t.fx.sawalif; const notes=resolveFail(t,p,'c'); play('fail',{volume:.6}); flash('bad'); reaction('wrong');
           afterTurn(`ما أحد خمّن "${esc(item.t)}"${notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:''}`);
         }
       };
@@ -541,7 +555,7 @@
       let ended=false;
       const end=(ok)=>{ if(ended) return; ended=true; clearTimer();
         if(ok){ const {net,note}=resolveSuccess(t,p,{hard:d===3,section:'t'}); play('cheer',{volume:.6}); flash('good'); reaction('correct'); confetti(80,1800); afterTurn(`<span style="color:var(--mint)">نجح!</span> +${net}${note}`); }
-        else { const notes=resolveFail(t,p); play('fail'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); afterTurn(`ما نجح${notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:''}`); }
+        else { const notes=resolveFail(t,p,'t'); play('fail'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); afterTurn(`ما نجح${notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:''}`); }
       };
       startTimer(time);
       $('#btn-ok').onclick=()=>end(true); $('#btn-no').onclick=()=>end(false);
@@ -556,6 +570,8 @@
     const t=cur();
     G.charade=null;
     t.lastGain = Math.max(0, t.score - t.turnStart);
+    { const o=ST(t); if(o){ o.bestTurn=Math.max(o.bestTurn,t.lastGain); if(t.lastGain>=200) moment(`${esc(t.name)} كسب ${t.lastGain} بدور واحد`, t); }
+      if(G.stats) G.stats.series.push({ label:`اللفة ${G.round} — دور ${t.name}`, round:G.round, scores:Object.fromEntries(G.teams.map(x=>[x.id,x.score])) }); }
     delete t.fx.noCard;
     const ok = t.lastGain>0, extra=[];
     (G.bets||[]).filter(b=>b.on===t.id).forEach(b=>{ const by=G.teams.find(x=>x.id===b.by); if(!by) return;
@@ -564,13 +580,13 @@
     G.bets=(G.bets||[]).filter(b=>b.on!==t.id);
     if(t.fx.coal){ delete t.fx.coal;
       if(ok){ const n=G.order.length, i=G.order.indexOf(G.teams.indexOf(t)); const nx=G.teams[G.order[(i+1)%n]]; if(nx&&nx!==t){ nx.fx.coal=true; extra.push(`الجمرة انتقلت لـ ${esc(nx.name)}`); play('game:c_ticking',{volume:.5,max:1500}); } }
-      else { addScore(t,-75,{silent:true}); extra.push(`الجمرة انفجرت على ${esc(t.name)} −75`); play('meme:boom',{volume:.9}); flash('bad'); }
+      else { addScore(t,-75,{silent:true}); extra.push(`الجمرة انفجرت على ${esc(t.name)} −75`); moment(`الجمرة انفجرت على ${esc(t.name)} (−75)`, t); play('meme:boom',{volume:.9}); flash('bad'); }
     }
     if(extra.length) msg += `<div class="fx-tags mt-s">${extra.map(x=>`<span class="fx-tag">${x}</span>`).join('')}</div>`;
     const reached = G.teams.find(x=>x.score>=S.target);
     let banner='';
     if(reached && !G.finalRound){
-      G.finalRound = true; play('game:g_finishhim',{volume:.9}); confetti(120,2000); reaction('finalRound',3000);
+      G.finalRound = true; moment(`${esc(reached.name)} وصل الهدف`, reached); play('game:g_finishhim',{volume:.9}); confetti(120,2000); reaction('finalRound',3000);
       banner = `<div class="banner">${esc(reached.name)} وصل الهدف! نكمل اللفة عشان الكل ياخذ نفس عدد الأدوار</div>`;
     } else if(G.finalRound) banner = `<span class="banner dim">اللفة الأخيرة — الحسم بنهايتها</span>`;
     stage(`<div class="big" style="font-size:clamp(1.5rem,3.6vw,2.6rem)">${msg}</div>${banner}<div class="row center mt-s"><button class="btn btn-sky big" id="btn-next">الدور الجاي ${ic('next')}</button></div>`);
@@ -710,6 +726,7 @@
     t.playedCard=true; t.hand.splice(idx,1);
     if(c.fx!=='copy') G.lastCard=c;
     showPlayed(c, t);
+    { const o=ST(t); if(o){ o.cards++; if(real.kind==='attack') o.attacks++; } if(c.tier==='legendary') moment(`${esc(t.name)} لعب "${esc(c.name)}"${target?` على ${esc(target.name)}`:''}`, t); }
     const fx=FX(); if(fx){ fx.sound(c); fx.visual(c); } else play('bling');
     if(real.fx==='swapTurn'){ swapTurn(t,target); return; }
     let msg;
@@ -742,6 +759,7 @@
         const choice = await decide(tgt,{ title:`${esc(src.name)} رمى "${esc(c.name)}" عليكم — تردون؟`, options:reacts.map(r=>({v:r.id,card:r})), cancel:'خلها تمر' });
         if(choice){
           const ri=tgt.hand.findIndex(x=>x.id===choice); const r=tgt.hand.splice(ri,1)[0]; showPlayed(r, tgt);
+          { const o=ST(tgt); if(o) o.reactions++; moment(`${esc(tgt.name)} ردّ "${esc(c.name)}" بـ"${esc(r.name)}"`, tgt); }
           const fx=FX(); if(fx){ fx.sound(r); fx.visual(r); }
           reaction('reverse',2600);
           if(r.fx==='seen') return `${tgt.name} طنّش — ${c.name} انلغت`;
@@ -756,7 +774,7 @@
     return applyAttack(src, tgt, c);
   }
   async function applyAttack(src, tgt, c){
-    const f=tgt.fx;
+    const f=tgt.fx; { const o=ST(tgt); if(o) o.hits++; }
     switch(c.fx){
       case 'harder': f.harder=true; return `${tgt.name}: الصعوبة الجاية أعلى بدرجة`;
       case 'lag': f.lag=true; return `${tgt.name}: وقته الجاي بالنص`;
@@ -829,6 +847,9 @@
       d.innerHTML=`${i===0?ic('crown','crown'):''}<div class="rank">${i+1}</div><div class="pn">${esc(t.name)}</div><div class="muted small">${t.players.map(p=>esc(p.name)).join('، ')}</div><div class="ps">${t.score}</div>`; pod.appendChild(d); });
     if(sorted.length>3){ const rest=document.createElement('div'); rest.className='row center'; rest.style.width='100%'; rest.innerHTML=sorted.slice(3).map((t,i)=>`<span class="pill">${i+4}. ${esc(t.name)} — ${t.score}</span>`).join(''); pod.appendChild(rest); }
     $('#btn-again').onclick=()=>newGame();
+    G.ended=true;
+    const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderAlf(el, G, S.target); }catch(e){ console.error(e); el.innerHTML=''; } }
+    pushAll();
   }
 
   // ---------- أدوات المضيف ----------

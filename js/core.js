@@ -22,18 +22,44 @@ window.Dahoom = (function(){
   const audio = { on: store.get('sound', true), vol: store.get('volume', 0.4), cache:{}, loops:{} };
   // أصوات التطبيق: كل اسم قديم يتحول لصوت قيمنق/ميم (تقدر ترجع أي واحد للأصلي بحذفه من هنا)
   const ALIAS = {
-    jingle:'game:g_xbox', pop:'game:g_swoosh', tick:'game:g_hitmarker', correct:'game:g_ding', wrong:'game:g_feudx',
-    buzzer:'game:g_pacman', steal:'game:g_mgs', coin:'game:g_mariocoin', card:'game:g_swoosh', bonus:'game:g_oneup',
-    unlock:'game:g_sonic', bling:'game:g_zelda', fail:'game:g_mariodeath', levelup:'game:g_mclevel', drums:'game:g_dramatic',
-    drumroll:'game:g_mkcount', cheer:'game:g_smash', win:'game:g_ffwin', applause:'meme:passed', clockloop:'game:g_jeopardy',
-    fx_tension:'game:g_suspense',
+    correct:'game:g_ding', wrong:'game:g_feudx', steal:'game:g_mgs', coin:'game:g_mariocoin', bonus:'game:g_oneup',
+    win:'game:g_ffwin', applause:'meme:passed', clockloop:'game:g_jeopardy', fx_tension:'game:g_suspense',
   };
+  // أصوات القوائم والواجهة: نغمات قصيرة تتولّد بالمتصفح (خفيفة، ثابتة، وكل وحدة لها معنى)
+  // كل نغمة: [تردد, بداية ms, مدة ms, نوع الموجة, قوة, تردد النهاية؟]
+  const SYN = {
+    pop:     [[520,0,60,'sine',.2,760]],                                         // تنقل / ضغطة
+    tick:    [[1500,0,28,'triangle',.11]],                                       // عدّاد / اختيار صغير
+    unlock:  [[784,0,80,'triangle',.17],[1175,75,130,'triangle',.17]],           // لاعب انضاف
+    bling:   [[1319,0,70,'sine',.13],[1760,65,70,'sine',.11],[2349,130,150,'sine',.09]], // تلميح / تم
+    jingle:  [[659,0,100,'triangle',.17],[784,95,100,'triangle',.17],[988,190,100,'triangle',.17],[1319,285,300,'triangle',.19]], // دخول المنصة
+    cheer:   [[523,0,90,'triangle',.16],[659,85,90,'triangle',.16],[784,170,260,'triangle',.18],[1047,170,260,'sine',.1]],       // بداية المباراة
+    levelup: [[880,0,80,'triangle',.15],[1320,80,200,'triangle',.15]],           // لفة جديدة / الخانة انسحبت
+    drums:   [[300,0,220,'sine',.12,900]],                                       // بداية السحب
+    drumroll:Array.from({length:8},(_,i)=>[900+i*70, i*95, 30,'triangle',.1]),   // ترتيب الفرق
+    card:    [[420,0,110,'sine',.11,1100]],                                      // سحب بطاقة
+    buzzer:  [[220,0,160,'square',.07],[165,150,240,'square',.07]],              // خلص الوقت
+    fail:    [[523,0,120,'triangle',.14],[440,115,120,'triangle',.14],[349,230,260,'triangle',.14]], // فشل
+  };
+  let AC=null;
+  const actx = () => { if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state==='suspended') AC.resume(); return AC; };
+  function synth(name, vol){
+    const c=actx(); if(!c) return; const t0=c.currentTime+0.005;
+    SYN[name].forEach(([f,st,du,type,g,f2])=>{
+      const o=c.createOscillator(), a=c.createGain(), s=t0+st/1000, e=s+du/1000;
+      o.type=type; o.frequency.setValueAtTime(f,s); if(f2) o.frequency.exponentialRampToValueAtTime(f2,e);
+      a.gain.setValueAtTime(0.0001,s); a.gain.exponentialRampToValueAtTime(Math.max(0.0002,g*vol),s+0.008); a.gain.exponentialRampToValueAtTime(0.0001,e);
+      o.connect(a); a.connect(c.destination); o.start(s); o.stop(e+0.03);
+    });
+  }
   const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n+'.mp3';
   function base(name){ if(!audio.cache[name]){ const a=new Audio(srcOf(name)); a.preload='auto'; audio.cache[name]=a; } return audio.cache[name]; }
   Object.values(ALIAS).forEach(base);
+  document.addEventListener('pointerdown', ()=>actx(), {once:true});
   // max: أقصى مدة بالملي ثانية (الميمز الطويلة تنقص)
   function play(name, {volume=1, loop=false, rate=1, max}={}){
     if(!audio.on || !name) return null;
+    if(SYN[name] && !loop){ synth(name, Math.min(1.5, volume*audio.vol*2.5)); return null; }
     const key = ALIAS[name] || name;
     const b = base(key);
     const a = loop ? b : b.cloneNode();
@@ -280,6 +306,7 @@ window.Dahoom = (function(){
       dropZone(d, t.id);
       g.appendChild(d);
     });
+    if(window.DahoomNet && window.DahoomNet.refresh) window.DahoomNet.refresh();
   }
   function validateLobby(){
     if(session.mode==='solo' && session.game!=='khaliya'){
@@ -335,7 +362,7 @@ window.Dahoom = (function(){
   // ---------- تهيئة ----------
   function init(){
     renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); updateThemeBtns(); decorate();
-    $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); setTimeout(()=>play('meme:boom',{volume:.6}),350); go('home'); };
+    $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
     $$('.vol-slider').forEach(sl=>{ sl.oninput=()=>setVolume(sl.value/100); sl.onchange=()=>play('pop'); });
     const openGame=g=>{ session.game=g; renderTeams(); go('lobby'); };

@@ -31,6 +31,7 @@
     const comps=D.competitors().slice(0,2);
     if(comps.length<2){ toast('نحتاج فريقين'); go('lobby'); return; }
     G={ teams: comps.map((c,i)=>({...c, wins:0, dir:i===0?'v':'h'})), round:1, used: usedL.load(), edit:false };
+    G.stats = G.teams.map(()=>({cells:0, ok:0, wrong:0, buzz:[]}));
     const net=window.DahoomNet;
     if(net) net.use({ teams:()=>G.teams, state:khState, buzz:id=>{ const i=G.teams.findIndex(t=>t.id===id); if(i>=0) buzz(i); }, onPhones:()=>{} });
     go('khaliya');
@@ -131,7 +132,7 @@
     const q=rnd(fresh); G.used.add(q.id); usedL.save(G.used); return q;
   }
   function startQuestion(k, q){
-    q = q || pickQ(k.l); G.q=q; G.phase='buzz'; G.answering=null; G.tried=[]; G.blog=[];
+    q = q || pickQ(k.l); G.q=q; G.phase='buzz'; G.answering=null; G.tried=[]; G.blog=[]; G.qStart=performance.now();
     renderQuestion(k);
   }
   function renderQuestion(k){
@@ -166,7 +167,7 @@
   }
   function buzz(i){
     if((G.phase==='buzz'||G.phase==='answer') && G.blog && !G.blog.some(o=>o.i===i)){
-      G.blog.push({i, t:performance.now()});
+      G.blog.push({i, t:performance.now()}); if(G.stats) G.stats[i].buzz.push(performance.now()-G.qStart);
       if(G.phase!=='buzz'){ const el=$('#kh-order'); if(el) el.innerHTML=orderHTML(); play('tick',{volume:.6}); const n=window.DahoomNet; if(n) n.pushAll(); }
     }
     if(G.phase!=='buzz' || G.tried.includes(i)) return;
@@ -175,7 +176,7 @@
   }
   function passOn(k){
     clearT();
-    const a=G.answering; if(a!=null) G.tried.push(a);
+    const a=G.answering; if(a!=null){ G.tried.push(a); if(G.stats) G.stats[a].wrong++; }
     play('wrong',{volume:.6});
     const other = a==null ? null : 1-a;
     if(other!=null && !G.tried.includes(other)){ G.answering=other; G.phase='answer'; toast(`السؤال راح لـ ${G.teams[other].name}`); }
@@ -184,7 +185,7 @@
   }
   function claim(k, teamIdx){
     clearT();
-    k.owner=teamIdx; G.sel=null; G.phase='pick'; play('correct'); flash('good'); reaction('correct',2500);
+    k.owner=teamIdx; if(G.stats){ G.stats[teamIdx].ok++; G.stats[teamIdx].cells++; } G.sel=null; G.phase='pick'; play('correct'); flash('good'); reaction('correct',2500);
     renderBoard(); $$(`#kh-board .hex[data-r="${k.r}"][data-c="${k.c}"]`).forEach(g=>g.classList.add('pop'));
     if(checkWinAll()) return;
     G.turn=teamIdx; // اللي يجاوب صح يختار الحرف الجاي
@@ -230,6 +231,7 @@
     const pod=$('#podium'); pod.innerHTML='';
     sorted.forEach((t,i)=>{ const d=document.createElement('div'); d.className='p '+(i===0?'first':'second'); d.style.setProperty('--c',t.color); d.style.animationDelay=(i*.25)+'s'; d.innerHTML=`${i===0?ic('crown','crown'):''}<div class="rank">${i+1}</div><div class="pn">${esc(t.name)}</div><div class="muted small">${t.players.map(p=>esc(p.name)).join('، ')}</div><div class="ps">${t.wins} ${t.wins===1?'جولة':'جولات'}</div>`; pod.appendChild(d); });
     $('#btn-again').onclick=()=>newMatch();
+    const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderKhaliya(el, G); }catch(e){ console.error(e); el.innerHTML=''; } }
   }
 
   // ---------- ربط ----------

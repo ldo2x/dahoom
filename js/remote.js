@@ -58,7 +58,7 @@
     peer.on('open', ()=>{
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
       const to = setTimeout(()=>{ if(!conn.open) fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); }, 9000);
-      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey())}); });
+      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid}); });
       conn.on('data', onData);
       conn.on('close', lost);
       conn.on('error', lost);
@@ -90,14 +90,22 @@
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
     if(d.t==='close'){ if(st.askId===d.reqId) closeSheet(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
+    if(d.t==='notice'){ status(d.msg); vibe([40,30,40]); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),3500); return; }
   }
 
   // ---------- اختيار الفريق ----------
   function renderTeams(teams){
     $('#r-room-lbl').textContent=st.room;
-    $('#r-teams').innerHTML = teams.length ? teams.map(t=>`<button class="btn team big" style="--c:${t.color}" data-t="${esc(t.id)}">${esc(t.name)}</button>`).join('')
-      : '<p class="muted">ما فيه فرق بعد — خلّ المضيف يضيف اللاعبين والفرق.</p>';
-    $$('#r-teams [data-t]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'hello', teamId:b.dataset.t}); });
+    // كل فريق: اسمه + عدد لاعبينه + صورهم
+    $('#r-teams').innerHTML = teams.length ? teams.map(t=>{ const pl=t.players||[], n=pl.length, shown=pl.slice(0,5);
+      return `<button class="r-teamopt" style="--c:${t.color}" data-t="${esc(t.id)}">
+        <span class="rt-name">${esc(t.name)}</span>
+        <span class="rt-count">${n ? `${n} ${n===1?'لاعب':n===2?'لاعبين':'لاعبين'}` : 'فاضي — كن أول واحد'}</span>
+        ${n ? `<span class="rt-avs">${shown.map(p=>`<img src="${avSrc(p.avatar)}" alt="" title="${esc(p.name)}">`).join('')}${n>5?`<i>+${n-5}</i>`:''}</span>` : ''}
+        ${n ? `<span class="rt-names">${esc(pl.map(p=>p.name).join('، '))}</span>` : ''}
+      </button>`; }).join('')
+      : '<p class="muted">ما فيه فرق بعد — خلّ المضيف يضيف الفرق من شاشة اللاعبين.</p>';
+    $$('#r-teams [data-t]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'hello', teamId:b.dataset.t, pid:(me()||{}).pid}); });
     show('r-pick');
   }
 
@@ -125,6 +133,7 @@
   // ---------- الشاشة الرئيسية ----------
   let buzzSent = 0;
   function renderMain(){
+    const sw=$('#r-switch'); if(sw) sw.style.display = st.S && st.S.locked ? 'none' : '';
     const S=st.S; if(!S || S.waiting){ $('#r-phase').textContent='بانتظار ما تبدأ المباراة…'; return; }
     const t=S.team;
     document.body.style.setProperty('--team', t.color);
@@ -134,6 +143,19 @@
       ${S.myTurn?'<span class="r-turn">دوركم</span>':''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=openReg;
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
+    // نهاية المباراة: مركز الفريق وجوائزه وأرقامه
+    const fin=$('#r-final'), done=!!S.final;
+    fin.classList.toggle('hidden', !done);
+    ['#r-buzz','#r-fx','#r-hand-wrap','#r-charade'].forEach(q=>{ const e=$(q); if(e) e.style.display = done ? 'none' : ''; });
+    if(done){
+      const f=S.final;
+      if(!st.finalShown){ st.finalShown=true; vibe(f.rank===1?[120,60,120,60,240]:[80]); }
+      fin.innerHTML=`<div class="rf-rank ${f.rank===1?'win':''}"><small>انتهت المباراة</small><b>#${f.rank}</b><span>من ${f.of} ${f.rank===1?'— فزتوا!':''}</span></div>
+        ${f.awards.length?`<div class="rf-aw">${f.awards.map(a=>`<span class="rf-badge"><b>${esc(a.title)}</b>${esc(a.value)}</span>`).join('')}</div>`:''}
+        <div class="rf-rows">${f.rows.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
+        <p class="muted small center">الإحصائيات الكاملة والمنحنى على الشاشة</p>`;
+      $('#r-phase').textContent='';
+    } else st.finalShown=false;
     // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
     renderCharade(S.charade);
     // البز

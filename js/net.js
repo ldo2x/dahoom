@@ -45,6 +45,7 @@ window.DahoomNet = (function(){
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     if(d.t==='hello'){
+      if(isLocked() && d.pid){ const home=homeTeamOf(d.pid); if(home && d.teamId!==home.id){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${home.name}`}); d.teamId=home.id; } }
       const teams = teamList();
       if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams});
@@ -52,10 +53,12 @@ window.DahoomNet = (function(){
     }
     if(!c.teamId) return;
     if(d.t==='answer'){ const p=pending.get(d.reqId); if(p && p.teamId===c.teamId){ pending.delete(d.reqId); closeAsk(d.reqId); p.cb(d.value); } return; }
+    if(d.t==='leave' && isLocked()){ c.send({t:'notice', msg:'تغيير الفريق بعد ما تخلص المباراة'}); return; }
     if(d.t==='leave'){ c.teamId=null; c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); refreshUI(); return; }
     if(d.t==='register'){ // اللاعب يسجل اسمه وصورته من جواله
       if(D.session.mode==='solo') return;
-      const pl=D.joinPlayer({pid:d.pid, name:d.name, avatar:d.avatar, teamId:c.teamId});
+      let tid=c.teamId; if(isLocked()){ const home=homeTeamOf(d.pid); if(home) tid=home.id; }
+      const pl=D.joinPlayer({pid:d.pid, name:d.name, avatar:d.avatar, teamId:tid});
       if(pl){ c.pid=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar}); if(H && H.roster) H.roster(); refreshUI(); }
       return; }
     if(!H) return;
@@ -64,13 +67,21 @@ window.DahoomNet = (function(){
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid);
   }
-  const teamList = () => (H ? H.teams().map(t=>({id:t.id,name:t.name,color:t.color})) : D.joinable());
+  // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)
+  const membersOf = id => { const ss=D.session, t=ss.teams.find(x=>x.id===id);
+    if(t) return t.members.map(m=>ss.players.find(p=>p.id===m)).filter(Boolean);
+    const p=ss.players.find(x=>x.id===id); return p?[p]:[]; };
+  const teamList = () => (H ? H.teams() : D.joinable()).map(t=>({ id:t.id, name:t.name, color:t.color,
+    players:membersOf(t.id).map(p=>({name:p.name, avatar:p.avatar})), phones:phonesOf(t.id).length }));
+  // وسط المباراة: ممنوع تغيير الفريق (قبلها وبعدها عادي)
+  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active');
+  const homeTeamOf = pid => pid ? D.session.teams.find(t=>t.members.includes(pid)) : null;
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
   const hasPhone = id => phonesOf(id).length>0;
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
-  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state'}, H.state(c.teamId, c.cid))); }catch(e){} }
+  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid))); }catch(e){} }
   // تحديث كل الجوالات (مجمّع عشان ما نرسل عشرات المرات بنفس اللحظة)
   function pushAll(){ if(pushT) return; pushT=setTimeout(()=>{ pushT=0; conns.forEach(push); }, 60); }
 
@@ -87,6 +98,8 @@ window.DahoomNet = (function(){
 
   // ---------- واجهة الشاشة ----------
   function refreshUI(){
+    // الجوالات اللي بشاشة اختيار الفريق تشوف العدد والصور يتحدثون مباشرة
+    const tl=teamList(); conns.forEach(c=>{ if(c.open && !c.teamId){ try{ c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:tl}); }catch(e){} } });
     $$('.net-dot').forEach(el=>el.classList.toggle('on', ready));
     const box=$('#net-panel-body'); if(box) box.innerHTML=panelBody();
     if(H && H.onPhones) H.onPhones();
@@ -111,5 +124,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

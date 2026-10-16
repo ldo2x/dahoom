@@ -665,3 +665,70 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .team-box .head input[type=color]{flex:none;cursor:pointer}
 .team-box .head .btn{flex:none;color:var(--bad-ink,#FF8796);border:1px solid var(--line)}
 .team-box .head .btn:hover{border-color:var(--bad-ink,#FF8796)}
+
+/* ===== إحصائيات نهاية المباراة ===== */
+:root{ --viz-1:#3987e5; --viz-2:#d95926; --viz-3:#199e70; --viz-4:#c98500; }
+:root[data-theme="day"]{ --viz-1:#2a78d6; --viz-2:#eb6834; --viz-3:#1baf7a; --viz-4:#eda100; }
+#match-stats{margin-top:34px;text-align:right}
+.ms{display:flex;flex-direction:column;gap:18px;max-width:1180px;margin:0 auto}
+.ms-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ms-head h2{font-size:clamp(1.6rem,3vw,2.3rem)}
+.ms-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.ms-card h3{font-size:1.25rem;margin-bottom:2px}
+/* الجوائز */
+.aw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.aw{position:relative;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:2px}
+.aw-ic{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;color:var(--text)}
+.aw-ic .ic{width:20px;height:20px}
+.aw-t{font-family:var(--display);font-size:1.35rem;line-height:1.2}
+.aw-team{font-weight:700;color:var(--text)}
+.aw-v{font-family:var(--num);font-size:1.35rem;color:var(--text);direction:rtl}
+.aw-d{color:var(--mute);font-size:.85rem}
+/* المنحنى */
+.viz-chart{direction:ltr;margin-top:10px}
+.viz-chart svg{width:100%;height:auto;display:block;overflow:visible}
+.viz-grid{stroke:var(--line);stroke-width:1;opacity:.55}
+.viz-grid.zero{opacity:1}
+.viz-round{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4;opacity:.7}
+.viz-target{stroke:var(--mute);stroke-width:1.5;stroke-dasharray:6 5}
+.viz-axis{fill:var(--mute);font-size:13px;font-family:var(--body);font-weight:600}
+.viz-line{fill:none;stroke:var(--c);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.viz-end{fill:var(--c);stroke:var(--surface);stroke-width:2.5}
+.viz-label{fill:var(--text);font-size:14px;font-family:var(--num);font-weight:700}
+.viz-label-n{font-family:var(--body);fill:var(--text)}
+.viz-cross{stroke:var(--mute);stroke-width:1}
+.viz-hit{fill:transparent;cursor:crosshair}
+/* الأشرطة */
+.viz-legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 6px;color:var(--text);font-weight:600;font-size:.95rem}
+.viz-legend span{display:inline-flex;align-items:center;gap:6px}
+.viz-sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.s1{background:var(--viz-1)}.s2{background:var(--viz-2)}.s3{background:var(--viz-3)}.s4{background:var(--viz-4)}
+.viz-bars{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.vb-row{display:grid;grid-template-columns:minmax(90px,170px) 1fr 64px;align-items:center;gap:12px}
+.vb-name,.vt-team{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--text);min-width:0}
+.vb-name i,.vt-team i,.vt-r i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.vb-track{height:24px;display:flex}
+.vb-bar{display:flex;gap:2px;height:100%;min-width:4px}
+.vb-seg{height:100%;min-width:3px;cursor:default}
+.vb-seg:first-child{border-radius:0 4px 4px 0}
+.vb-seg:last-child{border-radius:4px 0 0 4px}
+.vb-seg:only-child{border-radius:4px}
+.vb-val{font-family:var(--num);font-size:1.2rem;font-weight:700;color:var(--text)}
+/* الجدول */
+.viz-table-wrap{overflow-x:auto;margin-top:8px}
+.viz-table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:760px}
+.viz-table th{color:var(--mute);font-weight:700;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.viz-table td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+.viz-table td.num{font-family:var(--num);font-size:1.05rem}
+.viz-table tbody tr:last-child td{border-bottom:0}
+/* اللحظات */
+.ms-moments{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ms-moments li{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:var(--surface-2);border-inline-start:4px solid var(--c);color:var(--text);font-weight:600}
+.mm-r{font-family:var(--num);color:var(--mute);font-size:.9rem;min-width:30px}
+/* التلميح */
+.viz-tip{position:fixed;top:0;left:0;z-index:95;pointer-events:none;display:none;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 12px;box-shadow:0 12px 30px rgba(0,0,0,.35);font-size:.9rem;min-width:150px;direction:rtl}
+.vt-h{font-weight:700;margin-bottom:4px;color:var(--mute);font-size:.82rem}
+.vt-r{display:flex;align-items:center;gap:8px;font-weight:600}
+.vt-r b{margin-inline-start:auto;font-family:var(--num);font-size:1rem}
+@media (max-width:640px){ .vb-row{grid-template-columns:90px 1fr 46px;gap:8px} .ms-card{padding:14px} }
+.viz-rtl{direction:rtl;unicode-bidi:plaintext}
