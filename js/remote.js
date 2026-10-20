@@ -238,6 +238,32 @@
     $$('#r-sheet [data-o]').forEach(b=>b.onclick=()=>{ vibe(25); send({t:'answer', reqId, value:+b.dataset.o}); st.askId=null; closeSheet(); });
   }
 
+  // ---------- البلاغ: سؤال/تحدي غلط أو بطاقة مو موزونة ----------
+  function openReportSheet(){
+    const S=st.S||{}, opts=[];
+    if(S.item) opts.push({ what:'item', kind:S.item.kind, label:S.item.label, head:{q:'آخر سؤال',c:'بدون كلام',t:'آخر تحدي',l:'آخر سؤال حروف'}[S.item.kind]||'' });
+    const seen=new Set();
+    [S.lastCard, ...(S.hand||[])].forEach((id,i)=>{ const c=id&&C(id); if(!c || seen.has(id)) return; seen.add(id);
+      opts.push({ what:'card', id, kind:'card', label:c.name, head: i===0&&id===S.lastCard ? 'آخر بطاقة انلعبت' : 'بطاقة بيدكم' }); });
+    if(!opts.length){ sheet(`<h3>بلّغ عن مشكلة</h3><p class="muted">ما فيه شي تبلّغ عنه للحين — البلاغ يكون على آخر سؤال أو تحدي ظهر، أو بطاقة.</p><div class="r-actions"><button class="btn ghost" data-x>إغلاق</button></div>`); $('#r-sheet [data-x]').onclick=closeSheet; return; }
+    sheet(`<div class="eyebrow">بلّغ عن مشكلة</div><h3>على وش؟</h3>
+      <div class="r-rep-list">${opts.map((o,i)=>`<button class="r-rep-opt" data-i="${i}"><small>${esc(o.head)}</small><b>${esc(o.label)}</b></button>`).join('')}</div>
+      <div class="r-actions"><button class="btn ghost" data-x>إلغاء</button></div>`);
+    $$('#r-sheet [data-i]').forEach(b=>b.onclick=()=>reasonSheet(opts[+b.dataset.i]));
+    $('#r-sheet [data-x]').onclick=closeSheet;
+  }
+  function reasonSheet(o){
+    const list=(window.DahoomLog&&window.DahoomLog.REASONS[o.kind])||[]; let pick=null;
+    sheet(`<div class="eyebrow">${esc(o.head)}</div><h3>${esc(o.label)}</h3>
+      <div class="r-rep-reasons">${list.map((r,i)=>`<button class="btn ghost" data-r="${i}">${esc(r)}</button>`).join('')}</div>
+      <textarea class="r-rep-note" id="r-rep-note" maxlength="300" placeholder="ملاحظة (اختياري): وش الصح؟"></textarea>
+      <div class="r-actions"><button class="btn btn-hype big" id="r-rep-send" disabled>أرسل</button><button class="btn ghost" data-x>إلغاء</button></div>`);
+    $$('#r-sheet [data-r]').forEach(b=>b.onclick=()=>{ pick=list[+b.dataset.r]; vibe(10); $$('#r-sheet [data-r]').forEach(x=>x.classList.toggle('btn-hype',x===b)); $('#r-rep-send').disabled=false; });
+    $('#r-rep-send').onclick=()=>{ vibe(30); send({ t:'report', what:o.what, id:o.id||null, reason:pick, note:$('#r-rep-note').value.trim().slice(0,300) }); closeSheet(); };
+    $('#r-sheet [data-x]').onclick=closeSheet;
+  }
+  $('#r-report').onclick=()=>{ vibe(10); openReportSheet(); };
+
   // ---------- بطاقة جديدة وصلت ----------
   function drawn(c){
     if(!c) return; vibe([100,50,100]);

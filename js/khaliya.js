@@ -32,8 +32,9 @@
     if(comps.length<2){ toast('نحتاج فريقين'); go('lobby'); return; }
     G={ teams: comps.map((c,i)=>({...c, wins:0, dir:i===0?'v':'h'})), round:1, used: usedL.load(), edit:false };
     G.stats = G.teams.map(()=>({cells:0, ok:0, wrong:0, buzz:[]}));
+    G.log = { t0:Date.now(), items:[] }; window.DAHOOM_ITEM=null;
     const net=window.DahoomNet;
-    if(net) net.use({ teams:()=>G.teams, state:khState, buzz:id=>{ const i=G.teams.findIndex(t=>t.id===id); if(i>=0) buzz(i); }, onPhones:()=>{} });
+    if(net) net.use({ teams:()=>G.teams, state:khState, report:onReport, buzz:id=>{ const i=G.teams.findIndex(t=>t.id===id); if(i>=0) buzz(i); }, onPhones:()=>{} });
     go('khaliya');
     newRound(true);
   }
@@ -82,6 +83,11 @@
     $('#kh-board').innerHTML=`<svg viewBox="-6 -6 ${W+12} ${H+12}" xmlns="http://www.w3.org/2000/svg">${frame}${backing}${cells}</svg>`;
     $$('#kh-board .hex').forEach(g=>g.onclick=()=>onCell(cell(+g.dataset.r,+g.dataset.c)));
   }
+  function onReport(id, pid, d){
+    const L=window.DahoomLog, it=window.DAHOOM_ITEM, t=G && G.teams.find(x=>x.id===id);
+    if(!L || !t || d.what!=='item' || !it || !(L.REASONS.l||[]).includes(d.reason)) return false;
+    L.report(it, d.reason, d.note, `${((t.players||[]).find(p=>p.id===pid)||{}).name||'جوال'} (${t.name})`); return true;
+  }
   function panel(html){ $('#kh-panel').innerHTML=html; const n=window.DahoomNet; if(n) n.pushAll(); }
   // حالة جوال الفريق في خلية الحروف
   function khState(id){
@@ -95,6 +101,7 @@
         return G.phase==='buzz' ? { open:true, can:!G.tried.includes(i)&&k<0, first:null, mine:false, ...r }
           : ans ? { open:true, can:k<0, first:ans.name, mine:ans===t, ...r } : { open:false }; })(),
       letter: G.sel ? G.sel.l : null,
+      item: window.DAHOOM_ITEM ? { kind:'l', id:window.DAHOOM_ITEM.id, label:window.DAHOOM_ITEM.text } : null,
       phase: G.phase==='buzz' ? 'السؤال مقروء — بز!' : G.phase==='pick' ? `دور ${G.teams[G.turn].name} يختار حرف` : G.phase==='open' ? 'السؤال مفتوح للفريقين' : '' };
   }
   function panelIdle(){
@@ -132,7 +139,10 @@
     const q=rnd(fresh); G.used.add(q.id); usedL.save(G.used); return q;
   }
   function startQuestion(k, q){
-    q = q || pickQ(k.l); G.q=q; G.phase='buzz'; G.answering=null; G.tried=[]; G.blog=[]; G.qStart=performance.now();
+    q = q || pickQ(k.l); G.q=q;
+    { const L=G.log.items, last=L[L.length-1]; if(last && last.r==='?') last.r='skip';
+      L.push({ k:'l', id:q.id, d:q.d||1, tag:q.l, r:'?', x:String(q.q).slice(0,50) });
+      window.DAHOOM_ITEM = { kind:'l', id:q.id, d:q.d||1, tag:q.l, text:q.q, answer:q.a }; } G.phase='buzz'; G.answering=null; G.tried=[]; G.blog=[]; G.qStart=performance.now();
     renderQuestion(k);
   }
   function renderQuestion(k){
@@ -176,7 +186,7 @@
   }
   function passOn(k){
     clearT();
-    const a=G.answering; if(a!=null){ G.tried.push(a); if(G.stats) G.stats[a].wrong++; }
+    const a=G.answering; if(a!=null){ G.tried.push(a); if(G.stats) G.stats[a].wrong++; const l=G.log.items[G.log.items.length-1]; if(l) l.miss=(l.miss||0)+1; }
     play('wrong',{volume:.6});
     const other = a==null ? null : 1-a;
     if(other!=null && !G.tried.includes(other)){ G.answering=other; G.phase='answer'; toast(`السؤال راح لـ ${G.teams[other].name}`); }
@@ -185,6 +195,7 @@
   }
   function claim(k, teamIdx){
     clearT();
+    { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?') l.r='ok'; }
     k.owner=teamIdx; if(G.stats){ G.stats[teamIdx].ok++; G.stats[teamIdx].cells++; } G.sel=null; G.phase='pick'; play('correct'); flash('good'); reaction('correct',2500);
     renderBoard(); $$(`#kh-board .hex[data-r="${k.r}"][data-c="${k.c}"]`).forEach(g=>g.classList.add('pop'));
     if(checkWinAll()) return;
@@ -231,6 +242,11 @@
     const pod=$('#podium'); pod.innerHTML='';
     sorted.forEach((t,i)=>{ const d=document.createElement('div'); d.className='p '+(i===0?'first':'second'); d.style.setProperty('--c',t.color); d.style.animationDelay=(i*.25)+'s'; d.innerHTML=`${i===0?ic('crown','crown'):''}<div class="rank">${i+1}</div><div class="pn">${esc(t.name)}</div><div class="muted small">${t.players.map(p=>esc(p.name)).join('، ')}</div><div class="ps">${t.wins} ${t.wins===1?'جولة':'جولات'}</div>`; pod.appendChild(d); });
     $('#btn-again').onclick=()=>newMatch();
+    try{ const L=window.DahoomLog; if(L && !G.logged){ G.logged=true;
+      L.match({ game:'khaliya', rounds:G.round, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode, opts:{ size:S.size, difficulty:S.difficulty||'' },
+        teams: sorted.map((t,i)=>{ const o=G.stats[G.teams.indexOf(t)]||{}; return { id:t.id, name:t.name, score:t.wins, rank:i+1, win:t===winner,
+          players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })), st:{ cells:o.cells||0, ok:o.ok||0, wrong:o.wrong||0, buzz:(o.buzz||[]).map(Math.round) } }; }),
+        items:G.log.items }); } }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderKhaliya(el, G); }catch(e){ console.error(e); el.innerHTML=''; } }
   }
 

@@ -736,3 +736,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .tcg-phase{display:inline-block;margin-inline-start:6px;padding:0 6px;border-radius:6px;font-size:.92em;font-weight:700;background:var(--surface-2);color:var(--mute);white-space:nowrap}
 .tcg.in-phase .tcg-phase{background:var(--ok,#2FD98F);color:#120F1C}
 .tcg.in-phase{box-shadow:0 0 0 2px var(--ok,#2FD98F),0 14px 30px -12px rgba(0,0,0,.8)}
+
+/* ===== البلاغ ===== */
+.rep-item{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);margin:12px 0;line-height:1.6;text-align:start}
+.rep-reasons{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.rep-note{width:100%;min-height:70px;margin-top:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font:inherit;padding:10px;resize:vertical}

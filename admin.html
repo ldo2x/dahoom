@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>لوحة دحوم</title>
+<meta name="theme-color" content="#0D0B14">
+<script>(function(){var t=null;try{t=localStorage.getItem('dahoom_theme');}catch(e){}if(t!=='day'&&t!=='night'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'day':'night';}document.documentElement.setAttribute('data-theme',t);})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<main class="ad">
+  <header class="ad-head">
+    <div>
+      <div class="eyebrow">منصة دحوم</div>
+      <h1 class="ad-title">لوحة المراجعة</h1>
+    </div>
+    <div class="row" id="ad-user"></div>
+  </header>
+
+  <section id="ad-login" class="ad-card hidden">
+    <h3>سجّل دخول بحساب قوقل اللي عليه Firebase</h3>
+    <p class="muted">البلاغات والإحصائيات تنقرا لصاحب المشروع بس.</p>
+    <button class="btn btn-hype big mt-s" id="ad-signin">دخول بقوقل</button>
+    <p class="muted small mt-s" id="ad-login-err"></p>
+  </section>
+
+  <section id="ad-nocfg" class="ad-card hidden">
+    <h3>Firebase مو مربوط للحين</h3>
+    <p class="muted">املأ المفاتيح في <code>js/config.js</code> وارفعها، وبعدها كل البلاغات والمباريات تبان هنا.</p>
+  </section>
+
+  <section id="ad-app" class="hidden">
+    <div class="ad-kpis" id="ad-kpis"></div>
+    <nav class="ad-tabs" role="tablist">
+      <button class="ad-tab on" data-tab="reports">البلاغات</button>
+      <button class="ad-tab" data-tab="content">الأسئلة والمحتوى</button>
+      <button class="ad-tab" data-tab="cards">البطايق</button>
+      <button class="ad-tab" data-tab="players">اللاعبين</button>
+      <button class="ad-tab" data-tab="matches">المباريات</button>
+    </nav>
+    <div id="ad-body"></div>
+  </section>
+</main>
+
+<script src="data/questions.js"></script>
+<script src="data/questions-2.js"></script>
+<script src="data/charades.js"></script>
+<script src="data/charades-2.js"></script>
+<script src="data/challenges.js"></script>
+<script src="data/challenges-2.js"></script>
+<script src="data/cards.js"></script>
+<script src="data/letters-1.js"></script>
+<script src="data/letters-2.js"></script>
+<script src="data/letters-3.js"></script>
+<script src="data/letters-4.js"></script>
+<script src="data/letters-hard-1.js"></script>
+<script src="data/letters-hard-2.js"></script>
+<script src="js/config.js"></script>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

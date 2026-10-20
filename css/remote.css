@@ -72,7 +72,13 @@ body.remote::before{height:10px;background-size:23px 10px}
 .r-sc small{color:var(--mute);display:inline-flex;gap:2px;align-items:center}
 .r-sc.me{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
 .r-sc.turn{background:color-mix(in srgb,var(--c) 18%,var(--surface))}
-.r-switch{align-self:center;margin-top:auto}
+.r-foot{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:auto}
+.r-rep-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto;margin:10px 0}
+.r-rep-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:start;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--text);font:inherit;cursor:pointer}
+.r-rep-opt small{color:var(--mute);font-size:.78rem}
+.r-rep-opt b{font-weight:700;line-height:1.5}
+.r-rep-reasons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.r-rep-note{width:100%;min-height:76px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font:inherit;padding:10px;resize:vertical}
 
 /* الورقة المنبثقة */
 .r-sheet{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}

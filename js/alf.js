@@ -74,7 +74,7 @@
     const b=G && G.buzz; if(!b || !b.open || !b.eligible.includes(id) || b.tried.includes(id) || b.order.some(o=>o.id===id)) return;
     b.order.push({id, t:performance.now()});
     { const o=ST(G.teams.find(x=>x.id===id)); if(o) o.buzz.push(performance.now()-b.t0); }
-    if(!b.first){ b.first=id; const t=G.teams.find(x=>x.id===id); play('game:g_mgs',{volume:.9}); flash('steal'); b.onFirst(t); }
+    if(!b.first){ b.first=id; const t=G.teams.find(x=>x.id===id); G.log.buzz.push({ team:id, by:nameOf(t,pid), ms:Math.round(performance.now()-b.t0) }); play('game:g_mgs',{volume:.9}); flash('steal'); b.onFirst(t); }
     else play('tick',{volume:.6});
     renderBuzzOrder(); pushAll();
   }
@@ -123,6 +123,8 @@
         return { open:true, can: b.eligible.includes(id) && !b.tried.includes(id) && k<0 && !(G.charade && G.charade.actor===cid),
           first: first?first.name:null, mine: b.first===id, rank: k>=0?k+1:0, gap: k>0?+((b.order[k].t-b.order[0].t)/1000).toFixed(3):0 }; })() : { open:false },
       benched: !!(t.fx.benched && pid && t.fx.benched.pid===pid), phaseKey: gamePhase(),
+      item: G.item ? { kind:G.item.kind, id:G.item.id, label: G.item.kind==='c' ? (G.charade ? 'عبارة التمثيل الحالية' : 'آخر عبارة تمثيل: '+G.item.text) : G.item.text } : null,
+      lastCard: G.lastCard ? G.lastCard.id : null,
       charade: G.charade && G.charade.team===id ? { taken:!!G.charade.actor, mine:G.charade.actor===cid, acting:!!G.charade.acting, text: G.charade.actor===cid ? G.charade.text : null } : null,
       phase: strip(($('#stage .big')||{}).innerText||'').slice(0,90) };
   }
@@ -137,7 +139,7 @@
   function onClaim(teamId, cid, pid){
     const ch=G && G.charade; if(!ch || ch.team!==teamId || ch.actor) return;
     { const tm=G.teams.find(x=>x.id===teamId); if(tm && tm.fx.benched && pid && tm.fx.benched.pid===pid) return; }
-    ch.actor=cid; play('game:g_zelda',{volume:.7}); pushAll();
+    ch.actor=cid; ch.pid=pid; play('game:g_zelda',{volume:.7}); pushAll();
     const st=$('#ch-status'); if(st){ st.classList.add('ok'); st.innerHTML=`${ic('check')} الممثل جاهز — العبارة على جواله`; }
   }
   function syncRoster(){
@@ -145,7 +147,17 @@
     G.teams.forEach(t=>{ const tm=ss.teams.find(x=>x.id===t.id); if(tm) t.players=tm.members.map(id=>ss.players.find(p=>p.id===id)).filter(Boolean); });
     if($('#game').classList.contains('active') && G.canPlayNow) turnIntro();
   }
-  function registerNet(){ const n=NET(); if(n) n.use({ roster:syncRoster, teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse, claim:onClaim,
+  const cardRef = c => ({ kind:'card', id:c.id, d:0, tag:c.tier, text:`${c.name} — ${c.desc}` });
+  // بلاغ من جوال: الشاشة تكمّل النص والجواب من البنك
+  function onReport(id, pid, d){
+    const t=G && G.teams.find(x=>x.id===id); if(!t || !LOG()) return false;
+    let item=null;
+    if(d.what==='item' && G.item) item=G.item;
+    else if(d.what==='card'){ const c=DATA.cards.find(x=>x.id===d.id); if(c) item=cardRef(c); }
+    if(!item || !(LOG().REASONS[item.kind]||[]).includes(d.reason)) return false;
+    LOG().report(item, d.reason, d.note, `${nameOf(t,pid)||'جوال'} (${t.name})`); return true;
+  }
+  function registerNet(){ const n=NET(); if(n) n.use({ roster:syncRoster, report:onReport, teams:()=>G?G.teams:D.competitors(), state:phoneState, buzz:onBuzz, play:onPhonePlay, fuse:onPhoneFuse, claim:onClaim,
     onPhones:()=>{ if(G && $('#game').classList.contains('active')){ renderBoard(); renderHand(cur(), !!(G.canPlayNow && canPlayCard(cur()))); } } }); }
 
   // بطاقة انلعبت: تنعرض للكل على الشاشة ثواني
@@ -166,6 +178,7 @@
       round:1, order:[], turn:0, used: used.load(), finalRound:false
     };
     G.order = shuffle(G.teams.map((_,i)=>i));
+    G.log = { t0:Date.now(), items:[], cards:[], drawn:[], buzz:[] }; window.DAHOOM_ITEM=null;
     G.stats = { T:{}, series:[{label:'البداية', round:0, scores:Object.fromEntries(G.teams.map(t=>[t.id,0]))}], moments:[] };
     G.teams.forEach(t=>G.stats.T[t.id]={ pts:{q:0,c:0,t:0,steal:0}, tries:{q:0,c:0,t:0}, ok:{q:0,c:0,t:0}, steals:0, stolenFrom:0, cards:0, attacks:0, hits:0, reactions:0, bestTurn:0, maxCombo:0, fails:0, buzz:[] });
     $('#target-label').textContent='الهدف '+S.target;
@@ -178,6 +191,17 @@
   const ST = t => (G && G.stats && t && G.stats.T[t.id]) || null;
   const moment = (text, t) => { if(G && G.stats) G.stats.moments.push({ round:G.round, text, color:t?t.color:null }); };
   const others = t => G.teams.filter(x=>x!==t);
+  // ---------- سجل الموازنة: كل سؤال/تحدي ونتيجته، وكل بطاقة انلعبت ----------
+  const LOG = () => window.DahoomLog;
+  function itemRef(k, item, d){ const sp = k==='t' ? splitAnswer(item.t) : null;
+    return { kind:k, id:item.id, d, tag:item.tag, text: k==='q'?item.q : k==='t'?sp.t : item.t, answer: k==='q'?item.a : k==='t'?(sp.a||'') : '' }; }
+  function logItem(k, item, d){
+    const L=G.log.items, last=L[L.length-1]; if(last && last.r==='?') last.r='skip';
+    G.item = window.DAHOOM_ITEM = itemRef(k,item,d);
+    L.push({ k, id:item.id, d, tag:item.tag, r:'?', ph:gamePhase(), x:String(G.item.text).slice(0,50) });
+  }
+  function logResult(r, extra){ const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r=r; l.left=+Math.max(0,fracLeft()).toFixed(2); if(extra) Object.assign(l, extra); } }
+  const nameOf = (t, pid) => ((t && t.players.find(p=>p.id===pid)) || {}).name || null;
   const stealPts = p => Math.max(50, Math.ceil((p/2)/50)*50);
   const inFinalStretch = () => S.finalStretchEnabled && G.teams.some(x=>x.score>=S.finalStretchThreshold);
   const inClimax = t => S.climaxEnabled && t.score>=S.climaxThreshold;
@@ -248,7 +272,8 @@
     const why = c.kind==='reaction' ? 'هذي رد فعل: تطلع لحالها لما أحد يهاجمك' : c.fx==='none' ? 'سودا… ما تنلعب. ادمجها أو ارمها بعرض تجاري' : '';
     const m=modal(`<div class="co-wrap">${cardHTML(c,{size:'big',anim:true})}
       ${why?`<p class="muted mt-s">${why}</p>`:''}
-      <div class="row center mt-s">${canPlay?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${canPlay?'تراجع':'إغلاق'}</button></div></div>`,{onMount(m){
+      <div class="row center mt-s">${canPlay?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${canPlay?'تراجع':'إغلاق'}</button><button class="btn ghost small" data-rep-card>${ic('flag')} بلّغ</button></div></div>`,{onMount(m){
+        m.querySelector('[data-rep-card]').onclick=()=>{ m.remove(); LOG() && LOG().openReport(cardRef(c)); };
         m.querySelector('.panel').style.cssText='background:transparent;border:0;box-shadow:none;max-width:420px';
         const fx=window.DahoomFX; if(fx) fx.aura(m.querySelector('.tcg'),c.tier);
         m.querySelector('[data-x]').onclick=()=>m.remove();
@@ -435,7 +460,7 @@
 
   // ---------- الأسئلة ----------
   function runQuestion(t, d, item, {priceD, lag}={}){
-    item = item || pickContent('q', d, 'tagsQ');
+    item = item || pickContent('q', d, 'tagsQ'); logItem('q', item, d);
     const p = pts(priceD||d), hard = d===3;
     const time = Math.max(3, lag ? Math.ceil(S.answerTime/2) : S.answerTime);
     stage(`${head(t,item,'q',d,p,priceD)}
@@ -449,6 +474,7 @@
     let ended=false;
     const finish=(ok, timedOut)=>{
       if(ended) return; ended=true; clearTimer(); delete t.fx.spoiler;
+      logResult(ok?'ok': (t.fx.lock||!S.stealEnabled) ? 'fail' : '?');
       if(ok){ const {net,note}=resolveSuccess(t,p,{hard,section:'q'}); play('correct'); memeSound('correct',{volume:.5}); flash('good'); reaction('correct'); confetti(60,1500);
         return afterTurn(`<span style="color:var(--mint)">صح!</span> +${net} لـ ${esc(t.name)}${note}`); }
       const notes=resolveFail(t,p,'q'); const nt=notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:'';
@@ -478,6 +504,7 @@
     play('steal',{volume:.8}); reaction('steal',2300);
     let ended=false;
     const end=(sid, owner)=>{ if(ended) return; ended=true; clearTimer();
+      logResult(owner?'late': sid?'steal':'fail');
       if(owner){ const {net,note:n2}=resolveSuccess(t,p,{hard:p>=pts(3)}); play('correct'); flash('good'); reaction('correct'); confetti(60,1500); return afterTurn(`${esc(t.name)} لحقها! +${net}${n2}`); }
       if(sid){ const s=G.teams.find(x=>x.id===sid); let gain=stealPts(p); const notes=[];
         if(s.fx.fullsteal!=null){ gain=p; delete s.fx.fullsteal; notes.push('ببلاش: كاملة'); }
@@ -498,7 +525,7 @@
 
   // ---------- بدون كلام ----------
   function runCharade(t, d, item, {priceD, lag}={}){
-    item = item || pickContent('c', d, 'tagsC');
+    item = item || pickContent('c', d, 'tagsC'); logItem('c', item, d);
     const p=pts(priceD||d), half=Math.round(p/2);
     const time = lag ? Math.ceil(S.charadeTime/2) : S.charadeTime;
     const viaPhone = phoneOf(t);
@@ -523,6 +550,7 @@
         <div class="answer hidden" id="answer">${esc(item.t)}</div><div id="buzzbox"></div>`);
       let ended=false;
       const end=(gid)=>{ if(ended) return; ended=true; clearTimer();
+        logResult(!gid?'fail': gid===t.id?'own':'other', { by: G.charade && G.charade.pid ? nameOf(t, G.charade.pid) : null });
         if(gid){ const g=G.teams.find(x=>x.id===gid);
           let a=half; const an=[];
           if(t.fx.rizz!=null){ a=p; delete t.fx.rizz; an.push('فنّان: نصيب كامل'); }
@@ -550,7 +578,7 @@
 
   // ---------- التحديات ----------
   function runChallenge(t, d, item, {priceD, lag}={}){
-    item = item || pickContent('t', d, 'tagsT');
+    item = item || pickContent('t', d, 'tagsT'); logItem('t', item, d);
     const p=pts(priceD||d); const {t:text, a}=splitAnswer(item.t);
     const time = lag ? Math.max(5,Math.ceil(item.s/2)) : item.s;
     stage(`${head(t,item,'t',d,p,priceD)}
@@ -564,7 +592,7 @@
         ${a?`<div class="answer hidden" id="answer">${esc(a)}</div>`:''}
         <div class="row center"><button class="btn btn-mint big" id="btn-ok">${ic('check')} نجح</button><button class="btn btn-bad big" id="btn-no">${ic('cancel')} فشل</button></div>`);
       let ended=false;
-      const end=(ok)=>{ if(ended) return; ended=true; clearTimer();
+      const end=(ok)=>{ if(ended) return; ended=true; clearTimer(); logResult(ok?'ok':'fail');
         if(ok){ const {net,note}=resolveSuccess(t,p,{hard:d===3,section:'t'}); play('cheer',{volume:.6}); flash('good'); reaction('correct'); confetti(80,1800); afterTurn(`<span style="color:var(--mint)">نجح!</span> +${net}${note}`); }
         else { const notes=resolveFail(t,p,'t'); play('fail'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); afterTurn(`ما نجح${notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:''}`); }
       };
@@ -579,7 +607,7 @@
   function afterTurn(msg){
     stopAll();
     const t=cur();
-    G.charade=null;
+    G.charade=null; logResult('fail');
     if(t.fx.benched) delete t.fx.benched;
     t.lastGain = Math.max(0, t.score - t.turnStart);
     { const o=ST(t); if(o){ o.bestTurn=Math.max(o.bestTurn,t.lastGain); if(t.lastGain>=200) moment(`${esc(t.name)} كسب ${t.lastGain} بدور واحد`, t); }
@@ -688,6 +716,7 @@
   }
   // يضيف لليد ويتعامل مع الامتلاء
   async function addToHand(t, c){
+    G.log.drawn.push(c.id);
     if(t.hand.length<S.handMax){ t.hand.push(c); renderBoard(); return; }
     const v = await decide(t,{ title:`يدكم مليانة (${S.handMax}) — اختاروا بطاقة ترمونها`, options:[...t.hand.map((h,i)=>({v:i,card:h})), {v:'new',card:c,flag:'الجديدة'}] });
     if(v!=='new' && v!=null){ t.hand.splice(v,1); t.hand.push(c); }
@@ -745,6 +774,7 @@
     t.playedCard=true; t.hand.splice(idx,1);
     if(c.fx!=='copy') G.lastCard=c;
     showPlayed(c, t);
+    G.log.cards.push({ id:c.id, as:real!==c?real.id:null, team:t.id, r:G.round, ph:gamePhase(), s:t.score, lead:leader().score, tgt:target?target.id:null });
     { const o=ST(t); if(o){ o.cards++; if(real.kind==='attack') o.attacks++; } if(c.tier==='legendary') moment(`${esc(t.name)} لعب "${esc(c.name)}"${target?` على ${esc(target.name)}`:''}`, t); }
     const fx=FX(); if(fx){ fx.sound(c); fx.visual(c); } else play('bling');
     if(real.fx==='swapTurn'){ swapTurn(t,target); return; }
@@ -876,8 +906,20 @@
     if(sorted.length>3){ const rest=document.createElement('div'); rest.className='row center'; rest.style.width='100%'; rest.innerHTML=sorted.slice(3).map((t,i)=>`<span class="pill">${i+4}. ${esc(t.name)} — ${t.score}</span>`).join(''); pod.appendChild(rest); }
     $('#btn-again').onclick=()=>newGame();
     G.ended=true;
+    try{ sendMatchLog(winner, sorted); }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderAlf(el, G, S.target); }catch(e){ console.error(e); el.innerHTML=''; } }
     pushAll();
+  }
+
+  function sendMatchLog(winner, sorted){
+    const L=LOG(); if(!L || G.logged) return; G.logged=true;
+    const r1 = n => Math.round(n);
+    L.match({ game:'alf', target:S.target, rounds:G.round, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode,
+      opts:{ cards:!!S.cardsEnabled, steal:!!S.stealEnabled, reactions:!!S.reactionsEnabled, comeback:!!S.comebackEnabled, hand:S.handMax||0 },
+      teams: sorted.map((t,i)=>{ const o=G.stats.T[t.id]||{};
+        return { id:t.id, name:t.name, score:t.score, rank:i+1, win:t===winner, players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })),
+          st:{ pts:o.pts, tries:o.tries, ok:o.ok, steals:o.steals||0, stolen:o.stolenFrom||0, cards:o.cards||0, attacks:o.attacks||0, hits:o.hits||0, best:o.bestTurn||0, combo:o.maxCombo||0, buzz:(o.buzz||[]).map(r1) } }; }),
+      items:G.log.items, cards:G.log.cards, drawn:G.log.drawn, buzz:G.log.buzz });
   }
 
   // ---------- أدوات المضيف ----------
