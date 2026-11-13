@@ -156,6 +156,7 @@ window.Dahoom = (function(){
     const K = (window.DAHOOM_DATA.cardKinds||{})[c.kind] || {name:'',icon:'cards'};
     const art = c.tweet
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span><span>${ic('recycle')} ترند</span></div></div>`
+      : c.art ? `<div class="tcg-icon">${ic(c.art)}</div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
     // تشريح البطاقة: لوحة الاسم ← الصورة ← سطر النوع ← النص ← المصدر ورقم البطاقة
     return `<div class="tcg ${c.tier} ${size}${c.phase&&c.phase===window.DAHOOM_PHASE?' in-phase':''}" data-id="${c.id}">
@@ -329,7 +330,7 @@ window.Dahoom = (function(){
   // ---------- بطاقات الزينة (البداية والرئيسية) ----------
   function decorate(){
     const C=window.DAHOOM_DATA.cards; if(!C) return;
-    const pickIds=['R4','G6','N11','R1','K1','G9','N3','R2'];
+    const pickIds=['R4','G6','N11','R1','R8','G9','N17','R2'];
     const sc=$('#splash-cards'); if(sc){
       const spots=[[6,12,-14],[80,8,12],[3,62,10],[84,60,-10],[18,82,-6],[70,84,8]];
       sc.innerHTML=spots.map(([x,y,r],i)=>{ const c=C.find(k=>k.id===pickIds[i]); return `<div style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%) rotate(${r}deg);animation:fadeUp .8s ${.3+i*.12}s both">${cardHTML(c,{size:'mini'})}</div>`; }).join('');

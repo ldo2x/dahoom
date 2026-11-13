@@ -778,3 +778,16 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .brand-mark.rs .ic{width:.8em;height:.8em;color:var(--ink)}
 .rs-words{display:flex;flex-wrap:wrap;gap:8px}
 @media (max-width:900px){ .rs-layout{grid-template-columns:1fr} }
+
+/* ===== بطاقات التحدي ===== */
+.tcg-icon{width:100%;height:100%;display:grid;place-items:center;background:var(--face-2);color:var(--gold-ink)}
+.tcg-icon .ic{width:46%;height:46%}
+.tcg.legendary .tcg-icon{color:var(--bad-ink)}
+.du{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;min-width:min(680px,84vw)}
+.du-vs{display:flex;gap:16px;align-items:center;justify-content:center;font-family:var(--display);font-size:clamp(1.8rem,3.4vw,2.8rem);line-height:1.15;flex-wrap:wrap}
+.du-vs i{font-family:var(--body);font-style:normal;font-size:1rem;font-weight:700;color:var(--mute)}
+.du-turn{font-weight:700;font-size:1.15rem;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.du-time{font-family:var(--num);font-size:1.6rem;font-weight:900;min-width:1.6em;font-variant-numeric:tabular-nums}
+.du-time.big{font-size:3rem}
+.du-time.low{color:var(--bad-ink)}
+.du .qtext{max-width:100%}

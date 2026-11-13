@@ -17,6 +17,7 @@
     const K = DATA.cardKinds[c.kind] || {name:'',icon:'cards'};
     const art = c.tweet
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span></div></div>`
+      : c.art ? `<div class="tcg-icon">${ic(c.art)}</div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
     return `<div class="tcg ${c.tier} ${size}${c.phase&&c.phase===window.DAHOOM_PHASE?' in-phase':''}" data-id="${c.id}">${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
       <div class="tcg-in"><div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem"></span></div>

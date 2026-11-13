@@ -48,7 +48,7 @@
       </div>
       <div class="gt-body">
         <h3>ألف نقطة</h3>
-        <p>أسئلة، تمثيل بدون كلام، تحديات… و46 بطاقة من ترندات ونكت سعودية تقلب الطاولة. أول فريق يوصل ألف يفوز.</p>
+        <p>أسئلة، تمثيل بدون كلام، تحديات… و42 بطاقة تقلب الطاولة، منها بطاقات تحدي فريق ضد فريق. أول فريق يوصل ألف يفوز.</p>
         <div class="row">
           <span class="chip">فرق أو أفراد</span><span class="chip">بطاقات هجوم ورد فعل</span><span class="chip">المضيف هو الحكم</span>
         </div>
@@ -105,7 +105,7 @@
   </div>
   <div class="panel mt">
     <div class="row between">
-      <h3>المعرض (<span id="guide-count">46</span>)</h3>
+      <h3>المعرض (<span id="guide-count">42</span>)</h3>
       <div class="row" id="guide-filters"></div>
     </div>
     <div class="gallery mt" id="guide-cards"></div>
@@ -191,7 +191,7 @@
       <h3>البطاقات</h3>
       <label class="switch"><input type="checkbox" data-s="cardsEnabled"><span></span> نظام البطاقات مفعّل</label>
       <label class="switch"><input type="checkbox" data-s="cardFxEnabled"><span></span> مؤثرات وأصوات وميمز البطاقات</label>
-      <label class="switch"><input type="checkbox" data-s="reactionsEnabled"><span></span> بطاقات رد الفعل (ريفيرس، سين)</label>
+      <label class="switch"><input type="checkbox" data-s="reactionsEnabled"><span></span> بطاقات رد الفعل (العب غيرها، طنّش)</label>
       <label class="switch"><input type="checkbox" data-s="fuseBlack"><span></span> دمج كل سودتين = بطاقة زرقا</label>
       <label class="field">لفات بدون بطاقات في البداية <input type="number" data-s="noCardRounds" min="0"></label>
       <label class="field">أقصى عدد بطاقات في اليد <input type="number" data-s="handMax" min="1" max="6"></label>
@@ -205,14 +205,10 @@
     </div>
     <div class="panel stack">
       <h3>شدة النهاية</h3>
-      <label class="switch"><input type="checkbox" data-s="climaxEnabled"><span></span> الجولة الحاسمة</label>
-      <p class="muted small">أول ما فريق يوصل النقطة المحددة، أسئلته العامة ما فيها "سهل".</p>
-      <label class="field">تفعّل من نقطة <input type="number" data-s="climaxThreshold" min="0" step="50"></label>
-      <label class="switch"><input type="checkbox" data-s="finalStretchEnabled"><span></span> الشوط الأخير</label>
-      <p class="muted small">أول ما أي فريق يوصل النقطة المحددة، وقت السرقة للكل ينقص للنص.</p>
-      <label class="field">تفعّل من نقطة <input type="number" data-s="finalStretchThreshold" min="0" step="50"></label>
+      <label class="switch"><input type="checkbox" data-s="endgameEnabled"><span></span> الحسم</label>
+      <p class="muted small">أول ما فريق يوصل 75% من الهدف: هو ما له أسئلة سهلة، ووقت السرقة للكل ينقص للنص.</p>
       <label class="switch"><input type="checkbox" data-s="comebackEnabled"><span></span> دفعة الرجعة</label>
-      <p class="muted small">الفريق الأخير بفارق 300+ يسحب بطاقتين ويختار وحدة.</p>
+      <p class="muted small">الفريق المتأخر بفارق 400+ يسحب بطاقتين ويختار وحدة.</p>
     </div>
     <div class="panel stack span-all">
       <h3>تصنيفات الأسئلة العامة</h3>
