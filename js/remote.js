@@ -20,11 +20,15 @@
       : c.art ? `<div class="tcg-icon">${ic(c.art)}</div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
     return `<div class="tcg ${c.tier} ${size}${c.phase&&c.phase===window.DAHOOM_PHASE?' in-phase':''}" data-id="${c.id}">${flag?`<span class="tcg-flag">${esc(flag)}</span>`:''}
-      <div class="tcg-in"><div class="tcg-name"><span>${esc(c.name)}</span><span class="tcg-gem"></span></div>
-      <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
-      <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
-      <div class="tcg-desc">${esc(c.desc)}</div><div class="tcg-meme" data-no="${c.id}">${esc(c.src||'')}${c.phase?`<span class="tcg-phase ph-${c.phase}">تلمع في ${{early:'البداية',mid:'الوسط',late:'النهاية'}[c.phase]}</span>`:''}</div></div>
-      <div class="tcg-foil"></div></div>`;
+      <div class="tcg-in">
+        <div class="tcg-art">${art}${c.target?`<span class="tcg-tgt">على ${TARGET_AR[c.target]}</span>`:''}</div>
+        <div class="tcg-top"><span class="tcg-kind">${ic(K.icon)} ${K.name}</span><span class="tcg-tier">${TIER_AR[c.tier]}</span></div>
+        <div class="tcg-name">${esc(c.name)}</div>
+        <div class="tcg-desc">${esc(c.desc)}</div>
+        <div class="tcg-meme">${c.phase?`<span class="tcg-phase ph-${c.phase}">تلمع في ${{early:'البداية',mid:'الوسط',late:'النهاية'}[c.phase]}</span>`:''}</div>
+      </div>
+      <div class="tcg-foil"></div>
+    </div>`;
   }
 
   // ---------- الوضع النهاري / الليلي (نفس مفتاح الشاشة: dahoom_theme) ----------
