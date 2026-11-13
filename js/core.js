@@ -191,12 +191,13 @@ window.Dahoom = (function(){
     players: store.get('players', []),
     teams: store.get('teams', []),
     mode: store.get('mode','teams'),
+    phoneTeams: store.get('phoneTeams', false),   // اللاعبين ينشئون فرق من جوالاتهم؟ (المضيف يفعّلها)
     game: 'alf',
-    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); }
+    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); store.set('phoneTeams',!!this.phoneTeams); }
   };
   let pick = { color: COLORS[0], avatar: AVATARS[0] };
   let selectedPlayer = null;
-  const TEAM_NAMES = ['السيقما','الأورا','الكوبيوم','الديلولو','النو كاب','الريز'];
+  const TEAM_NAMES = ['الذيابة','الصقور','الهوامير','الكواسر','النشامى','الفرسان'];
 
   function renderPickers(){
     const cw=$('#p-colors'); cw.innerHTML='';
@@ -247,10 +248,19 @@ window.Dahoom = (function(){
   }
   function teamOf(pid){ return session.teams.find(t=>t.members.includes(pid)); }
   function newTeam(){ const used=session.teams.map(t=>t.color); const usedN=session.teams.map(t=>t.name);
-    return {id:'t'+Date.now()+Math.floor(Math.random()*999), name:'فريق '+(TEAM_NAMES.find(n=>!usedN.includes('فريق '+n))||(session.teams.length+1)), color:COLORS.find(c=>!used.includes(c))||rnd(COLORS), members:[]}; }
+    return {id:'t'+Date.now()+Math.floor(Math.random()*999), name:TEAM_NAMES.find(n=>!usedN.includes(n))||('فريق '+(session.teams.length+1)), color:COLORS.find(c=>!used.includes(c))||rnd(COLORS), members:[]}; }
   function addTeam(){
     if(session.teams.length>=6){ toast('الحد الأقصى 6 فرق'); return; }
     session.teams.push(newTeam()); play('pop'); session.save(); renderTeams();
+  }
+  // فريق ينشئه لاعب من جواله (لو المضيف مفعّل الخيار)
+  function createTeam(name){
+    if(session.mode!=='teams' || !session.phoneTeams) return null;
+    if(session.teams.length >= (session.game==='khaliya' ? 2 : 6)) return null;
+    const t=newTeam(); name=String(name||'').trim().slice(0,18);
+    if(name && !session.teams.some(x=>x.name===name)) t.name=name;
+    session.teams.push(t); session.save(); renderTeams(); play('pop'); toast(`فريق جديد من الجوال: ${t.name}`);
+    return t;
   }
   function removeTeam(id){ session.teams=session.teams.filter(t=>t.id!==id); session.save(); renderTeams(); }
   function assign(pid, tid){
@@ -288,6 +298,7 @@ window.Dahoom = (function(){
     const solo = session.mode==='solo';
     $('#teams-area').style.display = solo ? 'none' : 'block';
     $$('input[name=mode]').forEach(r=>r.checked = r.value===session.mode);
+    { const pt=$('#opt-phone-teams'); if(pt){ pt.checked=!!session.phoneTeams; pt.closest('label').style.display = solo ? 'none' : ''; } }
     if(solo) return;
     const pool=$('#pool'); const fresh=pool.cloneNode(false); pool.replaceWith(fresh);
     session.players.filter(p=>!teamOf(p.id)).forEach(p=>fresh.appendChild(miniChip(p)));
@@ -376,6 +387,7 @@ window.Dahoom = (function(){
     $('#p-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });
     $('#btn-add-team').onclick=addTeam;
     $('#btn-auto-teams').onclick=autoTeams;
+    $('#opt-phone-teams').onchange=e=>{ session.phoneTeams=e.target.checked; session.save(); if(window.DahoomNet) window.DahoomNet.refresh(); };
     $$('input[name=mode]').forEach(r=>r.onchange=()=>{ session.mode=r.value; session.save(); renderTeams(); });
     $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : session.game==='rasm' ? 'rasm-settings' : 'settings'); };
     $('#btn-reset-used').onclick=async ()=>{
@@ -385,7 +397,7 @@ window.Dahoom = (function(){
   }
   document.addEventListener('DOMContentLoaded', init);
 
-  return { joinPlayer, joinable, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
+  return { joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
     session, competitors, avatarSrc, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();

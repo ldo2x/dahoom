@@ -8,7 +8,7 @@
   const D = window.Dahoom, DATA = window.DAHOOM_DATA;
   const { $, $$, rnd, shuffle, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash } = D;
 
-  const DEFAULTS = { drawTime:80, rounds:2, hints:true, noRepeat:true };
+  const DEFAULTS = { drawTime:80, rounds:2, hints:true, noRepeat:true, mirror:true };
   let S = Object.assign({}, DEFAULTS, store.get('rasm_settings', {}));
   const PTS = { 1:100, 2:150, 3:200 };
   const DIFF = { 1:'سهلة', 2:'متوسطة', 3:'صعبة' };
@@ -70,8 +70,8 @@
     const comps=D.competitors();
     if(comps.length<2){ toast('نحتاج فريقين أو لاعبين اثنين على الأقل'); go('lobby'); return; }
     G = { teams: comps.map(c=>({...c, score:0, drawnOk:0, guessedOk:0})), order:[], turn:0, round:1, phase:'idle',
-      used: used.load(), drawer:null, choices:null, word:null, strokes:[], feed:[], left:0, total:1, lastWord:null,
-      stats:{ guesses:{}, drawings:{}, fast:null, wrong:0 }, log:{ t0:Date.now(), items:[] }, lastGuessAt:{} };
+      used: used.load(), drawer:null, choices:null, word:null, ratings:{}, feed:[], left:0, total:1, lastWord:null,
+      stats:{ guesses:{}, drawings:{}, fast:null, wrong:0, rated:{}, bestArt:null }, log:{ t0:Date.now(), items:[] }, lastGuessAt:{} };
     G.order = shuffle(G.teams.map((_,i)=>i));
     window.DAHOOM_ITEM = null;
     const n=NET(); if(n) n.use({ teams:()=>G.teams, state:phoneState, claim:onClaim, msg:onMsg, report:onReport, roster:syncRoster, onPhones:()=>{ if(G && G.phase==='claim') turnIntro(); } });
@@ -170,7 +170,7 @@
 
   // ---------- المؤقت + التلميحات ----------
   function startTimer(sec){
-    stopTimer(); G.total=sec; G.left=sec; play('clockloop',{volume:.25,loop:true});
+    stopTimer(); G.total=sec; G.left=sec;
     const tick=()=>{
       const el=$('#rs-timer'); if(!el){ timerH=setTimeout(tick,1000); return; }
       el.querySelector('.num').textContent=G.left;
@@ -180,12 +180,13 @@
       if(S.hints && G.word){ const n=[...G.word.w].filter(c=>c!==' ').length;
         if(G.left===Math.floor(G.total/2) && n>=3) revealLetter();
         if(G.left===Math.floor(G.total/4) && n>=5) revealLetter(); }
+      if(G.left<=10 && G.left>0) play('tick',{volume:.35});
       if(G.left<=0){ stopTimer(); reveal(null); return; }
       G.left--; timerH=setTimeout(tick,1000);
     };
     tick();
   }
-  function stopTimer(){ clearTimeout(timerH); timerH=null; stop('clockloop'); }
+  function stopTimer(){ clearTimeout(timerH); timerH=null; }
   function revealLetter(){
     const idx=[...G.word.w].map((c,i)=>c!==' '&&!G.revealed.has(i)?i:-1).filter(i=>i>=0);
     if(!idx.length) return; G.revealed.add(rnd(idx));
@@ -214,7 +215,7 @@
     tally(G.stats.guesses, guesserName); tally(G.stats.drawings, G.drawer.name);
     const secs=G.total-G.left; if(guesserName && (!G.stats.fast || secs<G.stats.fast.s)) G.stats.fast={ name:guesserName, s:secs, w:G.word.w };
     { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='ok'; l.left=+frac.toFixed(2); l.g=guesserName||null; l.gt=g.id; } }
-    play('correct'); flash('good'); reaction('correct',2200); confetti(70,1500);
+    play('correct'); flash('good'); confetti(70,1500);
     finishTurn(`<span style="color:var(--mint)">${esc(guesserName||g.name)} خمّنها!</span>`,
       `+${gp} لـ ${esc(g.name)}${g===d?` و+${dp} للرسم`:` · +${dp} لـ ${esc(d.name)} على الرسمة`}`);
   }
@@ -226,16 +227,19 @@
     finishTurn('ما أحد عرفها', 'ولا نقطة هالمرة');
   }
   function finishTurn(title, sub){
-    G.phase='reveal'; setTvDraw(false); G.lastWord=G.word;
+    G.phase='reveal'; setTvDraw(false); G.lastWord=G.word; G.ratings={};
     window.DAHOOM_ITEM = { kind:'w', id:G.word.id, d:G.word.d, tag:G.word.tag, text:G.word.w, answer:'' };
     renderScore();
     const last = G.turn===G.order.length-1 && G.round>=S.rounds;
     panel(`<div class="eyebrow">الكلمة كانت</div><div class="rs-word">${esc(G.word.w)}</div>
       <div class="kh-status">${title}</div><p class="muted">${sub}</p>
+      ${B && B.count ? '<div id="rs-rating" class="rs-rating"></div>' : ''}
       <div class="row center mt-s"><button class="btn btn-hype big" id="rs-next">${last?`${ic('podium')} النتائج`:`الدور الجاي ${ic('next')}`}</button></div>`);
     $('#rs-next').onclick=()=>nextTurn();
+    drawRating();
   }
   function nextTurn(){
+    closeRating();
     G.turn++;
     if(G.turn>=G.order.length){ G.turn=0; G.round++; }
     if(G.round>S.rounds) return endMatch();
@@ -254,8 +258,11 @@
     const isDrawer = G.drawer && !G.drawer.tv && G.drawer.cid===c.cid;
     if(d.t==='rpick' && isDrawer) return choose(+d.i);
     if(d.t==='guess') return onGuess(c.teamId, c.cid, c.pid, d.text);
+    if(d.t==='rate') return onRate(c.cid, d.v);
+    if(d.t==='rsync'){ if(S.mirror && B){ try{ c.send({ t:'rsfull', ops:B.ops }); }catch(e){} } return; }
     if(!isDrawer || G.phase!=='draw') return;
     if(d.t==='stroke') addStroke(d);
+    else if(d.t==='fill') addFill(d);
     else if(d.t==='undo') undo();
     else if(d.t==='clear') clearBoard();
   }
@@ -283,56 +290,50 @@
         choices: mine && G.phase==='pick' && G.choices ? G.choices.map(w=>({w:w.w, d:w.d, p:PTS[w.d]})) : null,
         word: mine && G.phase==='draw' ? G.word.w : null,
         hint: G.phase==='draw' ? hintText() : null, letters: G.word ? [...G.word.w].filter(c=>c!==' ').length : 0,
+        mirror: !!S.mirror, canRate: G.phase==='reveal' && !mine && !!(B && B.count), myRate: (G.ratings||{})[cid]||0,
         canGuess: G.phase==='draw' && !mine, reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null },
       phase: G.phase==='claim' ? `دور ${cur().name} يرسم` : G.phase==='pick' ? 'الرسام يختار كلمة' : G.phase==='draw' ? (mine ? 'ارسم! الكل يشوف رسمتك على الشاشة' : 'خمّنوا الرسمة!') : '' };
   }
 
   // ---------- اللوحة ----------
-  let cv=null, ctx=null, tvDrawOn=false, tvTool={ c:COLORS[0], w:SIZES[1] };
-  const CW=1200, CH=900;
+  // اللوحة والأدوات من draw.js (نفسها بالجوال). الشاشة ترسم كل شي، وتعيد إرساله لجوالات المتفرجين لو الخيار مفعّل.
+  const DR = window.DahoomDraw;
+  let cv=null, B=null, tvDrawOn=false; const tvTool=DR.newTool();
+  const relay = m => { if(!S.mirror || !G) return; const n=NET(); if(n) G.teams.forEach(t=>n.send(t.id, { t:'rs', m })); };
   function setupCanvas(){
-    cv=$('#rs-canvas'); ctx=cv.getContext('2d');
-    if(cv.dataset.ready) return; cv.dataset.ready='1';
-    // رسم المضيف بالماوس/اللمس (لو ما فيه جوال)
-    let curStroke=null;
-    const pt=e=>{ const r=cv.getBoundingClientRect(); return [ +((e.clientX-r.left)/r.width).toFixed(4), +((e.clientY-r.top)/r.height).toFixed(4) ]; };
-    cv.addEventListener('pointerdown',e=>{ if(!tvDrawOn) return; cv.setPointerCapture(e.pointerId); curStroke='tv'+Date.now(); addStroke({ id:curStroke, c:tvTool.c, w:tvTool.w, p:pt(e) }); });
-    cv.addEventListener('pointermove',e=>{ if(!tvDrawOn || !curStroke) return; addStroke({ id:curStroke, p:pt(e) }); });
-    const end=()=>{ curStroke=null; }; cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
-    // أدوات الشاشة
-    $('#rs-tools').innerHTML = COLORS.map(c=>`<button class="rs-sw" style="--c:${c}" data-c="${c}" aria-label="لون"></button>`).join('')
-      + `<button class="rs-sw eraser" data-c="#FFFFFF" aria-label="ممحاة">${ic('broom')}</button>`
-      + SIZES.map((w,i)=>`<button class="rs-size" data-w="${w}" aria-label="حجم ${i+1}"><i style="--s:${6+i*7}px"></i></button>`).join('')
-      + `<button class="btn ghost small" id="rs-undo">${ic('back')} تراجع</button><button class="btn ghost small" id="rs-clear">${ic('trash')} مسح</button>`;
-    const mark=()=>{ $$('#rs-tools [data-c]').forEach(b=>b.classList.toggle('on', b.dataset.c===tvTool.c)); $$('#rs-tools [data-w]').forEach(b=>b.classList.toggle('on', +b.dataset.w===tvTool.w)); };
-    $$('#rs-tools [data-c]').forEach(b=>b.onclick=()=>{ tvTool.c=b.dataset.c; mark(); });
-    $$('#rs-tools [data-w]').forEach(b=>b.onclick=()=>{ tvTool.w=+b.dataset.w; mark(); });
-    $('#rs-undo').onclick=undo; $('#rs-clear').onclick=clearBoard; mark();
+    cv=$('#rs-canvas');
+    if(!cv.dataset.ready){ cv.dataset.ready='1'; B=DR.board(cv);
+      DR.attach(cv, B, tvTool, relay, ()=>tvDrawOn);
+      DR.toolbar($('#rs-tools'), tvTool, { onUndo:undo, onClear:clearBoard }); }
   }
   function setTvDraw(on){ tvDrawOn=on; const tb=$('#rs-tools'); if(tb) tb.classList.toggle('hidden', !on); if(cv) cv.classList.toggle('drawable', on); }
-  function clearBoard(){ if(G) G.strokes=[]; redraw(); }
-  function undo(){ if(!G || !G.strokes.length) return; G.strokes.pop(); redraw(); }
-  function addStroke(d){
-    if(!G || !Array.isArray(d.p) || d.p.length<2) return;
-    let st=G.strokes.find(s=>s.id===d.id);
-    const pts=d.p.slice(0,400).map(v=>Math.max(0,Math.min(1,+v||0)));
-    if(!st){ if(G.strokes.length>800) return; st={ id:String(d.id).slice(0,30), c:/^#[0-9A-Fa-f]{6}$/.test(d.c)?d.c:'#111111', w:Math.max(0.003,Math.min(0.06,+d.w||0.015)), p:[] }; G.strokes.push(st); }
-    const from=st.p.length; st.p.push(...pts);
-    drawStroke(st, Math.max(0, from-2));
+  function clearBoard(){ if(B){ B.clear(); relay({t:'clear'}); } }
+  function undo(){ if(B && B.undo()) relay({t:'undo'}); }
+  function addStroke(d){ if(B && B.stroke(d)) relay(d); }
+  function addFill(d){ if(B){ B.fill(d); relay({ t:'fill', x:d.x, y:d.y, c:d.c, a:d.a }); } }
+
+  // ---------- تقييم الرسمة (1–5) ----------
+  const RATE = ['خرابيش','ماشي حالها','حلوة','فنان','تحفة'];
+  function rateAvg(){ const v=Object.values(G.ratings||{}); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
+  function onRate(cid, v){
+    v=Math.round(+v); if(!G || G.phase!=='reveal' || !(v>=1 && v<=5)) return;
+    if(G.drawer && G.drawer.cid && G.drawer.cid===cid) return;
+    G.ratings[cid]=v; drawRating(); pushAll();
   }
-  function drawStroke(st, from){
-    if(!ctx) return;
-    ctx.strokeStyle=st.c; ctx.fillStyle=st.c; ctx.lineWidth=st.w*CW; ctx.lineCap='round'; ctx.lineJoin='round';
-    const p=st.p;
-    if(p.length===2){ ctx.beginPath(); ctx.arc(p[0]*CW, p[1]*CH, st.w*CW/2, 0, Math.PI*2); ctx.fill(); return; }
-    ctx.beginPath(); ctx.moveTo(p[from]*CW, p[from+1]*CH);
-    for(let i=from+2;i<p.length;i+=2) ctx.lineTo(p[i]*CW, p[i+1]*CH);
-    ctx.stroke();
+  function drawRating(){
+    const el=$('#rs-rating'); if(!el) return;
+    const a=rateAvg(), n=Object.keys(G.ratings).length;
+    el.innerHTML=`<div class="lbl">تقييم الرسمة${n?` — ${n} ${n===1?'صوت':'أصوات'}`:''}</div>
+      <div class="rs-rate">${RATE.map((r,i)=>`<button class="rs-rate-b ${a!=null&&Math.round(a)===i+1?'on':''}" data-rv="${i+1}"><b>${i+1}</b><span>${r}</span></button>`).join('')}</div>
+      <p class="muted small">${a!=null?`المتوسط <bdi>${a.toFixed(1)}</bdi> من 5 — ${RATE[Math.round(a)-1]}`:'قيّموا من جوالاتكم، أو المضيف يضغط هنا'}</p>`;
+    $$('#rs-rating [data-rv]').forEach(b=>b.onclick=()=>onRate('tv', b.dataset.rv));
   }
-  function redraw(){
-    if(!ctx) return;
-    ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,CW,CH);
-    (G?G.strokes:[]).forEach(s=>drawStroke(s,0));
+  function closeRating(){
+    const a=rateAvg(); if(a==null || !G.lastWord) return;
+    const l=[...G.log.items].reverse().find(x=>x.id===G.lastWord.id); if(l) l.rate=+a.toFixed(2);
+    const who=(G.drawer && G.drawer.name) || cur().name;
+    (G.stats.rated[who]=G.stats.rated[who]||[]).push(a);
+    if(!G.stats.bestArt || a>G.stats.bestArt.a) G.stats.bestArt={ name:who, a, w:G.lastWord.w };
   }
 
   // ---------- النهاية ----------
@@ -353,6 +354,7 @@
     const aw=[]; const eye=top(G.stats.guesses), art=top(G.stats.drawings), f=G.stats.fast;
     if(eye) aw.push({ title:'عين الصقر', icon:'eye', desc:'أكثر تخمينات صح', who:eye[0], team:teamOfName(eye[0]), value:`${eye[1]} تخمينات` });
     if(art) aw.push({ title:'بيكاسو الجلسة', icon:'pencil', desc:'أكثر رسمات انعرفت', who:art[0], team:teamOfName(art[0]), value:`${art[1]} رسمات` });
+    { const ba=G.stats.bestArt; if(ba) aw.push({ title:'أحلى رسمة', icon:'star', desc:`«${ba.w}» بتقييم اللاعبين`, who:ba.name, team:teamOfName(ba.name)||G.teams.find(t=>t.name===ba.name)||null, value:`${ba.a.toFixed(1)} من 5` }); }
     if(f) aw.push({ title:'أسرع تخمين', icon:'stopwatch', desc:`«${f.w}»`, who:f.name, team:teamOfName(f.name), value:`${f.s} ث` });
     G.awards=aw;
     const el=$('#match-stats');
@@ -360,9 +362,9 @@
       ${aw.length?`<div class="aw-grid">${aw.map(a=>`<div class="aw" style="--c:${a.team?a.team.color:'var(--brand)'}"><span class="aw-ic">${ic(a.icon)}</span><div class="aw-t">${esc(a.title)}</div><div class="aw-team">${esc(a.who)}${a.team&&a.team.name!==a.who?` · ${esc(a.team.name)}`:''}</div><div class="aw-v">${esc(a.value)}</div><div class="aw-d">${esc(a.desc)}</div></div>`).join('')}</div>`:''}
       <section class="ms-card"><h3>الأرقام</h3><div class="viz-table-wrap"><table class="viz-table"><thead><tr><th>${D.session.mode==='solo'?'اللاعب':'الفريق'}</th><th>النقاط</th><th>تخمينات صح</th><th>رسمات انعرفت</th></tr></thead><tbody>
         ${sorted.map(t=>`<tr><td><span class="vt-team"><i style="--c:${t.color}"></i>${esc(t.name)}</span></td><td class="num"><bdi>${t.score}</bdi></td><td class="num"><bdi>${t.guessedOk}</bdi></td><td class="num"><bdi>${t.drawnOk}</bdi></td></tr>`).join('')}</tbody></table></div></section>
-      <section class="ms-card"><h3>كل الكلمات</h3><div class="rs-words">${G.log.items.filter(x=>x.r!=='skip'&&x.r!=='?').map(x=>`<span class="pill ${x.r==='ok'?'':'dim'}">${esc(x.x)}${x.g?` — ${esc(x.g)}`:''}</span>`).join('')}</div></section></div>`;
+      <section class="ms-card"><h3>كل الكلمات</h3><div class="rs-words">${G.log.items.filter(x=>x.r!=='skip'&&x.r!=='?').map(x=>`<span class="pill ${x.r==='ok'?'':'dim'}">${esc(x.x)}${x.g?` — ${esc(x.g)}`:''}${x.rate?` · <bdi>${x.rate.toFixed(1)}</bdi>/5`:''}</span>`).join('')}</div></section></div>`;
     try{ const L=LOG(); if(L && !G.logged){ G.logged=true;
-      L.match({ game:'rasm', rounds:S.rounds, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode, opts:{ time:S.drawTime, hints:!!S.hints },
+      L.match({ game:'rasm', rounds:S.rounds, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode, opts:{ time:S.drawTime, hints:!!S.hints, mirror:!!S.mirror },
         teams: sorted.map((t,i)=>({ id:t.id, name:t.name, score:t.score, rank:i+1, win:t===winner, players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })), st:{ guessed:t.guessedOk, drawn:t.drawnOk } })),
         items:G.log.items }); } }catch(e){ console.error(e); }
     pushAll();
@@ -375,6 +377,8 @@
       <p>الكل يخمّن — حتى الفرق الثانية — يكتبون من جوالاتهم، أو يقولونها بصوت والمضيف يضغط اسم الفريق.</p>
       <p>أول تخمين صح: فريقه ياخذ من نص لكامل قيمة الكلمة حسب السرعة، وفريق الرسام ياخذ نص قيمتها.</p>
       ${S.hints?'<p>تلميح: يطلع حرف من الكلمة عند نص الوقت، وحرف ثاني بالربع الأخير.</p>':''}
+      <p>أدوات الرسم: قلم، قطن، نيون، فلوماستر شفاف، ممحاة، دلو تعبئة، أشكال جاهزة، شفافية، وأي لون تبيه.</p>
+      <p>بعد كل رسمة الكل يقيّمها من 1 إلى 5، وأحلى رسمة بالمباراة تاخذ جائزة.</p>
       <p>بدون جوال؟ الرسام يرسم على الشاشة نفسها بالماوس أو اللمس.</p></div><div class="row mt-s"><button class="btn" id="c">تمام</button></div>`,{onMount(m){ m.querySelector('#c').onclick=()=>m.remove(); }});
   }
 
@@ -386,5 +390,5 @@
     $('#rs-help').onclick=helpModal;
     $('#rs-quit').onclick=async ()=>{ if(await confirmBox('<h3>تنهي المباراة؟</h3>','أنهِ','كمّل','btn-bad')){ stopTimer(); stopAll(); if(G) G.phase='over'; go('home'); } };
   });
-  window.DAHOOM_DEBUG_RS = { state:()=>G, settings:()=>S, check, norm, choose, win, reveal, nextTurn, onGuess, addStroke };
+  window.DAHOOM_DEBUG_RS = { state:()=>G, settings:()=>S, check, norm, choose, win, reveal, nextTurn, onGuess, addStroke, onRate, board:()=>B };
 })();

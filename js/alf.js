@@ -72,7 +72,7 @@
   function onBuzz(id, pid){
     { const tm=G && G.teams.find(x=>x.id===id); if(tm && tm.fx.benched && pid && tm.fx.benched.pid===pid) return; }
     const b=G && G.buzz; if(!b || !b.open || !b.eligible.includes(id) || b.tried.includes(id) || b.order.some(o=>o.id===id)) return;
-    b.order.push({id, t:performance.now()});
+    b.order.push({id, t:performance.now()}); (b.pids=b.pids||{})[id]=pid||null;
     { const o=ST(G.teams.find(x=>x.id===id)); if(o) o.buzz.push(performance.now()-b.t0); }
     if(!b.first){ b.first=id; const t=G.teams.find(x=>x.id===id); G.log.buzz.push({ team:id, by:nameOf(t,pid), ms:Math.round(performance.now()-b.t0) }); play('game:g_mgs',{volume:.9}); flash('steal'); b.onFirst(t); }
     else play('tick',{volume:.6});
@@ -179,7 +179,7 @@
     };
     G.order = shuffle(G.teams.map((_,i)=>i));
     G.log = { t0:Date.now(), items:[], cards:[], drawn:[], buzz:[] }; window.DAHOOM_ITEM=null;
-    G.stats = { T:{}, series:[{label:'البداية', round:0, scores:Object.fromEntries(G.teams.map(t=>[t.id,0]))}], moments:[] };
+    G.stats = { P:{}, T:{}, series:[{label:'البداية', round:0, scores:Object.fromEntries(G.teams.map(t=>[t.id,0]))}], moments:[] };
     G.teams.forEach(t=>G.stats.T[t.id]={ pts:{q:0,c:0,t:0,steal:0}, tries:{q:0,c:0,t:0}, ok:{q:0,c:0,t:0}, steals:0, stolenFrom:0, cards:0, attacks:0, hits:0, reactions:0, bestTurn:0, maxCombo:0, fails:0, buzz:[] });
     $('#target-label').textContent='الهدف '+S.target;
     const fx=window.DahoomFX; if(fx) fx.setEnabled(S.cardFxEnabled!==false);
@@ -201,6 +201,13 @@
     L.push({ k, id:item.id, d, tag:item.tag, r:'?', ph:gamePhase(), x:String(G.item.text).slice(0,50) });
   }
   function logResult(r, extra){ const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r=r; l.left=+Math.max(0,fracLeft()).toFixed(2); if(extra) Object.assign(l, extra); } }
+  // مين اللي جاوب؟ المضيف يضغط اسم اللاعب قبل صح/غلط (اختياري) — والفريق اللي فيه لاعب واحد ينحسب له على طول
+  const whoRow = t => t.players.length>=2 ? `<div class="who-row" id="who-row"><span class="lbl">مين جاوب؟</span>${t.players.map(p=>`<button class="pmini who" data-who="${p.id}" style="--c:${p.color}"><img src="${D.avatarSrc(p.avatar)}" alt=""> ${esc(p.name)}</button>`).join('')}</div>` : '';
+  function bindWho(){ G.answerer=null; $$('#who-row [data-who]').forEach(b=>b.onclick=()=>{ G.answerer = G.answerer===b.dataset.who ? null : b.dataset.who; play('tick',{volume:.4});
+    $$('#who-row [data-who]').forEach(x=>x.classList.toggle('sel', x.dataset.who===G.answerer)); }); }
+  const answererOf = t => G.answerer || (t.players.length===1 ? t.players[0].id : null);
+  function credit(pid, k){ if(!pid || !G.stats) return; const p=G.teams.flatMap(t=>t.players).find(x=>x.id===pid); if(!p) return;
+    const o = G.stats.P[pid] = G.stats.P[pid] || { name:p.name, ok:0, wrong:0, steals:0, acted:0, actedOk:0 }; o[k]++; }
   const nameOf = (t, pid) => ((t && t.players.find(p=>p.id===pid)) || {}).name || null;
   const stealPts = p => Math.max(50, Math.ceil((p/2)/50)*50);
   // الحسم: قاعدة وحدة من 75% من الهدف — اللي وصلها ما له أسئلة سهلة، ووقت السرقة للكل بالنص
@@ -470,12 +477,14 @@
       ${timerHTML(time)}${timeupHTML}
       <div class="row center"><button class="btn small" id="btn-reveal">${ic('eye')} إظهار الإجابة</button>${t.fx.spoiler?`<button class="btn small btn-sky" id="btn-hint">${ic('eye')} سبويلر</button>`:''}${rerollBtn(t)}<button class="btn small ghost" id="btn-restart">${ic('stopwatch')} أعد الوقت</button></div>
       <div class="answer hidden" id="answer">${esc(item.a)}</div>
+      ${whoRow(t)}
       <div class="row center"><button class="btn btn-mint big" id="btn-ok">${ic('check')} صح</button><button class="btn btn-bad big" id="btn-no">${ic('cancel')} غلط / ما جاوب</button></div>
       <p class="muted small">${S.stealEnabled?(t.fx.lock?'قفل الشات: ما فيه سرقة على هالسؤال.':'إذا خلص الوقت تفتح السرقة. "غلط" يفتحها على طول.'):'المؤقت للتنبيه — انت تقرر.'}</p>`);
     reaction('think',2300);
     let ended=false;
     const finish=(ok, timedOut)=>{
       if(ended) return; ended=true; clearTimer(); delete t.fx.spoiler;
+      if(ok || !timedOut) credit(answererOf(t), ok?'ok':'wrong');
       logResult(ok?'ok': (t.fx.lock||!S.stealEnabled) ? 'fail' : '?');
       if(ok){ const {net,note}=resolveSuccess(t,p,{hard,section:'q'}); play('correct'); memeSound('correct',{volume:.5}); flash('good'); reaction('correct'); confetti(60,1500);
         return afterTurn(`<span style="color:var(--mint)">صح!</span> +${net} لـ ${esc(t.name)}${note}`); }
@@ -486,6 +495,7 @@
       else afterTurn(`ولا نقطة${nt}. الجواب: ${esc(item.a)}`);
     };
     startTimer(time, ()=>{ if(S.stealEnabled) finish(false,true); });
+    bindWho();
     $('#btn-reveal').onclick=()=>{ $('#answer').classList.toggle('hidden'); play('pop'); };
     $('#btn-restart').onclick=()=>restartTimer(time, ()=>{ if(S.stealEnabled) finish(false,true); });
     $('#btn-ok').onclick=()=>finish(true);
@@ -509,6 +519,7 @@
       logResult(owner?'late': sid?'steal':'fail');
       if(owner){ const {net,note:n2}=resolveSuccess(t,p,{hard:p>=pts(3)}); play('correct'); flash('good'); reaction('correct'); confetti(60,1500); return afterTurn(`${esc(t.name)} لحقها! +${net}${n2}`); }
       if(sid){ const s=G.teams.find(x=>x.id===sid); let gain=stealPts(p); const notes=[];
+        credit((G.buzz && G.buzz.pids && G.buzz.pids[sid]) || (s.players.length===1 ? s.players[0].id : null), 'steals');
         if(s.fx.fullsteal!=null){ gain=p; delete s.fx.fullsteal; notes.push('ببلاش: كاملة'); }
         const {net,note:n2}=payout(s,gain,notes);
         { const o=ST(s); if(o){ o.pts.steal+=net; o.steals++; } const v=ST(t); if(v) v.stolenFrom++; moment(`${esc(s.name)} سرق سؤال ${esc(t.name)} (+${net})`, s); }
@@ -552,6 +563,7 @@
         <div class="answer hidden" id="answer">${esc(item.t)}</div><div id="buzzbox"></div>`);
       let ended=false;
       const end=(gid)=>{ if(ended) return; ended=true; clearTimer();
+        if(G.charade && G.charade.pid){ credit(G.charade.pid,'acted'); if(gid) credit(G.charade.pid,'actedOk'); }
         logResult(!gid?'fail': gid===t.id?'own':'other', { by: G.charade && G.charade.pid ? nameOf(t, G.charade.pid) : null });
         if(gid){ const g=G.teams.find(x=>x.id===gid);
           let a=half; const an=[];
@@ -592,13 +604,14 @@
         <div class="qtext">${esc(text)}</div>${timerHTML(time)}${timeupHTML}
         <div class="row center">${a?`<button class="btn small" id="btn-reveal">${ic('eye')} الإجابة</button>`:''}<button class="btn small ghost" id="btn-restart">${ic('stopwatch')} أعد الوقت</button></div>
         ${a?`<div class="answer hidden" id="answer">${esc(a)}</div>`:''}
+        ${whoRow(t).replace('مين جاوب؟','مين نفّذ؟')}
         <div class="row center"><button class="btn btn-mint big" id="btn-ok">${ic('check')} نجح</button><button class="btn btn-bad big" id="btn-no">${ic('cancel')} فشل</button></div>`);
       let ended=false;
-      const end=(ok)=>{ if(ended) return; ended=true; clearTimer(); logResult(ok?'ok':'fail');
+      const end=(ok)=>{ if(ended) return; ended=true; clearTimer(); logResult(ok?'ok':'fail'); credit(answererOf(t), ok?'ok':'wrong');
         if(ok){ const {net,note}=resolveSuccess(t,p,{hard:d===3,section:'t'}); play('cheer',{volume:.6}); flash('good'); reaction('correct'); confetti(80,1800); afterTurn(`<span style="color:var(--mint)">نجح!</span> +${net}${note}`); }
         else { const notes=resolveFail(t,p,'t'); play('fail'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); afterTurn(`ما نجح${notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:''}`); }
       };
-      startTimer(time);
+      startTimer(time); bindWho();
       $('#btn-ok').onclick=()=>end(true); $('#btn-no').onclick=()=>end(false);
       $('#btn-restart').onclick=()=>restartTimer(time);
       if(a) $('#btn-reveal').onclick=()=>$('#answer').classList.toggle('hidden');
@@ -1032,7 +1045,26 @@
     G.ended=true;
     try{ sendMatchLog(winner, sorted); }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderAlf(el, G, S.target); }catch(e){ console.error(e); el.innerHTML=''; } }
+    try{ playerStats(el); }catch(e){ console.error(e); }
     pushAll();
+  }
+  // إنجازات اللاعبين: مين جاوب أكثر، مين غلط أكثر، مين سرق، مين مثّل
+  function playerStats(el){
+    const P=Object.entries(G.stats.P||{}).map(([id,o])=>({ id, ...o, team:G.teams.find(t=>t.players.some(p=>p.id===id)) })).filter(p=>p.team);
+    if(!el || !P.length) return;
+    const top=(k,min=1)=>{ const l=[...P].sort((a,b)=>b[k]-a[k]); return l[0] && l[0][k]>=min && (l.length===1 || l[0][k]>l[1][k]) ? l[0] : null; };
+    const aw=[]; const add=(p,title,icon,value,desc)=>{ if(p) aw.push({p,title,icon,value,desc}); };
+    add(top('ok'),'عقل الجلسة','brain',o=>`${o.ok} إجابات صح`,'أكثر واحد جاوب صح');
+    add(top('wrong',2),'مسوي فاهم','cancel',o=>`${o.wrong} إجابات غلط`,'أكثر واحد جاوب غلط');
+    add(top('steals'),'الحرامي','ninja',o=>`${o.steals} سرقات`,'أكثر واحد سرق من جواله');
+    add(top('acted'),'نجم المسرح','masks',o=>`مثّل ${o.acted} مرات`,'أكثر واحد مثّل');
+    const sec=document.createElement('div'); sec.className='ms';
+    sec.innerHTML=`<div class="ms-head"><h2>إنجازات اللاعبين</h2></div>
+      ${aw.length?`<div class="aw-grid">${aw.map(a=>`<div class="aw" style="--c:${a.p.team.color}"><span class="aw-ic">${ic(a.icon)}</span><div class="aw-t">${a.title}</div><div class="aw-team">${esc(a.p.name)} · ${esc(a.p.team.name)}</div><div class="aw-v">${a.value(a.p)}</div><div class="aw-d">${a.desc}</div></div>`).join('')}</div>`:''}
+      <section class="ms-card"><h3>كل لاعب</h3><div class="viz-table-wrap"><table class="viz-table"><thead><tr><th>اللاعب</th><th>صح</th><th>غلط</th><th>سرقات</th><th>مثّل (انعرفت)</th></tr></thead><tbody>
+        ${P.sort((a,b)=>b.ok-a.ok).map(p=>`<tr><td><span class="vt-team"><i style="--c:${p.team.color}"></i>${esc(p.name)}</span></td><td class="num"><bdi>${p.ok}</bdi></td><td class="num"><bdi>${p.wrong}</bdi></td><td class="num"><bdi>${p.steals}</bdi></td><td class="num"><bdi>${p.acted}</bdi> (<bdi>${p.actedOk}</bdi>)</td></tr>`).join('')}</tbody></table></div>
+        <p class="muted small">تنحسب لما المضيف يضغط اسم اللاعب قبل «صح» أو «غلط»، ولما اللاعب يبز أو يمثّل من جواله.</p></section>`;
+    el.appendChild(sec);
   }
 
   function sendMatchLog(winner, sorted){
@@ -1041,7 +1073,7 @@
     L.match({ game:'alf', target:S.target, rounds:G.round, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode,
       opts:{ cards:!!S.cardsEnabled, steal:!!S.stealEnabled, reactions:!!S.reactionsEnabled, comeback:!!S.comebackEnabled, hand:S.handMax||0 },
       teams: sorted.map((t,i)=>{ const o=G.stats.T[t.id]||{};
-        return { id:t.id, name:t.name, score:t.score, rank:i+1, win:t===winner, players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })),
+        return { id:t.id, name:t.name, score:t.score, rank:i+1, win:t===winner, players:t.players.map(p=>{ const q=(G.stats.P||{})[p.id]; return q ? { name:p.name, av:p.avatar||'', ok:q.ok, wrong:q.wrong, steals:q.steals, acted:q.acted } : { name:p.name, av:p.avatar||'' }; }),
           st:{ pts:o.pts, tries:o.tries, ok:o.ok, steals:o.steals||0, stolen:o.stolenFrom||0, cards:o.cards||0, attacks:o.attacks||0, hits:o.hits||0, best:o.bestTurn||0, combo:o.maxCombo||0, buzz:(o.buzz||[]).map(r1) } }; }),
       items:G.log.items, cards:G.log.cards, drawn:G.log.drawn, buzz:G.log.buzz });
   }

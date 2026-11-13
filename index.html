@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/draw.css">
 </head>
 <body>
 
@@ -153,6 +154,7 @@
         <button class="btn small" id="btn-auto-teams"><i class="ic" style="--i:url(../assets/icons/dice.svg)"></i> وزّع عشوائي</button>
         <span class="muted small">اسحب اللاعب لفريقه، أو اضغطه وبعدين اضغط الفريق</span>
       </div>
+      <label class="switch mb-s"><input type="checkbox" id="opt-phone-teams"><span></span> اللاعبين يقدرون ينشئون فرق من جوالاتهم</label>
       <div class="lbl">بدون فريق</div>
       <div class="pool" id="pool"></div>
       <div class="teams-grid mt-s" id="teams-grid"></div>
@@ -325,6 +327,7 @@
         <select data-k="rounds"><option value="1">مرة وحدة</option><option value="2">مرتين</option><option value="3">ثلاث مرات</option><option value="4">أربع مرات</option></select>
       </label>
       <label class="switch"><input type="checkbox" data-k="hints"><span></span> تلميحات: حرف عند نص الوقت وحرف بالربع الأخير</label>
+      <label class="switch"><input type="checkbox" data-k="mirror"><span></span> الرسمة تطلع بجوالات اللاعبين كمان (مو بس الشاشة)</label>
       <label class="switch"><input type="checkbox" data-k="noRepeat"><span></span> لا تكرر الكلمات اللي انلعبت قبل</label>
     </div>
     <div class="panel stack">
@@ -402,6 +405,7 @@
 <script src="js/stats.js"></script>
 <script src="js/cardfx.js"></script>
 <script src="js/alf.js"></script>
+<script src="js/draw.js"></script>
 <script src="js/khaliya.js"></script>
 <script src="js/rasm.js"></script>
 </body>

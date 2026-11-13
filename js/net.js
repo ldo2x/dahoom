@@ -42,19 +42,41 @@ window.DahoomNet = (function(){
   }
 
   // ---------- الرسائل ----------
+  const isSolo = () => D.session.mode==='solo' && D.session.game!=='khaliya';
+  const soloList = () => D.session.players.map(p=>({name:p.name, avatar:p.avatar}));
+  const canCreate = () => !isSolo() && !!D.session.phoneTeams && !isLocked() && D.session.teams.length < (D.session.game==='khaliya'?2:6);
+  // شاشة البداية للجوال اللي ما له مكان بعد: فردي = يسجّل نفسه على طول، فرق = يختار فريقه
+  const lobbyMsg = () => isSolo() ? {t:'soloreg', mode:'solo', avatars:D.AVATARS, players:soloList(), locked:isLocked()}
+    : {t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), canCreate:canCreate()};
+  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); push(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
+    // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
+    if(isSolo() && (d.t==='hello' || d.t==='register')){
+      const known = d.pid && D.session.players.find(p=>p.id===d.pid);
+      if(d.t==='hello'){ if(known){ c.pid=known.id; seat(c, known.id); } else c.send(lobbyMsg()); refreshUI(); return; }
+      if(!known && isLocked()){ c.send({t:'notice', msg:'المباراة شغالة — سجّل بعد ما تخلص'}); return; }
+      const pl=D.joinPlayer({pid:d.pid, name:d.name, avatar:d.avatar});
+      if(pl){ c.pid=pl.id; c.teamId=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar, teamId:pl.id, mode:'solo'}); if(H && H.roster) H.roster(); push(c); refreshUI(); }
+      return;
+    }
+    // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار)
+    if(d.t==='newteam' && !c.teamId){
+      const t = canCreate() ? D.createTeam(d.name) : null;
+      if(t) seat(c, t.id); else c.send({t:'notice', msg:'إنشاء الفرق مقفل — كلّم المضيف'});
+      refreshUI(); return;
+    }
     if(d.t==='hello'){
       if(isLocked() && d.pid){ const home=homeTeamOf(d.pid); if(home && d.teamId!==home.id){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${home.name}`}); d.teamId=home.id; } }
       const teams = teamList();
       if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
-      else c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams});
+      else c.send(lobbyMsg());
       refreshUI(); return;
     }
     if(!c.teamId) return;
     if(d.t==='answer'){ const p=pending.get(d.reqId); if(p && p.teamId===c.teamId){ pending.delete(d.reqId); closeAsk(d.reqId); p.cb(d.value); } return; }
     if(d.t==='leave' && isLocked()){ c.send({t:'notice', msg:'تغيير الفريق بعد ما تخلص المباراة'}); return; }
-    if(d.t==='leave'){ c.teamId=null; c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); refreshUI(); return; }
+    if(d.t==='leave'){ c.teamId=null; c.send(lobbyMsg()); refreshUI(); return; }
     if(d.t==='register'){ // اللاعب يسجل اسمه وصورته من جواله
       if(D.session.mode==='solo') return;
       let tid=c.teamId; if(isLocked()){ const home=homeTeamOf(d.pid); if(home) tid=home.id; }
@@ -66,7 +88,7 @@ window.DahoomNet = (function(){
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
-    if(H.msg && (d.t==='guess' || d.t==='stroke' || d.t==='undo' || d.t==='clear' || d.t==='rpick')) H.msg(c, d);
+    if(H.msg && (d.t==='guess' || d.t==='stroke' || d.t==='fill' || d.t==='undo' || d.t==='clear' || d.t==='rpick' || d.t==='rate' || d.t==='rsync')) H.msg(c, d);
     if(d.t==='report'){ const ok = H.report ? H.report(c.teamId, c.pid, d) : false; try{ c.send({t:'notice', msg: ok ? 'وصل البلاغ — شكراً' : 'ما قدرنا نرسل البلاغ'}); }catch(e){} }
   }
   // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)
@@ -101,7 +123,7 @@ window.DahoomNet = (function(){
   // ---------- واجهة الشاشة ----------
   function refreshUI(){
     // الجوالات اللي بشاشة اختيار الفريق تشوف العدد والصور يتحدثون مباشرة
-    const tl=teamList(); conns.forEach(c=>{ if(c.open && !c.teamId){ try{ c.send({t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:tl}); }catch(e){} } });
+    const lm=lobbyMsg(); conns.forEach(c=>{ if(c.open && !c.teamId){ try{ c.send(lm); }catch(e){} } });
     $$('.net-dot').forEach(el=>el.classList.toggle('on', ready));
     const box=$('#net-panel-body'); if(box) box.innerHTML=panelBody();
     if(H && H.onPhones) H.onPhones();

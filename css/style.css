@@ -752,7 +752,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .rs-board-wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
 #rs-canvas{width:100%;height:auto;aspect-ratio:4/3;background:#FFFFFF;border-radius:var(--r-m);display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);touch-action:none}
 #rs-canvas.drawable{cursor:crosshair}
-.rs-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.rs-tools{display:flex;flex-direction:column;gap:8px}
 .rs-sw{width:36px;height:36px;border-radius:50%;background:var(--c);border:2px solid var(--line);cursor:pointer;display:grid;place-items:center;color:#555}
 .rs-sw.eraser{background:#FFFFFF}
 .rs-sw.on{outline:3px solid var(--text);outline-offset:2px}
@@ -791,3 +791,9 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .du-time.big{font-size:3rem}
 .du-time.low{color:var(--bad-ink)}
 .du .qtext{max-width:100%}
+
+/* ===== مين جاوب؟ ===== */
+.who-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+.who-row .lbl{margin:0}
+.pmini.who{cursor:pointer;font:inherit;font-weight:600;color:var(--text);background:var(--surface-2)}
+.pmini.who.sel{background:var(--c);color:var(--ink);outline:3px solid var(--text);outline-offset:2px}

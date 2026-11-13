@@ -81,14 +81,22 @@
   // ---------- الرسائل ----------
   function onData(d){
     if(!d) return;
-    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; renderTeams(d.teams); return; }
+    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; st.canCreate=!!d.canCreate; renderTeams(d.teams); return; }
+    // فردي: ما فيه فرق — سجّل اسمك وصورتك على طول
+    if(d.t==='soloreg'){ st.teamId=null; st.mode='solo'; st.avatars=d.avatars||[]; st.soloPlayers=d.players||[];
+      if(!$('#r-reg').classList.contains('hidden')){ drawSoloList(); return; }
+      const m=me(); if(m && m.name && !d.locked && st.autoReg!==st.room){ st.autoReg=st.room; send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
+      openReg(); return; }
     if(d.t==='joined'){ st.teamId=d.teamId; if(d.mode) st.mode=d.mode; if(d.avatars&&d.avatars.length) st.avatars=d.avatars; if(d.teams) st.teams=d.teams; localStorage.setItem(teamKey(), d.teamId); keepAwake();
       const m=me(); if(st.mode==='solo'){ show('r-main'); return; }
       if(m && m.name && st.registeredRoom===st.room+':'+d.teamId){ show('r-main'); return; }
       if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
       openReg(); return; }
-    if(d.t==='registered'){ const m=Object.assign(me()||{}, {pid:d.pid, name:d.name, avatar:d.avatar}); localStorage.setItem(meKey, JSON.stringify(m)); st.registeredRoom=st.room+':'+st.teamId; show('r-main'); renderMain(); return; }
+    if(d.t==='registered'){ if(d.teamId){ st.teamId=d.teamId; st.mode=d.mode||st.mode; localStorage.setItem(teamKey(), d.teamId); keepAwake(); }
+      const m=Object.assign(me()||{}, {pid:d.pid, name:d.name, avatar:d.avatar}); localStorage.setItem(meKey, JSON.stringify(m)); st.registeredRoom=st.room+':'+st.teamId; show('r-main'); renderMain(); return; }
     if(d.t==='state'){ st.S=d; window.DAHOOM_PHASE=d.phaseKey||null; if(st.teamId && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
+    if(d.t==='rs'){ onMirror(d.m); return; }
+    if(d.t==='rsfull'){ if(mirror) mirror.load(d.ops); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
     if(d.t==='close'){ if(st.askId===d.reqId) closeSheet(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
@@ -106,7 +114,8 @@
         ${n ? `<span class="rt-avs">${shown.map(p=>`<img src="${avSrc(p.avatar)}" alt="" title="${esc(p.name)}">`).join('')}${n>5?`<i>+${n-5}</i>`:''}</span>` : ''}
         ${n ? `<span class="rt-names">${esc(pl.map(p=>p.name).join('، '))}</span>` : ''}
       </button>`; }).join('')
-      : '<p class="muted">ما فيه فرق بعد — خلّ المضيف يضيف الفرق من شاشة اللاعبين.</p>';
+      : `<p class="muted">${st.canCreate?'ما فيه فرق بعد — أنشئ أول فريق.':'ما فيه فرق بعد — خلّ المضيف يضيف الفرق من شاشة اللاعبين.'}</p>`;
+    $('#r-newteam').classList.toggle('hidden', !st.canCreate);
     $$('#r-teams [data-t]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'hello', teamId:b.dataset.t, pid:(me()||{}).pid}); });
     show('r-pick');
   }
@@ -116,10 +125,12 @@
   function openReg(){
     if(!st.avatars.length) st.avatars=AV_FALLBACK.slice();
     const m=me()||{}; const t=st.teams.find(x=>x.id===st.teamId)||{};
-    $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`;
+    if(st.mode==='solo') drawSoloList(); else { $('#r-reg-lbl').textContent='فريقك'; $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`; }
     $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];
     drawAvatars(); show('r-reg');
   }
+  function drawSoloList(){ const l=st.soloPlayers||[]; $('#r-reg-lbl').textContent = l.length ? `اللاعبين (${l.length}):` : 'كل واحد لحاله — كن أول لاعب';
+    $('#r-reg-team').innerHTML = l.map(p=>`<span class="r-solo"><img src="${avSrc(p.avatar)}" alt="">${esc(p.name)}</span>`).join(''); }
   function drawAvatars(){
     $('#r-avatars').innerHTML=st.avatars.map(a=>`<button class="r-av ${a===regAv?'sel':''}" data-a="${a}"><img src="${avSrc(a)}" alt=""></button>`).join('');
     $$('#r-avatars .r-av').forEach(b=>b.onclick=()=>{ regAv=b.dataset.a; vibe(10); drawAvatars(); });
@@ -135,7 +146,7 @@
   // ---------- الشاشة الرئيسية ----------
   let buzzSent = 0;
   function renderMain(){
-    const sw=$('#r-switch'); if(sw) sw.style.display = st.S && st.S.locked ? 'none' : '';
+    const sw=$('#r-switch'); if(sw) sw.style.display = (st.S && st.S.locked) || st.mode==='solo' ? 'none' : '';
     const S=st.S; if(!S || S.waiting){ $('#r-phase').textContent='بانتظار ما تبدأ المباراة…'; return; }
     const t=S.team;
     document.body.style.setProperty('--team', t.color);
@@ -198,8 +209,8 @@
   function renderRasm(R){
     const box=$('#r-rasm');
     const key = R.phase + ':' + (R.mine?'m':'g') + ':' + (R.canClaim?'c':'') + ':' + (R.choices?'p':'') + ':' + (R.word||'') + ':' + (R.reveal||'');
-    if(box.dataset.key===key){ const h=$('#rg-hint'); if(h && R.hint!=null) h.innerHTML=hintHTML(R); return; }
-    box.dataset.key=key;
+    if(box.dataset.key===key){ const h=$('#rg-hint'); if(h && R.hint!=null) h.innerHTML=hintHTML(R); if(R.phase==='reveal' && R.myRate) markRate(R.myRate); return; }
+    box.dataset.key=key; if(R.phase!=='draw') mirror=null;
     if(R.phase==='claim'){
       if(R.canClaim){
         box.innerHTML=`<div class="eyebrow">${ic('pencil')} ارسم وخمّن — دوركم</div><button class="btn btn-hype big ch-claim" id="rs-claim">أنا برسم</button><p class="muted small center">أول واحد يضغط تطلع له الكلمات بجواله بس</p>`;
@@ -216,49 +227,55 @@
     }
     if(R.phase==='draw' && R.mine && R.word){ buildPad(box, R.word); return; }
     if(R.phase==='draw'){ guessLog=[]; buildGuess(box, R); return; }
-    if(R.phase==='reveal'){ box.innerHTML=`<div class="eyebrow">الكلمة كانت</div><div class="rp-reveal">${esc(R.reveal||'')}</div>`; return; }
+    if(R.phase==='reveal'){ mirror=null; buildReveal(box, R); return; }
     box.innerHTML='';
   }
   const hintHTML = R => `<span class="rg-pat">${esc(R.hint||'')}</span><small>${R.letters} ${R.letters>10?'حرف':'حروف'}</small>`;
   function buildGuess(box, R){
-    box.innerHTML=`<div class="eyebrow">${ic('eye')} خمّن الرسمة اللي على الشاشة</div>
+    box.innerHTML=`<div class="eyebrow">${ic('eye')} خمّن الرسمة${R.mirror?'':' اللي على الشاشة'}</div>
+      ${R.mirror?'<canvas class="rp-canvas" id="rg-canvas"></canvas>':''}
       <div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
       <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>
       <div class="rg-log" id="rg-log"></div>`;
     $('#rg-form').onsubmit=e=>{ e.preventDefault(); const inp=$('#rg-in'), v=inp.value.trim(); if(!v) return;
       send({t:'guess', text:v}); vibe(15); guessLog.unshift(v); guessLog=guessLog.slice(0,5); inp.value=''; inp.focus();
       $('#rg-log').innerHTML=guessLog.map(g=>`<span>${esc(g)}</span>`).join(''); };
+    if(R.mirror) buildMirror(); else mirror=null;
   }
+  // لوحة الرسام: نفس أدوات الشاشة (draw.js) — كل عملية تنرسل للشاشة مباشرة
+  let mirror=null;
   function buildPad(box, word){
+    const DR=window.DahoomDraw;
     box.innerHTML=`<div class="rp-word"><small>ارسم:</small> <b>${esc(word)}</b></div>
       <canvas class="rp-canvas" id="rp-canvas"></canvas>
-      <div class="rp-tools">${RCOL.map(c=>`<button class="rp-sw" style="--c:${c}" data-c="${c}" aria-label="لون"></button>`).join('')}<button class="rp-sw eraser" data-c="#FFFFFF" aria-label="ممحاة">${ic('broom')}</button></div>
-      <div class="rp-tools">${RSIZE.map((w,i)=>`<button class="rp-size" data-w="${w}" aria-label="حجم ${i+1}"><i style="--s:${6+i*7}px"></i></button>`).join('')}<button class="btn ghost small" id="rp-undo">${ic('back')} تراجع</button><button class="btn ghost small" id="rp-clear">${ic('trash')} مسح</button></div>
+      <div class="dr-tools" id="rp-tools"></div>
       <p class="muted small center">ممنوع حروف وأرقام بالرسمة</p>`;
-    const cv=$('#rp-canvas'), ctx=cv.getContext('2d'), dpr=Math.min(2, window.devicePixelRatio||1);
-    const W=cv.clientWidth, H=Math.round(W*0.75); cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
-    const tool={ c:RCOL[0], w:RSIZE[1] }, strokes=[]; let curS=null, pend=[], flushT=0;
-    const dot=(s,from)=>{ ctx.strokeStyle=s.c; ctx.fillStyle=s.c; ctx.lineWidth=s.w*cv.width; ctx.lineCap='round'; ctx.lineJoin='round'; const p=s.p;
-      if(p.length===2){ ctx.beginPath(); ctx.arc(p[0]*cv.width,p[1]*cv.height,s.w*cv.width/2,0,Math.PI*2); ctx.fill(); return; }
-      ctx.beginPath(); ctx.moveTo(p[from]*cv.width,p[from+1]*cv.height); for(let i=from+2;i<p.length;i+=2) ctx.lineTo(p[i]*cv.width,p[i+1]*cv.height); ctx.stroke(); };
-    const redraw=()=>{ ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,cv.width,cv.height); strokes.forEach(s=>dot(s,0)); };
-    const flush=()=>{ flushT=0; if(curS && pend.length){ send({t:'stroke', id:curS.id, c:curS.c, w:curS.w, p:pend}); pend=[]; } };
-    const pt=e=>{ const r=cv.getBoundingClientRect(); return [ +Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)).toFixed(4), +Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)).toFixed(4) ]; };
-    cv.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){} const p=pt(e);
-      curS={ id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), c:tool.c, w:tool.w, p:[...p] }; strokes.push(curS); pend=[...p]; dot(curS,0); flush(); });
-    cv.addEventListener('pointermove',e=>{ if(!curS) return; e.preventDefault();
-      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-      (evs.length?evs:[e]).forEach(ev=>{ const p=pt(ev), q=curS.p; if(Math.hypot(p[0]-q[q.length-2], p[1]-q[q.length-1])<0.003) return; const from=q.length-2; q.push(...p); pend.push(...p); dot(curS,from); });
-      if(!flushT) flushT=setTimeout(flush,45); });
-    const end=()=>{ if(!curS) return; clearTimeout(flushT); flush(); curS=null; };
-    cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
-    const mark=()=>{ $$('#r-rasm [data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c===tool.c)); $$('#r-rasm [data-w]').forEach(b=>b.classList.toggle('on',+b.dataset.w===tool.w)); };
-    $$('#r-rasm [data-c]').forEach(b=>b.onclick=()=>{ tool.c=b.dataset.c; vibe(8); mark(); });
-    $$('#r-rasm [data-w]').forEach(b=>b.onclick=()=>{ tool.w=+b.dataset.w; vibe(8); mark(); });
-    $('#rp-undo').onclick=()=>{ if(!strokes.length) return; strokes.pop(); redraw(); send({t:'undo'}); vibe(10); };
-    $('#rp-clear').onclick=()=>{ strokes.length=0; redraw(); send({t:'clear'}); vibe(20); };
-    redraw(); mark();
+    const cv=$('#rp-canvas'), dpr=Math.min(2, window.devicePixelRatio||1);
+    const W=cv.clientWidth, H=Math.round(W*0.75); cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
+    const B=DR.board(cv), tool=DR.newTool();
+    DR.attach(cv, B, tool, m=>send(m));
+    DR.toolbar($('#rp-tools'), tool, { tap:()=>vibe(8), onUndo:()=>{ if(B.undo()) send({t:'undo'}); }, onClear:()=>{ B.clear(); send({t:'clear'}); } });
+    mirror=null;
   }
+  // لوحة المتفرج: نسخة حية من رسمة الشاشة (لو المضيف مفعّل الخيار)
+  function buildMirror(){
+    const cv=$('#rg-canvas'); if(!cv){ mirror=null; return; }
+    const dpr=Math.min(2, window.devicePixelRatio||1), W=cv.clientWidth, H=Math.round(W*0.75);
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
+    mirror=window.DahoomDraw.board(cv); send({t:'rsync'});
+  }
+  function onMirror(m){
+    if(!mirror || !m) return;
+    if(m.t==='stroke') mirror.stroke(m); else if(m.t==='fill') mirror.fill(m); else if(m.t==='undo') mirror.undo(); else if(m.t==='clear') mirror.clear();
+  }
+  const RATE = ['خرابيش','ماشي حالها','حلوة','فنان','تحفة'];
+  function buildReveal(box, R){
+    box.innerHTML=`<div class="eyebrow">الكلمة كانت</div><div class="rp-reveal">${esc(R.reveal||'')}</div>
+      ${R.canRate?`<div class="lbl center">قيّم الرسمة</div><div class="rs-rate" id="rp-rate">${RATE.map((r,i)=>`<button class="rs-rate-b" data-rv="${i+1}"><b>${i+1}</b><span>${r}</span></button>`).join('')}</div>`:''}`;
+    $$('#rp-rate [data-rv]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'rate', v:+b.dataset.rv}); markRate(+b.dataset.rv); });
+    markRate(R.myRate);
+  }
+  function markRate(v){ $$('#rp-rate [data-rv]').forEach(b=>b.classList.toggle('on', +b.dataset.rv===v)); }
 
   let showPhrase=false, lastPhrase=null;
   function renderCharade(ch){
@@ -365,6 +382,7 @@
   }
   $('#r-go').onclick=()=>join($('#r-code').value);
   $('#r-code').addEventListener('keydown', e=>{ if(e.key==='Enter') join(e.target.value); });
+  $('#r-newteam').onsubmit=e=>{ e.preventDefault(); vibe(20); send({t:'newteam', name:$('#r-newteam-name').value.trim(), pid:(me()||{}).pid}); $('#r-newteam-name').value=''; };
   $('#r-switch').onclick=()=>{ localStorage.removeItem(teamKey()); st.teamId=null; send({t:'leave'}); };
   const q=new URLSearchParams(location.search).get('room');
   if(q) join(q); else { const last=localStorage.getItem('dahoom_last_room'); if(last) $('#r-code').value=last; }
