@@ -21,10 +21,19 @@ window.Dahoom = (function(){
   // الاسم العادي من assets/sfx، و'meme:xxx' من assets/sfx/meme، و'game:xxx' من assets/sfx/game
   const audio = { on: store.get('sound', true), vol: store.get('volume', 0.4), cache:{}, loops:{} };
   // أصوات التطبيق: كل اسم قديم يتحول لصوت قيمنق/ميم (تقدر ترجع أي واحد للأصلي بحذفه من هنا)
+  // اختيارات صاحب المنصة من صفحة pick.html (تنحفظ بالجهاز): صور البطاقات، أصوات اللعبة، وأصوات موقوفة
+  const picks = Object.assign({ snd:{}, csnd:{}, gif:{}, off:[] }, store.get('picks', {}));
   const ALIAS = {
     correct:'game:g_ding', wrong:'game:g_feudx', steal:'game:g_mgs', coin:'game:g_mariocoin', bonus:'game:g_oneup',
     win:'game:g_ffwin', applause:'meme:passed', clockloop:'game:g_jeopardy', fx_tension:'game:g_suspense',
+    // بدل النغمات المولّدة: أصوات حقيقية معروفة
+    cheer:'game:g_mkcount', levelup:'game:g_mclevel', unlock:'meme:discord', bling:'game:g_sonic', fail:'game:g_mariodeath',
+    card:'game:g_swoosh', drumroll:'file:drumroll', buzzer:'file:buzzer', tick:'file:tick',
+    fx_trombone:'meme:spongefail', fx_thunder:'meme:boom',
   };
+  const CAP = { drumroll:2600, buzzer:1500, fail:2600, cheer:3500 };   // أقصى مدة (ملي ثانية)
+  // الاسم ← الملف: اختيار صاحب المنصة أول، بعدين الافتراضي، و'syn' = نغمة مولّدة
+  const resolve = name => picks.snd[name] || ALIAS[name] || (SYN[name] ? 'syn' : name);
   // أصوات القوائم والواجهة: نغمات قصيرة تتولّد بالمتصفح (خفيفة، ثابتة، وكل وحدة لها معنى)
   // كل نغمة: [تردد, بداية ms, مدة ms, نوع الموجة, قوة, تردد النهاية؟]
   const SYN = {
@@ -52,22 +61,23 @@ window.Dahoom = (function(){
       o.connect(a); a.connect(c.destination); o.start(s); o.stop(e+0.03);
     });
   }
-  const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n+'.mp3';
+  const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n.replace(/^file:/,'')+'.mp3';
   function base(name){ if(!audio.cache[name]){ const a=new Audio(srcOf(name)); a.preload='auto'; audio.cache[name]=a; } return audio.cache[name]; }
-  Object.values(ALIAS).forEach(base);
+  Object.keys(ALIAS).map(resolve).filter(k=>k!=='syn'&&k!=='none').forEach(base);
   document.addEventListener('pointerdown', ()=>actx(), {once:true});
   // max: أقصى مدة بالملي ثانية (الميمز الطويلة تنقص)
   function play(name, {volume=1, loop=false, rate=1, max}={}){
     if(!audio.on || !name) return null;
-    if(SYN[name] && !loop){ synth(name, Math.min(1.5, volume*audio.vol*2.5)); return null; }
-    const key = ALIAS[name] || name;
+    let key = resolve(name);
+    if(key==='none' || picks.off.includes(key)) return null;
+    if(key==='syn'){ if(!loop){ synth(name, Math.min(1.5, volume*audio.vol*2.5)); return null; } key=name; }
     const b = base(key);
     const a = loop ? b : b.cloneNode();
     a.volume = Math.min(1, volume * audio.vol); a.loop = loop; a.currentTime = 0;
     try{ a.playbackRate = rate; a.preservesPitch = false; }catch(e){}
     a.play().catch(()=>{});
     if(loop) audio.loops[name]=a;
-    else { const cap = max ?? (key.includes(':') ? 4200 : 0); if(cap) setTimeout(()=>fade(a), cap); }
+    else { const cap = max ?? CAP[name] ?? (key.includes(':') ? 4200 : 0); if(cap) setTimeout(()=>fade(a), cap); }
     return a;
   }
   function fade(a){ let v=a.volume; const t=setInterval(()=>{ v-=.08; if(v<=0){ a.pause(); clearInterval(t); } else a.volume=v; },40); }
@@ -78,7 +88,7 @@ window.Dahoom = (function(){
   function updateSoundBtn(){ $$('.btn-sound').forEach(b=>b.innerHTML = audio.on ? ic('sound')+' الصوت' : ic('mute')+' مكتوم'); $$('.vol-slider').forEach(s=>s.value=Math.round(audio.vol*100)); }
   // صوت ميم للحظة معينة (من data/memes.js)
   function memeSound(kind, opts={}){
-    const M=(window.DAHOOM_DATA||{}).memes||{}; const l=M.sounds&&M.sounds[kind];
+    const M=(window.DAHOOM_DATA||{}).memes||{}; const l=((M.sounds&&M.sounds[kind])||[]).filter(x=>!picks.off.includes('meme:'+x));
     if(l&&l.length) return play('meme:'+rnd(l), Object.assign({volume:.8},opts));
   }
 
@@ -154,7 +164,8 @@ window.Dahoom = (function(){
   // size: 'big' | 'mini' | '' ، anim: صورة متحركة
   function cardHTML(c, {size='', anim=false, flag=''}={}){
     const K = (window.DAHOOM_DATA.cardKinds||{})[c.kind] || {name:'',icon:'cards'};
-    const art = c.tweet
+    const own = picks.gif[c.id];
+    const art = own ? `<img src="${esc(own)}" alt="" loading="lazy">` : c.tweet
       ? `<div class="tweet"><div class="tw-h"><span class="tw-av">${esc(c.tweet.name[0])}</span><span><b>${esc(c.tweet.name)}</b><i>${esc(c.tweet.handle)}</i></span></div><p>${esc(c.tweet.text)}</p><div class="tw-f"><span>${ic('star')} ${esc(c.tweet.likes)}</span><span>${ic('recycle')} ترند</span></div></div>`
       : c.art ? `<div class="tcg-icon">${ic(c.art)}</div>`
       : `<img src="assets/cards/${c.id}${anim?'.webp':'_s.gif'}" alt="" loading="lazy">`;
@@ -398,6 +409,6 @@ window.Dahoom = (function(){
   document.addEventListener('DOMContentLoaded', init);
 
   return { joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
-    session, competitors, avatarSrc, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
+    session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();

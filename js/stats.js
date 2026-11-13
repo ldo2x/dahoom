@@ -20,6 +20,8 @@ window.DahoomStats = (function(){
       { key:'bag',     title:'كيس الملاكمة',    icon:'defense',   desc:'أكثر واحد انضرب',           val:t=>T[t.id].hits,                  fmt:v=>`${v} ضربات جته` },
       { key:'fire',    title:'مولّعة',          icon:'flame',     desc:'أطول سلسلة نجاحات',         val:t=>T[t.id].maxCombo>=2?T[t.id].maxCombo:0, fmt:v=>`${v} ورا بعض` },
       { key:'actor',   title:'نجم التمثيل',     icon:'masks',     desc:'أكثر نقاط من بدون كلام',    val:t=>T[t.id].pts.c,                 fmt:v=>`${v} نقطة` },
+      { key:'robbed',  title:'مال سايب',        icon:'coins',     desc:'أكثر واحد انسرق منه',       val:t=>T[t.id].stolenFrom,            fmt:v=>`انسرق ${v} مرات` },
+      { key:'cards',   title:'لعّيب ورق',       icon:'cards',     desc:'أكثر واحد لعب بطاقات',      val:t=>T[t.id].cards>=2?T[t.id].cards:0, fmt:v=>`${v} بطاقات` },
       { key:'unlucky', title:'منحوس الليلة',    icon:'skull',     desc:'أكثر محاولات فاشلة',        val:t=>T[t.id].fails,                 fmt:v=>`${v} فشل` },
     ];
     const out=[];
@@ -124,13 +126,60 @@ window.DahoomStats = (function(){
     const rows=teams.map((t,i)=>({t, o:T[i]||{cells:0,ok:0,wrong:0,buzz:[]}}));
     const fast=rows.filter(r=>r.o.buzz.length).sort((a,b)=>avg(a.o.buzz)-avg(b.o.buzz))[0];
     const most=[...rows].sort((a,b)=>b.o.cells-a.o.cells)[0];
+    const wr=[...rows].sort((a,b)=>b.o.wrong-a.o.wrong);
     const aw=[]; if(most && most.o.cells) aw.push({title:'ملك الخلية',icon:'hive',desc:'أكثر خلايا لوّنها',team:most.t,value:`${most.o.cells} خلية`});
     if(fast) aw.push({title:'أسرع إصبع',icon:'whistle',desc:'أسرع بز بالمتوسط من قراءة السؤال',team:fast.t,value:`${sec(avg(fast.o.buzz))} ث`});
+    if(wr[0] && wr[0].o.wrong>=2 && (wr.length<2 || wr[0].o.wrong>wr[1].o.wrong)) aw.push({title:'مسوي فاهم',icon:'cancel',desc:'أكثر إجابات غلط',team:wr[0].t,value:`${wr[0].o.wrong} غلطات`});
+    G.awards=aw;
     const max=Math.max(1,...rows.map(r=>r.o.cells));
     el.innerHTML=`<div class="ms"><div class="ms-head"><h2>وش صار بالخلية</h2><span class="muted">${G.round} جولات</span></div>${awardsHTML(aw)}
       <section class="ms-card"><h3>الخلايا اللي لوّنها كل فريق</h3><div class="viz-bars">${rows.map(r=>`<div class="vb-row"><span class="vb-name"><i style="--c:${r.t.color}"></i>${esc(r.t.name)}</span><span class="vb-track"><span class="vb-bar" style="width:${(r.o.cells/max*100).toFixed(1)}%"><span class="vb-seg" style="flex:1;background:${r.t.color}"></span></span></span><span class="vb-val">${r.o.cells}</span></div>`).join('')}</div></section>
       <section class="ms-card"><h3>الأرقام كاملة</h3><div class="viz-table-wrap"><table class="viz-table"><thead><tr><th>الفريق</th><th>جولات</th><th>خلايا</th><th>إجابات صح</th><th>غلط</th><th>متوسط البز</th></tr></thead><tbody>${rows.map(r=>`<tr><td><span class="vt-team"><i style="--c:${r.t.color}"></i>${esc(r.t.name)}</span></td><td class="num">${r.t.wins}</td><td class="num">${r.o.cells}</td><td class="num">${r.o.ok}</td><td class="num">${r.o.wrong}</td><td class="num">${r.o.buzz.length?sec(avg(r.o.buzz))+' ث':'—'}</td></tr>`).join('')}</tbody></table></div></section></div>`;
   }
 
-  return { awards, renderAlf, renderKhaliya, avg };
+  // ---------- عرض التتويج: لقب ورا لقب، طبل، وبعدين الاسم ----------
+  // list: [{title, desc, icon, name, sub, color, value, avatars:[src]}] · pool: أسماء تدور قبل الإعلان
+  function show(list, {pool=[], onDone}={}){
+    document.querySelectorAll('.cer').forEach(x=>x.remove());
+    if(!list || !list.length){ onDone&&onDone(); return; }
+    const el=document.createElement('div'); el.className='cer';
+    el.innerHTML=`<div class="cer-top"><span class="cer-count" id="cer-count"></span><button class="btn ghost" id="cer-skip">تخطي</button></div>
+      <div class="cer-stage" id="cer-stage"></div><div class="cer-hint">اضغط أي مكان للتالي</div>`;
+    document.body.appendChild(el);
+    let alive=true, bump=null, roll=0;
+    const wait=ms=>new Promise(r=>{ const t=setTimeout(()=>{ bump=null; r(); },ms); bump=()=>{ clearTimeout(t); bump=null; r(); }; });
+    const close=()=>{ if(!alive) return; alive=false; clearInterval(roll); el.classList.add('out'); setTimeout(()=>el.remove(),350); if(bump) bump(); onDone&&onDone(); };
+    el.querySelector('#cer-skip').onclick=e=>{ e.stopPropagation(); close(); };
+    el.onclick=()=>{ if(bump) bump(); };
+    (async()=>{
+      const st=el.querySelector('#cer-stage'), cnt=el.querySelector('#cer-count');
+      st.innerHTML=`<div class="cer-intro"><div class="eyebrow">قبل ما تقومون</div><h1>التتويجات</h1><p>${list.length} ألقاب، ومين ياخذ كل لقب؟</p></div>`;
+      D.play('drums',{volume:.6}); await wait(2200);
+      for(let i=0;i<list.length && alive;i++){
+        const a=list[i]; el.style.setProperty('--c', a.color||'var(--brand)'); cnt.textContent=`${i+1} / ${list.length}`;
+        st.innerHTML=`<div class="cer-card"><span class="cer-ic">${ic(a.icon)}</span><div class="cer-title">${esc(a.title)}</div><div class="cer-desc">${esc(a.desc)}</div>
+          <div class="cer-name rolling" id="cer-name">…</div><div class="cer-more" id="cer-more"></div></div>`;
+        const nm=st.querySelector('#cer-name'), names=pool.length>1?pool:[a.name]; let k=Math.floor(Math.random()*names.length);
+        roll=setInterval(()=>{ nm.textContent=names[k++%names.length]; },90);
+        D.play('drumroll',{volume:.7}); await wait(2000); clearInterval(roll); if(!alive) break;
+        nm.classList.remove('rolling'); nm.classList.add('hit'); nm.textContent=a.name;
+        st.querySelector('#cer-more').innerHTML=`${(a.avatars||[]).length?`<div class="cer-avs">${a.avatars.map(s=>`<img src="${s}" alt="">`).join('')}</div>`:''}
+          ${a.sub && a.sub!==a.name?`<div class="cer-sub">${esc(a.sub)}</div>`:''}<div class="cer-val">${esc(a.value)}</div>`;
+        D.play('bonus',{volume:.8}); D.confetti(90,1800);
+        await wait(4200);
+      }
+      close();
+    })();
+  }
+  // يشتغل لحاله بعد لحظة الفوز، وزر «التتويجات» يعيده
+  function autoShow(build){
+    const btn=document.getElementById('btn-show'); const list=build();
+    if(btn){ btn.classList.toggle('hidden', !list.items.length); btn.onclick=()=>show(list.items, list); }
+    if(!list.items.length || window.DAHOOM_NO_SHOW) return;
+    setTimeout(()=>{ const r=document.getElementById('results'); if(r && r.classList.contains('active') && !document.querySelector('.cer')) show(list.items, list); }, 3200);
+  }
+  const ofTeam = a => ({ title:a.title, desc:a.desc, icon:a.icon, name:a.team.name, color:a.team.color, value:a.value,
+    sub:(a.team.players||[]).map(p=>p.name).join('، '), avatars:(a.team.players||[]).slice(0,5).map(p=>D.avatarSrc(p.avatar)) });
+
+  return { awards, renderAlf, renderKhaliya, avg, show, autoShow, ofTeam };
 })();

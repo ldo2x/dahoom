@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>اختيارات دحوم</title>
+<script>(function(){var t=null;try{t=localStorage.getItem('dahoom_theme');}catch(e){}if(t!=='day'&&t!=='night'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'day':'night';}document.documentElement.setAttribute('data-theme',t);})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pick.css">
+</head>
+<body class="pk">
+<header class="pk-head">
+  <div>
+    <h1>اختيارات دحوم</h1>
+    <p class="muted">اختر صورة كل بطاقة واسمع الأصوات وغيّر اللي ما يعجبك. اختياراتك تشتغل على هالجهاز على طول. لما تخلص اضغط «انسخ اختياراتي» وأرسلها عشان تتثبت لكل الناس.</p>
+  </div>
+  <div class="pk-actions">
+    <span class="pill" id="pk-count">ولا اختيار</span>
+    <button class="btn btn-hype" id="pk-copy">انسخ اختياراتي</button>
+    <button class="btn ghost" id="pk-reset">امسح الكل</button>
+    <a class="btn ghost" href="./">اللعبة</a>
+  </div>
+</header>
+<nav class="pk-tabs" id="pk-tabs">
+  <button data-tab="gif" class="on">صور البطاقات</button>
+  <button data-tab="snd">أصوات اللعبة</button>
+  <button data-tab="pool">أصوات اللحظات</button>
+  <button data-tab="csnd">أصوات البطاقات</button>
+</nav>
+<main class="pk-main" id="pk-main"></main>
+<textarea id="pk-out" class="pk-out hidden" readonly></textarea>
+
+<script src="data/cards.js"></script>
+<script src="data/memes.js"></script>
+<script src="data/pick-data.js"></script>
+<script src="js/pick.js"></script>
+</body>
+</html>

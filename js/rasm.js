@@ -71,7 +71,7 @@
     if(comps.length<2){ toast('نحتاج فريقين أو لاعبين اثنين على الأقل'); go('lobby'); return; }
     G = { teams: comps.map(c=>({...c, score:0, drawnOk:0, guessedOk:0})), order:[], turn:0, round:1, phase:'idle',
       used: used.load(), drawer:null, choices:null, word:null, ratings:{}, feed:[], left:0, total:1, lastWord:null,
-      stats:{ guesses:{}, drawings:{}, fast:null, wrong:0, rated:{}, bestArt:null }, log:{ t0:Date.now(), items:[] }, lastGuessAt:{} };
+      stats:{ guesses:{}, drawings:{}, missed:{}, wrongBy:{}, fast:null, wrong:0, rated:{}, bestArt:null }, log:{ t0:Date.now(), items:[] }, lastGuessAt:{} };
     G.order = shuffle(G.teams.map((_,i)=>i));
     window.DAHOOM_ITEM = null;
     const n=NET(); if(n) n.use({ teams:()=>G.teams, state:phoneState, claim:onClaim, msg:onMsg, report:onReport, roster:syncRoster, onPhones:()=>{ if(G && G.phase==='claim') turnIntro(); } });
@@ -203,7 +203,7 @@
     const name=nameOf(t,pid)||t.name, res=check(G.word, text);
     if(res===2) return win(teamId, name);
     if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('tick',{volume:.7}); }
-    else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; play('pop',{volume:.35}); }
+    else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; tally(G.stats.wrongBy, name); play('pop',{volume:.35}); }
     renderFeed();
   }
   function win(teamId, guesserName){
@@ -223,7 +223,7 @@
     if(G.phase!=='draw') return;
     stopTimer();
     { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='fail'; l.left=0; } }
-    play('fail',{volume:.6}); flash('bad');
+    play('fail',{volume:.6}); flash('bad'); tally(G.stats.missed, G.drawer.name);
     finishTurn('ما أحد عرفها', 'ولا نقطة هالمرة');
   }
   function finishTurn(title, sub){
@@ -356,7 +356,17 @@
     if(art) aw.push({ title:'بيكاسو الجلسة', icon:'pencil', desc:'أكثر رسمات انعرفت', who:art[0], team:teamOfName(art[0]), value:`${art[1]} رسمات` });
     { const ba=G.stats.bestArt; if(ba) aw.push({ title:'أحلى رسمة', icon:'star', desc:`«${ba.w}» بتقييم اللاعبين`, who:ba.name, team:teamOfName(ba.name)||G.teams.find(t=>t.name===ba.name)||null, value:`${ba.a.toFixed(1)} من 5` }); }
     if(f) aw.push({ title:'أسرع تخمين', icon:'stopwatch', desc:`«${f.w}»`, who:f.name, team:teamOfName(f.name), value:`${f.s} ث` });
+    // ألقاب الضحك
+    { const who = n => teamOfName(n)||G.teams.find(t=>t.name===n)||null;
+      const mis=top(G.stats.missed||{}); if(mis && mis[1]>=2) aw.push({ title:'محد فهمه', icon:'help', desc:'أكثر رسمات ما انعرفت', who:mis[0], team:who(mis[0]), value:`${mis[1]} رسمات` });
+      const wb=top(G.stats.wrongBy||{}); if(wb && wb[1]>=4) aw.push({ title:'يخبّص', icon:'dice', desc:'أكثر تخمينات غلط', who:wb[0], team:who(wb[0]), value:`${wb[1]} تخمينات غلط` });
+      const avgs=Object.entries(G.stats.rated||{}).map(([n,l])=>[n, l.reduce((x,y)=>x+y,0)/l.length]).sort((x,y)=>x[1]-y[1]);
+      if(avgs.length>=2 && avgs[0][1]<avgs[1][1] && avgs[0][1]<3) aw.push({ title:'خرابيش الجلسة', icon:'broom', desc:'أقل تقييم لرسماته', who:avgs[0][0], team:who(avgs[0][0]), value:`${avgs[0][1].toFixed(1)} من 5` }); }
     G.awards=aw;
+    try{ const DS=window.DahoomStats, order=['خرابيش الجلسة','يخبّص','محد فهمه','أسرع تخمين','عين الصقر','بيكاسو الجلسة','أحلى رسمة'];
+      const avOf = n => { const p=G.teams.flatMap(t=>t.players).find(p=>p.name===n); return p ? [D.avatarSrc(p.avatar)] : []; };
+      DS.autoShow(()=>({ items:[...aw].sort((x,y)=>order.indexOf(x.title)-order.indexOf(y.title)).map(a=>({ title:a.title, desc:a.desc, icon:a.icon, name:a.who, sub:a.team?a.team.name:'', color:a.team?a.team.color:'', value:a.value, avatars:avOf(a.who) })),
+        pool:[...new Set(G.teams.flatMap(t=>t.players.length?t.players.map(p=>p.name):[t.name]))] })); }catch(e){ console.error(e); }
     const el=$('#match-stats');
     el.innerHTML=`<div class="ms"><div class="ms-head"><h2>وش صار بالرسم</h2><span class="muted">${G.log.items.filter(x=>x.r!=='skip').length} رسمات</span></div>
       ${aw.length?`<div class="aw-grid">${aw.map(a=>`<div class="aw" style="--c:${a.team?a.team.color:'var(--brand)'}"><span class="aw-ic">${ic(a.icon)}</span><div class="aw-t">${esc(a.title)}</div><div class="aw-team">${esc(a.who)}${a.team&&a.team.name!==a.who?` · ${esc(a.team.name)}`:''}</div><div class="aw-v">${esc(a.value)}</div><div class="aw-d">${esc(a.desc)}</div></div>`).join('')}</div>`:''}

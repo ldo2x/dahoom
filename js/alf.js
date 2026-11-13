@@ -1033,6 +1033,7 @@
 
   // ---------- النهاية ----------
   function endGame(winner){
+    $('#overlay-root').innerHTML='';
     stopAll(); go('results'); play('win'); setTimeout(()=>memeSound('win'),700); setTimeout(()=>play('applause',{volume:.6}),1500); confetti(400,6000); reaction('win',4000);
     const sorted=[...G.teams].sort((a,b)=>b.score-a.score);
     $('#winner-title').innerHTML=`<span class="who" style="--c:${winner.color}">${esc(winner.name)}</span> فاز`;
@@ -1045,13 +1046,25 @@
     G.ended=true;
     try{ sendMatchLog(winner, sorted); }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderAlf(el, G, S.target); }catch(e){ console.error(e); el.innerHTML=''; } }
-    try{ playerStats(el); }catch(e){ console.error(e); }
+    let pAw=[]; try{ pAw=playerStats(el)||[]; }catch(e){ console.error(e); }
     pushAll();
+    // عرض التتويج: المضحك أول، والأقوى آخر شي (أقصى شي 8 ألقاب)
+    try{ const DS=window.DahoomStats; DS.autoShow(()=>{
+      const tAw=(G.stats.awards||[]).filter(a=>!(a.key==='thief' && pAw.some(x=>x.title==='الحرامي')) && !(a.key==='actor' && pAw.some(x=>x.title==='نجم المسرح')));
+      const order=['unlucky','robbed','bag','مسوي فاهم','cards','saboteur','thief','الحرامي','finger','actor','نجم المسرح','fire','wolf','عقل الجلسة'];
+      const all=[ ...tAw.map(a=>({k:a.key, a:DS.ofTeam(a)})),
+        ...pAw.map(a=>({k:a.title, a:{ title:a.title, desc:a.desc, icon:a.icon, name:a.p.name, sub:a.p.team.name, color:a.p.team.color, value:a.value(a.p),
+          avatars:[D.avatarSrc((a.p.team.players.find(x=>x.id===a.p.id)||{}).avatar)] }})) ];
+      all.sort((x,y)=>order.indexOf(x.k)-order.indexOf(y.k));
+      const items=all.slice(-8).map(x=>x.a);
+      const solo=G.teams.every(t=>t.players.length<=1);
+      return { items, pool: solo ? G.teams.map(t=>t.name) : [...new Set([...G.teams.map(t=>t.name), ...G.teams.flatMap(t=>t.players.map(p=>p.name))])] };
+    }); }catch(e){ console.error(e); }
   }
   // إنجازات اللاعبين: مين جاوب أكثر، مين غلط أكثر، مين سرق، مين مثّل
   function playerStats(el){
     const P=Object.entries(G.stats.P||{}).map(([id,o])=>({ id, ...o, team:G.teams.find(t=>t.players.some(p=>p.id===id)) })).filter(p=>p.team);
-    if(!el || !P.length) return;
+    if(!el || !P.length) return [];
     const top=(k,min=1)=>{ const l=[...P].sort((a,b)=>b[k]-a[k]); return l[0] && l[0][k]>=min && (l.length===1 || l[0][k]>l[1][k]) ? l[0] : null; };
     const aw=[]; const add=(p,title,icon,value,desc)=>{ if(p) aw.push({p,title,icon,value,desc}); };
     add(top('ok'),'عقل الجلسة','brain',o=>`${o.ok} إجابات صح`,'أكثر واحد جاوب صح');
@@ -1065,6 +1078,7 @@
         ${P.sort((a,b)=>b.ok-a.ok).map(p=>`<tr><td><span class="vt-team"><i style="--c:${p.team.color}"></i>${esc(p.name)}</span></td><td class="num"><bdi>${p.ok}</bdi></td><td class="num"><bdi>${p.wrong}</bdi></td><td class="num"><bdi>${p.steals}</bdi></td><td class="num"><bdi>${p.acted}</bdi> (<bdi>${p.actedOk}</bdi>)</td></tr>`).join('')}</tbody></table></div>
         <p class="muted small">تنحسب لما المضيف يضغط اسم اللاعب قبل «صح» أو «غلط»، ولما اللاعب يبز أو يمثّل من جواله.</p></section>`;
     el.appendChild(sec);
+    return aw;
   }
 
   function sendMatchLog(winner, sorted){

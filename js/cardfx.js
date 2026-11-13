@@ -68,7 +68,8 @@ window.DahoomFX = (function(){
 
   function sound(card,{volume=1}={}){
     (TIER_SND[card.tier]||[]).forEach(([n,d,v])=>setTimeout(()=>play(n,{volume:v*volume}),d));
-    if(card.snd) setTimeout(()=>play(card.snd,{volume:.9*volume}), SND_DELAY[card.tier]||100);
+    const snd=((window.Dahoom.picks||{}).csnd||{})[card.id] || card.snd;
+    if(snd && snd!=='none') setTimeout(()=>play(snd,{volume:.9*volume}), SND_DELAY[card.tier]||100);
   }
 
   // صوت الفئة بس (للسحب السري — ما يفضح البطاقة)

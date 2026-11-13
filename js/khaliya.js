@@ -236,6 +236,7 @@
     if(matchOver) $('#kh-results').onclick=()=>endMatch(t); else $('#kh-next').onclick=()=>{ G.round++; newRound(false); };
   }
   function endMatch(winner){
+    $('#overlay-root').innerHTML='';
     stopAll(); go('results'); play('applause',{volume:.7}); confetti(400,6000);
     const sorted=[...G.teams].sort((a,b)=>b.wins-a.wins);
     $('#winner-title').innerHTML=`<span class="who" style="--c:${winner.color}">${esc(winner.name)}</span> فاز بخلية الحروف`;
@@ -248,6 +249,7 @@
           players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })), st:{ cells:o.cells||0, ok:o.ok||0, wrong:o.wrong||0, buzz:(o.buzz||[]).map(Math.round) } }; }),
         items:G.log.items }); } }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderKhaliya(el, G); }catch(e){ console.error(e); el.innerHTML=''; } }
+    try{ const DS=window.DahoomStats; DS.autoShow(()=>({ items:(G.awards||[]).map(DS.ofTeam), pool:G.teams.map(t=>t.name) })); }catch(e){ console.error(e); }
   }
 
   // ---------- ربط ----------
