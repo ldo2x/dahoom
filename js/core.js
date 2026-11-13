@@ -369,16 +369,17 @@ window.Dahoom = (function(){
     const openGame=g=>{ session.game=g; renderTeams(); go('lobby'); };
     $('#card-alf').onclick=()=>openGame('alf');
     $('#card-khaliya').onclick=()=>openGame('khaliya');
+    $('#card-rasm').onclick=()=>openGame('rasm');
     $$('.game-tile').forEach(t=>t.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target===t) t.click(); }));
     $('#btn-add-player').onclick=addPlayer;
     $('#p-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });
     $('#btn-add-team').onclick=addTeam;
     $('#btn-auto-teams').onclick=autoTeams;
     $$('input[name=mode]').forEach(r=>r.onchange=()=>{ session.mode=r.value; session.save(); renderTeams(); });
-    $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : 'settings'); };
+    $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : session.game==='rasm' ? 'rasm-settings' : 'settings'); };
     $('#btn-reset-used').onclick=async ()=>{
       if(await confirmBox('<h3>تصفير المحتوى المستخدم؟</h3><p class="muted">يرجع كل الأسئلة والعبارات والتحديات اللي انلعبت قبل.</p>','صفّر','إلغاء')){
-        store.del('used'); store.del('used_letters'); toast('رجع كل المحتوى جديد'); play('bling'); }
+        store.del('used'); store.del('used_letters'); store.del('used_words'); toast('رجع كل المحتوى جديد'); play('bling'); }
     };
   }
   document.addEventListener('DOMContentLoaded', init);

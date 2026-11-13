@@ -154,7 +154,7 @@
       fin.innerHTML=`<div class="rf-rank ${f.rank===1?'win':''}"><small>انتهت المباراة</small><b>#${f.rank}</b><span>من ${f.of} ${f.rank===1?'— فزتوا!':''}</span></div>
         ${f.awards.length?`<div class="rf-aw">${f.awards.map(a=>`<span class="rf-badge"><b>${esc(a.title)}</b>${esc(a.value)}</span>`).join('')}</div>`:''}
         <div class="rf-rows">${f.rows.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
-        <p class="muted small center">الإحصائيات الكاملة والمنحنى على الشاشة</p>`;
+        <p class="muted small center">${S.game==='alf'?'الإحصائيات الكاملة والمنحنى على الشاشة':'الإحصائيات الكاملة على الشاشة'}</p>`;
       $('#r-phase').textContent='';
     } else st.finalShown=false;
     // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
@@ -184,7 +184,81 @@
     }
     // النقاط
     $('#r-scores').innerHTML=(S.scores||[]).map(x=>`<span class="r-sc ${x.id===t.id?'me':''} ${x.turn?'turn':''}" style="--c:${x.color}"><i></i>${esc(x.name)} <b>${x.score}</b>${S.game==='alf'?`<small>${ic('cards')}${x.hand}</small>`:''}</span>`).join('');
+    // ارسم وخمّن: لوحة الرسم للرسام، ومربع التخمين للباقين
+    const rs=$('#r-rasm'), isR = S.game==='rasm' && !done && !!S.rasm;
+    rs.classList.toggle('hidden', !isR);
+    if(S.game==='rasm') b.style.display='none';
+    if(isR) renderRasm(S.rasm); else if(rs.dataset.key){ rs.innerHTML=''; rs.dataset.key=''; }
   }
+  // ---------- ارسم وخمّن ----------
+  const RCOL = ['#111111','#E53935','#1E88E5','#43A047','#FDD835','#FB8C00','#8E24AA','#8D6E63'];
+  const RSIZE = [0.007, 0.015, 0.032];
+  let guessLog=[];
+  function renderRasm(R){
+    const box=$('#r-rasm');
+    const key = R.phase + ':' + (R.mine?'m':'g') + ':' + (R.canClaim?'c':'') + ':' + (R.choices?'p':'') + ':' + (R.word||'') + ':' + (R.reveal||'');
+    if(box.dataset.key===key){ const h=$('#rg-hint'); if(h && R.hint!=null) h.innerHTML=hintHTML(R); return; }
+    box.dataset.key=key;
+    if(R.phase==='claim'){
+      if(R.canClaim){
+        box.innerHTML=`<div class="eyebrow">${ic('pencil')} ارسم وخمّن — دوركم</div><button class="btn btn-hype big ch-claim" id="rs-claim">أنا برسم</button><p class="muted small center">أول واحد يضغط تطلع له الكلمات بجواله بس</p>`;
+        $('#rs-claim').onclick=()=>{ vibe([40,20,40]); send({t:'claim'}); };
+      } else box.innerHTML=`<div class="ch-taken">${ic('pencil')} دور ${esc(R.drawerTeam)} يرسم — استعدوا تخمّنون</div>`;
+      return;
+    }
+    if(R.phase==='pick'){
+      if(R.mine && R.choices){ vibe([80,40,80]);
+        box.innerHTML=`<div class="eyebrow">${ic('pencil')} اختار كلمة — لا تخلي أحد يشوف</div><div class="rp-choices">${R.choices.map((c,i)=>`<button class="btn big rp-choice" data-i="${i}"><b>${esc(c.w)}</b><small>${['','سهلة','متوسطة','صعبة'][c.d]} · ${c.p}</small></button>`).join('')}</div>`;
+        $$('#r-rasm [data-i]').forEach(bt=>bt.onclick=()=>{ vibe(30); send({t:'rpick', i:+bt.dataset.i}); });
+      } else box.innerHTML=`<div class="ch-taken">${ic('pencil')} ${esc(R.drawer||'الرسام')} يختار كلمة…</div>`;
+      return;
+    }
+    if(R.phase==='draw' && R.mine && R.word){ buildPad(box, R.word); return; }
+    if(R.phase==='draw'){ guessLog=[]; buildGuess(box, R); return; }
+    if(R.phase==='reveal'){ box.innerHTML=`<div class="eyebrow">الكلمة كانت</div><div class="rp-reveal">${esc(R.reveal||'')}</div>`; return; }
+    box.innerHTML='';
+  }
+  const hintHTML = R => `<span class="rg-pat">${esc(R.hint||'')}</span><small>${R.letters} ${R.letters>10?'حرف':'حروف'}</small>`;
+  function buildGuess(box, R){
+    box.innerHTML=`<div class="eyebrow">${ic('eye')} خمّن الرسمة اللي على الشاشة</div>
+      <div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
+      <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>
+      <div class="rg-log" id="rg-log"></div>`;
+    $('#rg-form').onsubmit=e=>{ e.preventDefault(); const inp=$('#rg-in'), v=inp.value.trim(); if(!v) return;
+      send({t:'guess', text:v}); vibe(15); guessLog.unshift(v); guessLog=guessLog.slice(0,5); inp.value=''; inp.focus();
+      $('#rg-log').innerHTML=guessLog.map(g=>`<span>${esc(g)}</span>`).join(''); };
+  }
+  function buildPad(box, word){
+    box.innerHTML=`<div class="rp-word"><small>ارسم:</small> <b>${esc(word)}</b></div>
+      <canvas class="rp-canvas" id="rp-canvas"></canvas>
+      <div class="rp-tools">${RCOL.map(c=>`<button class="rp-sw" style="--c:${c}" data-c="${c}" aria-label="لون"></button>`).join('')}<button class="rp-sw eraser" data-c="#FFFFFF" aria-label="ممحاة">${ic('broom')}</button></div>
+      <div class="rp-tools">${RSIZE.map((w,i)=>`<button class="rp-size" data-w="${w}" aria-label="حجم ${i+1}"><i style="--s:${6+i*7}px"></i></button>`).join('')}<button class="btn ghost small" id="rp-undo">${ic('back')} تراجع</button><button class="btn ghost small" id="rp-clear">${ic('trash')} مسح</button></div>
+      <p class="muted small center">ممنوع حروف وأرقام بالرسمة</p>`;
+    const cv=$('#rp-canvas'), ctx=cv.getContext('2d'), dpr=Math.min(2, window.devicePixelRatio||1);
+    const W=cv.clientWidth, H=Math.round(W*0.75); cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    const tool={ c:RCOL[0], w:RSIZE[1] }, strokes=[]; let curS=null, pend=[], flushT=0;
+    const dot=(s,from)=>{ ctx.strokeStyle=s.c; ctx.fillStyle=s.c; ctx.lineWidth=s.w*cv.width; ctx.lineCap='round'; ctx.lineJoin='round'; const p=s.p;
+      if(p.length===2){ ctx.beginPath(); ctx.arc(p[0]*cv.width,p[1]*cv.height,s.w*cv.width/2,0,Math.PI*2); ctx.fill(); return; }
+      ctx.beginPath(); ctx.moveTo(p[from]*cv.width,p[from+1]*cv.height); for(let i=from+2;i<p.length;i+=2) ctx.lineTo(p[i]*cv.width,p[i+1]*cv.height); ctx.stroke(); };
+    const redraw=()=>{ ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,cv.width,cv.height); strokes.forEach(s=>dot(s,0)); };
+    const flush=()=>{ flushT=0; if(curS && pend.length){ send({t:'stroke', id:curS.id, c:curS.c, w:curS.w, p:pend}); pend=[]; } };
+    const pt=e=>{ const r=cv.getBoundingClientRect(); return [ +Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)).toFixed(4), +Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)).toFixed(4) ]; };
+    cv.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){} const p=pt(e);
+      curS={ id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), c:tool.c, w:tool.w, p:[...p] }; strokes.push(curS); pend=[...p]; dot(curS,0); flush(); });
+    cv.addEventListener('pointermove',e=>{ if(!curS) return; e.preventDefault();
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      (evs.length?evs:[e]).forEach(ev=>{ const p=pt(ev), q=curS.p; if(Math.hypot(p[0]-q[q.length-2], p[1]-q[q.length-1])<0.003) return; const from=q.length-2; q.push(...p); pend.push(...p); dot(curS,from); });
+      if(!flushT) flushT=setTimeout(flush,45); });
+    const end=()=>{ if(!curS) return; clearTimeout(flushT); flush(); curS=null; };
+    cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+    const mark=()=>{ $$('#r-rasm [data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c===tool.c)); $$('#r-rasm [data-w]').forEach(b=>b.classList.toggle('on',+b.dataset.w===tool.w)); };
+    $$('#r-rasm [data-c]').forEach(b=>b.onclick=()=>{ tool.c=b.dataset.c; vibe(8); mark(); });
+    $$('#r-rasm [data-w]').forEach(b=>b.onclick=()=>{ tool.w=+b.dataset.w; vibe(8); mark(); });
+    $('#rp-undo').onclick=()=>{ if(!strokes.length) return; strokes.pop(); redraw(); send({t:'undo'}); vibe(10); };
+    $('#rp-clear').onclick=()=>{ strokes.length=0; redraw(); send({t:'clear'}); vibe(20); };
+    redraw(); mark();
+  }
+
   let showPhrase=false, lastPhrase=null;
   function renderCharade(ch){
     const box=$('#r-charade');

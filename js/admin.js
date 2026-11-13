@@ -9,7 +9,7 @@ const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;'
 const DATA = window.DAHOOM_DATA || {};
 const CFG = window.DAHOOM_FB || {};
 const DEMO = new URLSearchParams(location.search).has('demo');
-const KIND_AR = { q:'سؤال', c:'بدون كلام', t:'تحدي', l:'حروف', card:'بطاقة' };
+const KIND_AR = { q:'سؤال', c:'بدون كلام', t:'تحدي', l:'حروف', w:'رسم', card:'بطاقة' };
 const TIER_AR = { legendary:'حمراء', medium:'ذهبية', normal:'زرقاء', black:'سودا' };
 const PH_AR = { early:'بداية', mid:'وسط', late:'نهاية' };
 const DIFF_AR = { 1:'سهل', 2:'متوسط', 3:'صعب' };
@@ -24,6 +24,7 @@ const BANK = new Map();
 (DATA.charades||[]).forEach(x=>BANK.set('c:'+x.id,{ text:x.t, answer:'', d:x.d, tag:x.tag }));
 (DATA.challenges||[]).forEach(x=>{ const m=String(x.t).match(/^(.*?)\s*\(الجواب:\s*(.*?)\)\s*$/s); BANK.set('t:'+x.id,{ text:m?m[1]:x.t, answer:m?m[2]:'', d:x.d, tag:x.tag }); });
 (DATA.letters||[]).forEach(x=>BANK.set('l:'+x.id,{ text:x.q, answer:x.a, d:x.d||1, tag:x.l }));
+(DATA.words||[]).forEach(x=>BANK.set('w:'+x.id,{ text:x.w, answer:(x.alt||[]).join('، '), d:x.d, tag:x.tag }));
 (DATA.cards||[]).forEach(x=>BANK.set('card:'+x.id,{ text:`${x.name} — ${x.desc}`, answer:'', d:0, tag:TIER_AR[x.tier], card:x }));
 const CARD = id => (DATA.cards||[]).find(c=>c.id===id);
 
@@ -95,7 +96,7 @@ function renderReports(root){
   const list = reports.filter(r=>(ui.rStatus==='all' || (r.status||'open')===ui.rStatus) && (ui.rKind==='all' || r.kind===ui.rKind));
   const groups = groupReports(list);
   root.innerHTML = `<div class="ad-tools">${seg('rs',[['open','مفتوحة'],['done','انعدلت'],['ignored','متجاهلة'],['all','الكل']],ui.rStatus)}
-      ${seg('rk',[['all','الكل'],['q','أسئلة'],['c','تمثيل'],['t','تحديات'],['l','حروف'],['card','بطايق']],ui.rKind)}
+      ${seg('rk',[['all','الكل'],['q','أسئلة'],['c','تمثيل'],['t','تحديات'],['l','حروف'],['w','رسم'],['card','بطايق']],ui.rKind)}
       <button class="btn small" id="ad-copy">نسخ المفتوحة (عشان ترسلها لـClaude)</button></div>
     ${groups.length ? groups.map(gr=>{
       const now = BANK.get(gr.key) || {}, first = gr.list[0];
@@ -131,7 +132,7 @@ function renderReports(root){
 
 // ---------- الأسئلة والمحتوى ----------
 // نجاح الفريق صاحب الدور: سؤال (صح أو لحقها) · تمثيل (أحد خمّن) · تحدي (نجح) · حروف (أحد جاوب)
-const WIN = { q:r=>r==='ok'||r==='late', c:r=>r==='own'||r==='other', t:r=>r==='ok', l:r=>r==='ok' };
+const WIN = { q:r=>r==='ok'||r==='late', c:r=>r==='own'||r==='other', t:r=>r==='ok', l:r=>r==='ok', w:r=>r==='ok' };
 function itemStats(kind){
   const m = new Map();
   matches.forEach(x=>(x.items||[]).forEach(it=>{
@@ -158,11 +159,11 @@ function renderContent(root){
   // مصفوفة الصعوبة: نسبة النجاح لكل مستوى (المفروض تنزل من سهل لصعب)
   const byD = [1,2,3].map(d=>{ const l=all.filter(s=>s.d===d); const n=l.reduce((a,s)=>a+s.n,0), w=l.reduce((a,s)=>a+s.win,0); return { d, n, r:pct(w,n) }; });
   const tags = new Map(); all.forEach(s=>{ const t=tags.get(s.tag)||{ tag:s.tag, n:0, w:0 }; t.n+=s.n; t.w+=s.win; tags.set(s.tag,t); });
-  const bankCount = kind==='q'?(DATA.questions||[]).length : kind==='c'?(DATA.charades||[]).length : kind==='t'?(DATA.challenges||[]).length : (DATA.letters||[]).length;
+  const bankCount = kind==='q'?(DATA.questions||[]).length : kind==='c'?(DATA.charades||[]).length : kind==='t'?(DATA.challenges||[]).length : kind==='w'?(DATA.words||[]).length : (DATA.letters||[]).length;
   let rows = all.map(s=>({ ...s, rate:pct(s.win,s.n), flag:flagOf(s) }));
   if(ui.cFlag==='flag') rows = rows.filter(s=>s.flag); else rows = rows.filter(s=>s.n>=ui.cMin);
   rows.sort((a,b)=> (b.flag?1:0)-(a.flag?1:0) || b.n-a.n);
-  root.innerHTML = `<div class="ad-tools">${seg('ck',[['q','أسئلة'],['c','تمثيل'],['t','تحديات'],['l','حروف']],kind)}
+  root.innerHTML = `<div class="ad-tools">${seg('ck',[['q','أسئلة'],['c','تمثيل'],['t','تحديات'],['l','حروف'],['w','رسم']],kind)}
       ${seg('cf',[['flag','اللي يحتاج نظر'],['all','الكل']],ui.cFlag)}
       ${seg('cm',[[1,'من مرة'],[3,'3 مرات+'],[5,'5+']],ui.cMin)}</div>
     <div class="ad-grid3">
@@ -212,19 +213,20 @@ function renderCards(root){
 
 // ---------- اللاعبين ----------
 function renderPlayers(root){
-  const P = new Map(); const get = n => { const k=String(n||'').trim(); if(!P.has(k)) P.set(k,{ name:k, av:'', m:0, w:0, alf:0, kh:0, pts:0, acted:0, actedOk:0, first:0, ms:[] , last:null }); return P.get(k); };
+  const P = new Map(); const get = n => { const k=String(n||'').trim(); if(!P.has(k)) P.set(k,{ name:k, av:'', m:0, w:0, alf:0, kh:0, rs:0, pts:0, acted:0, actedOk:0, drew:0, drewOk:0, gOk:0, first:0, ms:[] , last:null }); return P.get(k); };
   matches.forEach(m=>{
-    (m.teams||[]).forEach(t=>(t.players||[]).forEach(p=>{ const s=get(p.name); s.m++; if(t.win) s.w++; if(m.game==='alf'){ s.alf++; s.pts+=t.score||0; } else s.kh++; if(!s.last || (m.at && m.at>s.last)){ s.last=m.at; s.av=p.av; } }));
-    (m.items||[]).forEach(it=>{ if(it.k==='c' && it.by){ const s=get(it.by); s.acted++; if(WIN.c(it.r)) s.actedOk++; } });
+    (m.teams||[]).forEach(t=>(t.players||[]).forEach(p=>{ const s=get(p.name); s.m++; if(t.win) s.w++; if(m.game==='alf'){ s.alf++; s.pts+=t.score||0; } else if(m.game==='rasm') s.rs++; else s.kh++; if(!s.last || (m.at && m.at>s.last)){ s.last=m.at; s.av=p.av; } }));
+    (m.items||[]).forEach(it=>{ if(it.k==='c' && it.by){ const s=get(it.by); s.acted++; if(WIN.c(it.r)) s.actedOk++; }
+      if(it.k==='w'){ if(it.by){ const s=get(it.by); s.drew++; if(it.r==='ok') s.drewOk++; } if(it.g) get(it.g).gOk++; } });
     (m.buzz||[]).forEach(b=>{ if(b.by){ const s=get(b.by); s.first++; if(b.ms!=null) s.ms.push(b.ms); } });
   });
   let rows = [...P.values()].filter(p=>p.name && p.m);
   const key = { matches:p=>p.m, wins:p=>p.w, rate:p=>p.m>=3?pct(p.w,p.m):-1, buzz:p=>p.first }[ui.pSort];
   rows.sort((a,b)=>key(b)-key(a));
   root.innerHTML = `<div class="ad-tools">${seg('ps',[['matches','الأكثر لعب'],['wins','الأكثر فوز'],['rate','نسبة الفوز'],['buzz','أسرع بز']],ui.pSort)}</div>
-    <div class="ad-card"><div class="ad-tablewrap"><table class="ad-table"><thead><tr><th>اللاعب</th><th>مباريات</th><th>فوز</th><th>نسبة الفوز</th><th>ألف نقطة / حروف</th><th>مثّل (نجح)</th><th>بز أول</th><th>متوسط سرعة البز</th><th>آخر لعب</th></tr></thead><tbody>
+    <div class="ad-card"><div class="ad-tablewrap"><table class="ad-table"><thead><tr><th>اللاعب</th><th>مباريات</th><th>فوز</th><th>نسبة الفوز</th><th>ألف / حروف / رسم</th><th>مثّل (نجح)</th><th>رسم (انعرف)</th><th>خمّن رسمات</th><th>بز أول</th><th>متوسط سرعة البز</th><th>آخر لعب</th></tr></thead><tbody>
       ${rows.map(p=>`<tr><td><span class="ad-pl">${p.av?`<img src="assets/avatars/${esc(p.av)}.webp" alt="">`:''}<b>${esc(p.name)}</b></span></td><td><bdi>${p.m}</bdi></td><td><bdi>${p.w}</bdi></td><td>${bar(pct(p.w,p.m))} ${fmtP(pct(p.w,p.m))}</td>
-        <td><bdi>${p.alf}</bdi> / <bdi>${p.kh}</bdi></td><td><bdi>${p.acted}</bdi> (<bdi>${p.actedOk}</bdi>)</td><td><bdi>${p.first}</bdi></td><td>${p.ms.length?`<bdi>${(p.ms.reduce((a,b)=>a+b,0)/p.ms.length/1000).toFixed(2)}</bdi> ث`:'—'}</td><td><small>${when(p.last)}</small></td></tr>`).join('') || '<tr><td colspan="9" class="muted">ما فيه لاعبين للحين</td></tr>'}
+        <td><bdi>${p.alf}</bdi> / <bdi>${p.kh}</bdi> / <bdi>${p.rs}</bdi></td><td><bdi>${p.acted}</bdi> (<bdi>${p.actedOk}</bdi>)</td><td><bdi>${p.drew}</bdi> (<bdi>${p.drewOk}</bdi>)</td><td><bdi>${p.gOk}</bdi></td><td><bdi>${p.first}</bdi></td><td>${p.ms.length?`<bdi>${(p.ms.reduce((a,b)=>a+b,0)/p.ms.length/1000).toFixed(2)}</bdi> ث`:'—'}</td><td><small>${when(p.last)}</small></td></tr>`).join('') || '<tr><td colspan="11" class="muted">ما فيه لاعبين للحين</td></tr>'}
     </tbody></table></div><p class="muted small">اللاعبين ينجمعون بالاسم — لو أحد كتب اسمه بأكثر من شكل بيطلع مرتين.</p></div>`;
   bindSeg(root,'ps',v=>ui.pSort=v);
 }
@@ -233,12 +235,12 @@ function renderPlayers(root){
 const R_AR = { ok:'صح', late:'لحقها', steal:'انسرق', fail:'ما أحد', own:'فريقه خمّن', other:'فريق ثاني خمّن', skip:'تخطّوه' };
 function renderMatches(root){
   root.innerHTML = matches.length ? matches.map((m,i)=>`<article class="ad-match">
-      <button class="ad-match-h" data-i="${i}"><span class="pill">${m.game==='alf'?'ألف نقطة':'خلية الحروف'}</span><span class="muted small">${when(m.at)}</span>
+      <button class="ad-match-h" data-i="${i}"><span class="pill">${m.game==='alf'?'ألف نقطة':m.game==='rasm'?'ارسم وخمّن':'خلية الحروف'}</span><span class="muted small">${when(m.at)}</span>
         <span class="ad-teams">${(m.teams||[]).map(t=>`<span class="${t.win?'ad-win':''}">${esc(t.name)} <bdi>${t.score}</bdi></span>`).join(' · ')}</span>
-        <span class="muted small"><bdi>${m.mins||0}</bdi> د · <bdi>${m.rounds||0}</bdi> ${m.game==='alf'?'لفة':'جولة'}</span></button>
+        <span class="muted small"><bdi>${m.mins||0}</bdi> د · <bdi>${m.rounds||0}</bdi> ${m.game==='khaliya'?'جولة':m.game==='rasm'?'جولات رسم':'لفة'}</span></button>
       ${ui.mOpen===i?`<div class="ad-match-b">
         ${(m.teams||[]).map(t=>`<div class="ad-line"><b>${t.rank}. ${esc(t.name)}</b><span class="muted">${(t.players||[]).map(p=>esc(p.name)).join('، ')||'—'}</span></div>`).join('')}
-        ${m.items&&m.items.length?`<div class="lbl mt-s">اللي انلعب</div><ol class="ad-items">${m.items.map(it=>`<li><span class="pill dim">${KIND_AR[it.k]||it.k} · ${DIFF_AR[it.d]||''}</span> ${esc((BANK.get(it.k+':'+it.id)||{}).text||it.x)} <b class="${WIN[it.k]&&WIN[it.k](it.r)?'ad-ok':'ad-no'}">${R_AR[it.r]||it.r}</b>${it.by?` <small class="muted">مثّلها ${esc(it.by)}</small>`:''}</li>`).join('')}</ol>`:''}
+        ${m.items&&m.items.length?`<div class="lbl mt-s">اللي انلعب</div><ol class="ad-items">${m.items.map(it=>`<li><span class="pill dim">${KIND_AR[it.k]||it.k} · ${DIFF_AR[it.d]||''}</span> ${esc((BANK.get(it.k+':'+it.id)||{}).text||it.x)} <b class="${WIN[it.k]&&WIN[it.k](it.r)?'ad-ok':'ad-no'}">${R_AR[it.r]||it.r}</b>${it.by?` <small class="muted">${it.k==='w'?'رسمها':'مثّلها'} ${esc(it.by)}</small>`:''}${it.g?` <small class="muted">· خمّنها ${esc(it.g)}</small>`:''}</li>`).join('')}</ol>`:''}
         ${m.cards&&m.cards.length?`<div class="lbl mt-s">البطايق اللي انلعبت</div><div class="row">${m.cards.map(c=>{ const k=CARD(c.id), t=(m.teams||[]).find(x=>x.id===c.team); return `<span class="pill dim">${esc(k?k.name:c.id)} — ${esc(t?t.name:'')} (لفة <bdi>${c.r}</bdi>)</span>`; }).join('')}</div>`:''}
         <div class="row mt-s"><button class="btn small ghost" data-del="${i}">حذف المباراة</button></div></div>`:''}
     </article>`).join('') : '<div class="ad-card"><p class="muted">ما فيه مباريات للحين — تنحفظ تلقائياً لما تخلص أي مباراة.</p></div>';

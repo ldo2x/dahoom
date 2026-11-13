@@ -66,6 +66,7 @@ window.DahoomNet = (function(){
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
+    if(H.msg && (d.t==='guess' || d.t==='stroke' || d.t==='undo' || d.t==='clear' || d.t==='rpick')) H.msg(c, d);
     if(d.t==='report'){ const ok = H.report ? H.report(c.teamId, c.pid, d) : false; try{ c.send({t:'notice', msg: ok ? 'وصل البلاغ — شكراً' : 'ما قدرنا نرسل البلاغ'}); }catch(e){} }
   }
   // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)
@@ -75,7 +76,7 @@ window.DahoomNet = (function(){
   const teamList = () => (H ? H.teams() : D.joinable()).map(t=>({ id:t.id, name:t.name, color:t.color,
     players:membersOf(t.id).map(p=>({name:p.name, avatar:p.avatar})), phones:phonesOf(t.id).length }));
   // وسط المباراة: ممنوع تغيير الفريق (قبلها وبعدها عادي)
-  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active');
+  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active');
   const homeTeamOf = pid => pid ? D.session.teams.find(t=>t.members.includes(pid)) : null;
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
