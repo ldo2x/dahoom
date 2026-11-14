@@ -17,7 +17,7 @@ window.DahoomFX = (function(){
     yasalam:'يا سلام', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
     copium:'بسيطة', seen:'طنّش', gacha:'ضربة حظ', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',
     swapTurn:'روح انت أول', roast:'طقطقة', bet:'أراهنك',
-    duelQ:'انزلي', duelBuzz:'وجه لوجه', duelAct:'تحدي الصمت',
+    duelQ:'انزلي', hamour:'الهامور', duelBuzz:'وجه لوجه', duelAct:'تحدي الصمت',
     capital:'رأس مال', bench:'برا!', brake:'على وين؟', finisher:'K.O.', haul:'زاد الطريق', comeback:'ما بقى شي',
   };
 

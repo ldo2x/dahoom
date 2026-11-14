@@ -624,7 +624,7 @@
     const t=cur();
     G.charade=null; logResult('fail');
     if(t.fx.benched) delete t.fx.benched;
-    t.lastGain = Math.max(0, t.score - t.turnStart);
+    t.lastGain = Math.max(0, t.score - t.turnStart); t.lastFail = t.lastGain<=0;
     { const o=ST(t); if(o){ o.bestTurn=Math.max(o.bestTurn,t.lastGain); if(t.lastGain>=200) moment(`${esc(t.name)} كسب ${t.lastGain} بدور واحد`, t); }
       if(G.stats) G.stats.series.push({ label:`اللفة ${G.round} — دور ${t.name}`, round:G.round, scores:Object.fromEntries(G.teams.map(x=>[x.id,x.score])) }); }
     delete t.fx.noCard;
@@ -694,7 +694,8 @@
     let r=Math.random()*tot; for(const [k,v] of Object.entries(w)){ if(r<v) return k; r-=v; } return 'normal';
   }
   function randomCard(tier){
-    let pool = DATA.cards.filter(c=>c.tier===(tier||weightedTier()));
+    const tr = tier||weightedTier();                 // الفئة تنختار مرة وحدة لكل سحبة
+    let pool = DATA.cards.filter(c=>c.tier===tr);
     if(!S.reactionsEnabled) pool = pool.filter(c=>c.kind!=='reaction');
     if(!pool.length) pool = DATA.cards.filter(c=>c.tier==='normal'&&c.kind!=='reaction');
     const ph=gamePhase(), w=c=> !c.phase ? 1 : c.phase===ph ? 2.2 : 0.7;
@@ -766,23 +767,32 @@
   }
   const notPlayedYet = t => G.order.slice(G.turn+1).map(i=>G.teams[i]).filter(x=>x!==t);
   function chooseTarget(t, c){
-    if(c.fx==='swapTurn'){ const l=notPlayedYet(t); if(!l.length){ toast('ما فيه فريق باقي له دور هاللفة'); return Promise.resolve(null); } return pickTeam(t,'روح انت أول — مين يلعب بدالك الحين؟', l); }
+    if(c.fx==='swapTurn'){ const l=notPlayedYet(t); if(!l.length) return Promise.resolve('none:ما فيه فريق باقي له دور هاللفة'); return pickTeam(t,'روح انت أول — مين يلعب بدالك الحين؟', l); }
     if(c.fx==='bet') return pickTeam(t,'أراهنك — على أي فريق تراهن؟', others(t));
-    if(c.fx==='bench'){ const l=others(t).filter(x=>x.players.length>=2); if(!l.length){ toast('ما فيه فريق فيه لاعبين أو أكثر'); return Promise.resolve(null); } return pickTeam(t,'خلك برا السالفة — أي فريق؟', l); }
+    if(c.fx==='bench'){ const l=others(t).filter(x=>x.players.length>=2); if(!l.length) return Promise.resolve('none:ما فيه فريق فيه لاعبين أو أكثر'); return pickTeam(t,'خلك برا السالفة — أي فريق؟', l); }
     if(c.kind==='duel') return pickTeam(t,`${esc(c.name)} — مين تتحدى؟`, others(t));
     return pickTeam(t,`${esc(c.name)} — اختار الفريق`, others(t));
+  }
+  // بطاقة انلعبت وشرطها مو متحقق: تنحرق على صاحبها وتنحسب بطاقة الدور
+  function burnCard(t, idx, why){
+    const c=t.hand[idx]; if(!c) return;
+    t.playedCard=true; t.hand.splice(idx,1);
+    G.log.cards.push({ id:c.id, as:null, team:t.id, r:G.round, ph:gamePhase(), s:t.score, lead:leader().score, tgt:null, burned:1 });
+    play('fx_deny',{volume:.6}); toast(`انحرقت "${c.name}": ${why}`, 3600);
+    renderBoard(); turnIntro();
   }
   async function playCard(t, idx){
     if(!canPlayCard(t)){ toast(t.fx.noCard?'ولا كلمة: ممنوع بطاقات هالدور':'بطاقة وحدة بس كل دور'); return; }
     const c=t.hand[idx];
     let real=c, target=null;
-    if(c.fx==='copy'){ real=G.lastCard; if(!real){ toast('ما انلعبت بطاقة قبل — ما فيه شي تنسخه'); return; } }
+    if(c.fx==='copy'){ real=G.lastCard; if(!real) return burnCard(t, idx, 'ما انلعبت بطاقة قبل'); }
     if(real.target){
       if(real.target==='choose'){ target=await chooseTarget(t,real); if(!target) return;
+        if(typeof target==='string') return burnCard(t, idx, target.slice(5));
         if(real.fx==='bench'){ const pid=await decide(t,{ title:`مين من ${esc(target.name)} يطلع برا السالفة؟`, options:target.players.map(p=>({v:p.id,label:p.name})), cancel:'تراجع' }); if(!pid) return; G.benchPick={teamId:target.id, pid}; } }
       else {
         target=targetOf(t,real);
-        if(!target){ toast(real.target==='leader'?'انت المتصدر — ما تقدر تلعبها على نفسك':'ما فيه فريق تنزل عليه'); return; }
+        if(!target){ if(real.target==='leader') return burnCard(t, idx, 'انت المتصدر'); toast('ما فيه فريق تنزل عليه'); return; }
         const ok = await decide(t,{ title:`${esc(c.name)}${real!==c?` ← ${esc(real.name)}`:''} — بتنزل على <span class="who" style="--c:${target.color}">${esc(target.name)}</span>`, text:esc(real.desc), options:[{v:true,label:'نزّلها'}], cancel:'تراجع' });
         if(!ok) return;
       }
@@ -938,6 +948,7 @@
 
   // هجوم مع فرصة رد الفعل
   async function attack(src, tgt, c){
+    if(c.fx==='roast' && !tgt.lastFail){ play('fx_deny',{volume:.6}); return `انحرقت طقطقة: ${tgt.name} ما فشل بدوره الأخير`; }
     if(tgt.fx.immune!=null && c.fx!=='factcheck'){ play('meme:pipe',{volume:.6}); return `محد قدّ ${tgt.name} — ${c.name} ما أثرت`; }
     if(S.reactionsEnabled){
       const reacts = tgt.hand.filter(x=>x.kind==='reaction');
@@ -976,8 +987,8 @@
         const pp=pl.find(x=>x.id===pid)||rnd(pl); f.benched={pid:pp.id, name:pp.name}; return `${pp.name} من ${tgt.name} برا السالفة بدورهم الجاي`; }
       case 'brake': f.brake=G.round; return `على وين؟ ${tgt.name} ما يعدّي الهدف هاللفة`;
       case 'coal': f.coal=true; return `الجمرة بيد ${tgt.name}: ينجح تنتقل، يفشل تنفجر −150`;
-      case 'roast': { const a=Math.min(100,Math.max(0,tgt.score)); addScore(tgt,-a,{silent:true}); return `طقطقة على ${tgt.name}: −${a}`; }
-      case 'hamour': { const amt=Math.min(75, Math.max(0,tgt.score)); if(!amt) return `${tgt.name} ما عنده شي ينوخذ`; addScore(tgt,-amt,{silent:true}); addScore(src,amt); return `الهامور: ${src.name} أخذ ${amt} من ${tgt.name}`; }
+      case 'roast': { const a=Math.min(100,Math.max(0,tgt.score)); addScore(tgt,-a,{silent:true}); tgt.lastFail=false; return `طقطقة على ${tgt.name}: −${a}`; }
+      case 'hamour': { const amt=Math.min(150, Math.max(0,tgt.score)); if(!amt) return `${tgt.name} ما عنده شي ينوخذ`; addScore(tgt,-amt,{silent:true}); addScore(src,amt); return `الهامور: ${src.name} أخذ ${amt} من ${tgt.name}`; }
       case 'evilEye': f.evilEye=true; return `عين وصابت ${tgt.name}: نص نجاحه الجاي يطير`;
       case 'prank': { const b=randomCard('black'); if(tgt.hand.length>=S.handMax) tgt.hand.splice(Math.floor(Math.random()*tgt.hand.length),1); tgt.hand.push(b); return `مقلب! ${tgt.name} لقى "${b.name}" بيده`; }
       case 'snap': { const loss=Math.max(Math.min(250, r25(tgt.score*.25)), tgt.score>0?25:0); addScore(tgt,-loss,{silent:true}); play('meme:inevitable',{volume:.4});
@@ -1105,11 +1116,11 @@
       <p><b>بدون كلام:</b> واحد من الفريق يمثّل والباقين يخمّنون. نص للممثل ونص للي خمّن. ما أحد خمّن؟ ولا نقطة.</p>
       <p><b>التحديات:</b> نفّذ بالوقت المحدد. ما فيه سرقة.</p>
       <p>كل لفة الترتيب يتغير: الأعلى نقاط يبدأ.</p>
-      <p><b>البطاقات:</b> من اللفة ${S.noCardRounds+1} كل فريق يسحب بطاقة بداية دوره ويحتفظ لين ${S.handMax}. بطاقة وحدة بس كل دور. ${S.reactionsEnabled?'بطاقات رد الفعل تنلعب برا دورك لحظة ما أحد يهاجمك.':''}</p>
+      <p><b>البطاقات:</b> من اللفة ${S.noCardRounds+1} كل فريق يسحب بطاقة بداية دوره ويحتفظ لين ${S.handMax}. بطاقة وحدة بس كل دور. البطاقة اللي لها شرط وتلعبها وشرطها مو متحقق تنحرق وتنحسب بطاقة دورك. ${S.reactionsEnabled?'بطاقات رد الفعل تنلعب برا دورك لحظة ما أحد يهاجمك.':''}</p>
       <p><b>مراحل المباراة:</b> البداية (المتصدر تحت 35% من الهدف)، الوسط (لين 75%)، والنهاية. بطاقات كل مرحلة تنسحب أكثر بوقتها، وبعضها أقوى فيه — مثل "رأس مال" بالبداية و"الضربة القاضية" بالنهاية.</p>
       ${S.comebackEnabled?'<p><b>دفعة الرجعة:</b> لو متأخر 400 نقطة أو أكثر عن المتصدر، تسحب بطاقتين وتختار وحدة.</p>':''}
       ${S.endgameEnabled?`<p><b>الحسم:</b> أول ما فريق يوصل ${endgameAt()} نقطة: هو ما له أسئلة سهلة، ووقت السرقة للكل ينقص للنص.</p>`:''}
-      <p><b>بطاقات التحدي:</b> انزلي، وجه لوجه، تحدي الصمت — تتحدى فيها فريق ثاني، والفايز ياخذ الرهان من الخاسر.</p>
+      <p><b>بطاقات التحدي:</b> وجه لوجه وتحدي الصمت — تتحدى فيها فريق ثاني، والفايز ياخذ الرهان من الخاسر.</p>
       <p>المضيف هو الحكم: يقرر صح/غلط ويعدل النقاط يدويًا.</p>`;
   }
   function helpModal(){
