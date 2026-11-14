@@ -40,6 +40,7 @@ window.DahoomFX = (function(){
     if(!P.c){ P.c=document.createElement('canvas'); P.c.className='fx-canvas'; document.body.appendChild(P.c); P.x=P.c.getContext('2d'); }
     const dpr=Math.min(2,window.devicePixelRatio||1);
     if(P.c.width!==innerWidth*dpr){ P.c.width=innerWidth*dpr; P.c.height=innerHeight*dpr; P.x.setTransform(dpr,0,0,dpr,0,0); }
+    P.c.style.display='block';
     return P;
   }
   function burst(col, n){
@@ -60,7 +61,7 @@ window.DahoomFX = (function(){
     }
     x.globalAlpha=1;
     P.raf = P.list.length ? requestAnimationFrame(tick) : 0;
-    if(!P.raf) x.clearRect(0,0,innerWidth,innerHeight);
+    if(!P.raf){ x.clearRect(0,0,innerWidth,innerHeight); P.c.style.display='none'; }
   }
 
   let ON = true;

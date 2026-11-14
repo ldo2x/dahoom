@@ -508,7 +508,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .flash{position:fixed;inset:0;pointer-events:none;z-index:40;animation:flash .6s both;will-change:opacity}
 @keyframes flash{from{opacity:.4}to{opacity:0}}
 .flash.good{background:radial-gradient(circle,transparent 30%,var(--ok))}.flash.bad{background:radial-gradient(circle,transparent 30%,var(--bad))}.flash.steal{background:radial-gradient(circle,transparent 30%,var(--steal))}
-.confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:45}
+.confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:45;display:none}
 .fx-layer{position:fixed;inset:0;pointer-events:none;z-index:65;overflow:hidden;contain:strict}
 .fx-canvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:66}
 .fx-shaking{animation:bodyShake .45s;will-change:transform}

@@ -63,7 +63,14 @@ window.Dahoom = (function(){
   }
   const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n.replace(/^file:/,'')+'.mp3';
   function base(name){ if(!audio.cache[name]){ const a=new Audio(srcOf(name)); a.preload='auto'; audio.cache[name]=a; } return audio.cache[name]; }
-  Object.keys(ALIAS).map(resolve).filter(k=>k!=='syn'&&k!=='none').forEach(base);
+  // تجهيز الأصوات بالخلفية: بعد ما تخلص الصفحة تحميل، صوت ورا صوت — ما تزاحم الصفحة ولا تثقّل أول فتحة
+  const warm = [...new Set(['correct','wrong','tick','card','buzzer'].concat(Object.keys(ALIAS)).map(resolve))].filter(k=>k!=='syn'&&k!=='none');
+  function warmNext(){
+    const k=warm.shift(); if(!k) return;
+    const a=base(k); let done=false; const nx=()=>{ if(done) return; done=true; setTimeout(warmNext,120); };
+    a.addEventListener('canplaythrough',nx,{once:true}); a.addEventListener('error',nx,{once:true}); setTimeout(nx,5000);
+  }
+  if(document.readyState==='complete') setTimeout(warmNext,1500); else window.addEventListener('load',()=>setTimeout(warmNext,1500),{once:true});
   document.addEventListener('pointerdown', ()=>actx(), {once:true});
   // max: أقصى مدة بالملي ثانية (الميمز الطويلة تنقص)
   function play(name, {volume=1, loop=false, rate=1, max}={}){
@@ -125,20 +132,27 @@ window.Dahoom = (function(){
   const conf = { c:null, ctx:null, parts:[], raf:null };
   function confetti(n=160, ms=3500, cols=['#FF3D81','#38B6FF','#FFC23A','#2EE59D','#B07CFF','#F4EEFF']){
     if(!conf.c){ conf.c=$('#confetti'); conf.ctx=conf.c.getContext('2d'); }
-    const c=conf.c; c.width=innerWidth; c.height=innerHeight;
+    const c=conf.c; if(c.width!==innerWidth||c.height!==innerHeight){ c.width=innerWidth; c.height=innerHeight; } c.style.display='block';
     for(let i=0;i<n;i++) conf.parts.push({x:Math.random()*c.width,y:-20-Math.random()*200,w:6+Math.random()*8,h:10+Math.random()*12,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.3,vy:2+Math.random()*4,vx:(Math.random()-.5)*2,col:rnd(cols)});
     const end=Date.now()+ms;
     cancelAnimationFrame(conf.raf);
     (function tick(){
-      conf.ctx.clearRect(0,0,c.width,c.height);
-      conf.parts.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=p.vr;conf.ctx.save();conf.ctx.translate(p.x,p.y);conf.ctx.rotate(p.r);conf.ctx.fillStyle=p.col;conf.ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);conf.ctx.restore();});
-      conf.parts=conf.parts.filter(p=>p.y<c.height+30);
-      if(conf.parts.length && Date.now()<end+4000) conf.raf=requestAnimationFrame(tick); else conf.ctx.clearRect(0,0,c.width,c.height);
+      const x=conf.ctx, H=c.height+30, keep=[];
+      x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,c.width,c.height);
+      for(const p of conf.parts){
+        p.y+=p.vy; p.x+=p.vx; p.r+=p.vr; if(p.y>=H) continue; keep.push(p);
+        if(p.y<-30) continue;                                   // لسا فوق الشاشة — لا ترسمها
+        const co=Math.cos(p.r), si=Math.sin(p.r);
+        x.setTransform(co,si,-si,co,p.x,p.y); x.fillStyle=p.col; x.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      }
+      conf.parts=keep;
+      if(keep.length && Date.now()<end+4000) conf.raf=requestAnimationFrame(tick);
+      else { conf.parts=[]; x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,c.width,c.height); c.style.display='none'; }  // مخفي وهو فاضي — ما يكلف المتصفح شي
     })();
   }
 
   // ---------- الميمز ----------
-  const memeSrc = x => /^(https?:|data:|\.|\/|assets\/)/.test(x) ? x : (/\.webp$/i.test(x) ? 'assets/memes/'+x : 'assets/gif/'+(/\.\w+$/.test(x)?x:x+'.gif'));
+  const memeSrc = x => /^(https?:|data:|\.|\/|assets\/)/.test(x) ? x : (/\.webp$/i.test(x) ? 'assets/memes/'+x : 'assets/gif/'+(/\.\w+$/.test(x)?x:x+'.webp'));
   const FALLBACK = { correct:['celebrate_0','win_3'], wrong:['wrong_0','facepalm_1'], steal:['steal_1'], think:['think_0'], win:['win_2'] };
   const M = () => (window.DAHOOM_DATA && window.DAHOOM_DATA.memes) || {};
   let reactOn = true;
@@ -152,7 +166,7 @@ window.Dahoom = (function(){
     $$('.reaction').forEach(r=>r.remove());
     const fb = rnd(FALLBACK[typeof kind==='string'?kind:'correct'] || ['card_0']);
     const d=document.createElement('div'); d.className='reaction';
-    d.innerHTML=`<img src="${memeSrc(rnd(list))}" alt="" onerror="this.onerror=null;this.src='${memeSrc(fb)}'">${cap?`<div class="cap">${esc(cap)}</div>`:''}`;
+    d.innerHTML=`<img src="${memeSrc(rnd(list))}" alt="" decoding="async" onerror="this.onerror=null;this.src='${memeSrc(fb)}'">${cap?`<div class="cap">${esc(cap)}</div>`:''}`;
     document.body.appendChild(d);
     setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); }, ms);
   }
@@ -214,7 +228,7 @@ window.Dahoom = (function(){
     const cw=$('#p-colors'); cw.innerHTML='';
     COLORS.forEach(c=>{ const b=document.createElement('button'); b.style.background=c; b.className=c===pick.color?'sel':''; b.setAttribute('aria-label','لون '+c); b.onclick=()=>{pick.color=c; renderPickers(); play('tick',{volume:.4});}; cw.appendChild(b); });
     const aw=$('#p-avatars'); aw.innerHTML='';
-    AVATARS.forEach(a=>{ const b=document.createElement('button'); b.className=a===pick.avatar?'sel':''; b.style.background=pick.color+'40'; b.innerHTML=`<img src="${avatarSrc(a)}" alt="${a}">`; b.onclick=()=>{pick.avatar=a; renderPickers(); play('pop',{volume:.4});}; aw.appendChild(b); });
+    AVATARS.forEach(a=>{ const b=document.createElement('button'); b.className=a===pick.avatar?'sel':''; b.style.background=pick.color+'40'; b.innerHTML=`<img src="${avatarSrc(a)}" alt="${a}" loading="lazy" decoding="async" width="96" height="96">`; b.onclick=()=>{pick.avatar=a; renderPickers(); play('pop',{volume:.4});}; aw.appendChild(b); });
   }
   // لاعب ينضم من جواله: يضاف (أو يتحدث) وينحط بفريقه
   function joinPlayer({pid, name, avatar, teamId}){
