@@ -98,7 +98,7 @@ window.DahoomNet = (function(){
   const teamList = () => (H ? H.teams() : D.joinable()).map(t=>({ id:t.id, name:t.name, color:t.color,
     players:membersOf(t.id).map(p=>({name:p.name, avatar:p.avatar})), phones:phonesOf(t.id).length }));
   // وسط المباراة: ممنوع تغيير الفريق (قبلها وبعدها عادي)
-  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active');
+  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active, #hawamir.active');
   const homeTeamOf = pid => pid ? D.session.teams.find(t=>t.members.includes(pid)) : null;
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);

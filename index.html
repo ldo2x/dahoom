@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/draw.css">
+<link rel="stylesheet" href="css/hawamir.css">
 </head>
 <body>
 
@@ -67,6 +68,16 @@
         <h3>خلية الحروف</h3>
         <p>شبكة سداسية، حرف في كل خلية، وسباق مين يوصل الطرف الثاني أول. 1800 سؤال بالحروف.</p>
         <div class="row"><span class="chip">فريقين بالضبط</span><span class="chip">اللي يبز أول يجاوب</span></div>
+      </div>
+    </article>
+    <article class="game-tile hm" id="card-hawamir" tabindex="0">
+      <div class="gt-art">
+        <div class="hm-logo"><span class="hm-logo-coins"><i></i><i></i><i></i></span><span>هوامير</span></div>
+      </div>
+      <div class="gt-body">
+        <h3>هوامير</h3>
+        <p>اشترِ أحياء ومطارات من الطائف لين نيوم، ابنِ وارفع الإيجار، وزايد وسوِّ صفقات. أغنى واحد لما يخلص الوقت يفوز.</p>
+        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">مزادات وصفقات</span><span class="chip">القرارات من الجوال</span></div>
       </div>
     </article>
     <article class="game-tile rs" id="card-rasm" tabindex="0">
@@ -365,6 +376,58 @@
 </section>
 
 <!-- ===== النتائج ===== -->
+<!-- ===== لعبة هوامير ===== -->
+<section id="hawamir-settings" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
+  </header>
+  <h1 class="page-title">إعدادات هوامير</h1>
+  <div class="settings-grid" id="hawamir-form">
+    <div class="panel stack">
+      <h3>المباراة</h3>
+      <label class="field">مدة المباراة
+        <select data-k="minutes"><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">60 دقيقة</option></select>
+      </label>
+      <label class="field">كاش البداية لكل لاعب
+        <select data-k="startCash"><option value="1000">1,000</option><option value="1500">1,500</option><option value="2000">2,000</option></select>
+      </label>
+      <label class="field">الراتب كل ما تمر على البداية
+        <select data-k="salary"><option value="100">100</option><option value="200">200</option><option value="300">300</option></select>
+      </label>
+    </div>
+    <div class="panel stack">
+      <h3>اللاعبين</h3>
+      <div id="hawamir-preview" class="row"></div>
+      <p class="muted small">كل لاعب لحاله. اللي داخل من جواله تجيه القرارات على جواله (شراء، مزايدة، صفقات)، واللي ما معه جوال يقرر من الشاشة.</p>
+    </div>
+  </div>
+  <div class="row center mt">
+    <button class="btn btn-hype big" id="btn-hawamir-start">ابدأ هوامير</button>
+  </div>
+</section>
+
+<section id="hawamir" class="screen wide">
+  <div class="roundbar">
+    <div class="brand small"><span class="brand-mark hm">هـ</span> هوامير</div>
+    <div class="row">
+      <span class="pill" id="hm-round">اللفة 1</span>
+      <span class="pill" id="hm-clock">45:00</span>
+      <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
+      <button class="btn ghost small" id="hm-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
+      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
+      <button class="btn ghost small" id="hm-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
+    </div>
+  </div>
+  <div class="hm-layout">
+    <div class="hm-board">
+      <div class="hm-tiles" id="hm-tiles"></div>
+      <div class="hm-center"><div id="hm-stage"></div><div id="hm-ask"></div></div>
+    </div>
+    <aside class="panel hm-side"><h3>الترتيب بالثروة</h3><div id="hm-players"></div></aside>
+  </div>
+</section>
+
 <section id="results" class="screen">
   <div class="results-in">
     <div class="eyebrow">انتهت المباراة</div>
@@ -392,6 +455,7 @@
 <script src="data/cards.js"></script>
 <script src="data/memes.js"></script>
 <script src="data/words.js"></script>
+<script src="data/hawamir.js"></script>
 <script src="data/letters-1.js"></script>
 <script src="data/letters-2.js"></script>
 <script src="data/letters-3.js"></script>
@@ -410,5 +474,6 @@
 <script src="js/draw.js"></script>
 <script src="js/khaliya.js"></script>
 <script src="js/rasm.js"></script>
+<script src="js/hawamir.js"></script>
 </body>
 </html>

@@ -1,0 +1,88 @@
+/* ===== لعبة هوامير =====
+   اللوحة: طريق دائري من 28 خانة حول ساحة بالنص فيها النرد والقرارات.
+   لون كل مدينة شريط فوق الخانة. العقار المملوك ياخذ إطار بلون مالكه.
+*/
+.hm .gt-art{background:#0E2A1E}
+.hm-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hm-logo>span:last-child{font-family:var(--display);font-size:2.6rem;color:#F7F4EF;line-height:1}
+.hm-logo-coins{display:flex;align-items:flex-end;gap:8px;height:74px}
+.hm-logo-coins i{display:block;width:34px;border-radius:6px 6px 2px 2px;background:var(--gold);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
+.hm-logo-coins i:nth-child(1){height:34px}.hm-logo-coins i:nth-child(2){height:54px;background:var(--ok)}.hm-logo-coins i:nth-child(3){height:74px}
+.brand-mark.hm{background:var(--ok)}
+
+.hm-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+.hm-board{position:relative;direction:ltr;aspect-ratio:16/9.4;container-type:inline-size}
+.hm-tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:.55cqw}
+.hm-center{position:absolute;left:10.6%;right:10.6%;top:17.6%;bottom:17.6%;direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2cqw;padding:1.2cqw;text-align:center;
+  border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);overflow:auto}
+
+.hm-tile{position:relative;direction:rtl;background:var(--surface);border:2px solid var(--line);border-radius:.9cqw;padding:1.15cqw .3cqw .25cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.1cqw;overflow:hidden;min-width:0;text-align:center}
+.hm-tile.owned{border-color:var(--own);box-shadow:inset 0 0 0 .18cqw var(--own)}
+.hm-tile.focus{outline:.35cqw solid var(--brand);outline-offset:.1cqw;z-index:2}
+.hm-band{position:absolute;inset:0 0 auto 0;height:.8cqw;background:var(--city)}
+.hm-name{font-weight:700;font-size:1.32cqw;line-height:1.2;color:var(--text)}
+.hm-price,.hm-rent{font-family:var(--num);font-weight:800;font-size:1.3cqw;color:var(--mute);line-height:1.1}
+.hm-rent{color:var(--text)}
+.hm-ticon{color:var(--mute);line-height:0}.hm-ticon .ic{width:1.7cqw;height:1.7cqw}
+.hm-tile.start{background:color-mix(in srgb,var(--ok) 16%,var(--surface))}
+.hm-tile.luck{background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
+.hm-tile.saher{background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
+.hm-tile.stocks{background:color-mix(in srgb,var(--info) 14%,var(--surface))}
+.hm-tile.auction{background:color-mix(in srgb,var(--steal) 14%,var(--surface))}
+.hm-lv{position:absolute;top:1.05cqw;inset-inline-start:.4cqw;display:flex;gap:.2cqw}
+.hm-lv i{width:.7cqw;height:.7cqw;border-radius:.15cqw;background:var(--own)}
+.hm-toks{margin-top:auto;display:flex;justify-content:center;flex-wrap:nowrap;gap:0;min-height:2.5cqw}
+.hm-toks .hm-tok+.hm-tok{margin-inline-start:-.7cqw}
+.hm-tiles .hm-tok{width:2.5cqw;height:2.5cqw;font-size:1.2cqw;border-width:.25cqw}
+.hm-tok{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:3px solid var(--c);background:var(--c);color:var(--ink);font-weight:700;font-size:.9rem;object-fit:cover;flex:none;vertical-align:middle}
+
+/* وسط اللوحة */
+#hm-stage{min-height:3.4cqw;display:grid;place-items:center}
+.hm-msg{font-size:clamp(1.05rem,1.9cqw,1.9rem);font-weight:700;line-height:1.5;display:flex;gap:.8cqw;align-items:center;justify-content:center;flex-wrap:wrap}
+.hm-msg.bad{color:var(--bad-ink)}
+.hm-dice{display:inline-flex;gap:.5cqw;direction:ltr}
+.hm-dice b{display:grid;place-items:center;width:3.4cqw;height:3.4cqw;min-width:38px;min-height:38px;border-radius:.6cqw;background:var(--text);color:var(--bg);font-family:var(--num);font-weight:900;font-size:clamp(1.3rem,2.2cqw,2.2rem)}
+.hm-luck{background:color-mix(in srgb,var(--gold) 18%,var(--surface));border:2px solid var(--gold);border-radius:var(--r-m);padding:1.2cqw 2.4cqw;max-width:80%}
+.hm-luck-t{font-family:var(--display);font-size:clamp(1.3rem,2.4cqw,2.4rem);line-height:1.35}
+#hm-ask{width:100%}
+.hm-q{display:flex;flex-direction:column;align-items:center;gap:.7cqw}
+.hm-q h3{font-size:clamp(1.15rem,2cqw,2rem);margin:0;line-height:1.35}
+.hm-q p{margin:0}
+.hm-q .eyebrow{display:flex;align-items:center;gap:8px;color:var(--text)}
+.hm-q .row{gap:8px;flex-wrap:wrap}
+.hm-auc-rows{display:grid;gap:6px;width:min(640px,100%)}
+.hm-auc-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-inline-start:5px solid var(--c);border-radius:var(--r-s);padding:5px 10px;text-align:start}
+.hm-auc-row b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-auc-row small{color:var(--mute);font-family:var(--num);font-weight:800}
+.hm-auc-row.off{opacity:.5}
+.hm-auc-row.top{border-color:var(--ok)}
+
+/* قائمة اللاعبين */
+.hm-side{padding:16px}
+.hm-side h3{margin:0 0 10px}
+#hm-players{display:grid;gap:8px}
+.hm-pl{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-inline-start:5px solid var(--c);border-radius:var(--r-s);padding:8px 10px}
+.hm-pl.turn{border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
+.hm-pl.out{opacity:.5}
+.hm-rk{font-family:var(--num);font-weight:900;color:var(--mute);width:1.1em;text-align:center}
+.hm-pn,.hm-pw{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.hm-pn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-pn small,.hm-pw small{color:var(--mute);font-size:.78rem;font-weight:600}
+.hm-pw{align-items:flex-end}
+.hm-pw b{font-family:var(--num);font-weight:900;font-size:1.25rem}
+.hm-dots{grid-column:1/-1;display:flex;gap:4px;flex-wrap:wrap;min-height:10px}
+.hm-dots i{width:14px;height:10px;border-radius:3px;background:var(--city)}
+
+/* جدول النتائج */
+.hm-table{display:grid;gap:4px;overflow:auto}
+.hm-tr{display:grid;grid-template-columns:1.4fr repeat(6,1fr);gap:8px;padding:6px 10px;border-radius:var(--r-xs);background:var(--surface-2);text-align:center;font-family:var(--num);font-weight:700;min-width:560px}
+.hm-tr span:first-child{text-align:start;font-family:var(--body)}
+.hm-th{background:transparent;color:var(--mute);font-family:var(--body);font-size:.85rem}
+
+@media (max-width:1100px){
+  .hm-layout{grid-template-columns:1fr}
+  #hm-players{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+}
+@media (max-width:700px){
+  .hm-name{font-size:1.5cqw}.hm-price,.hm-rent{font-size:1.4cqw}
+}

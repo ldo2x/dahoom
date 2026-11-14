@@ -156,7 +156,7 @@
     document.body.style.setProperty('--team', t.color);
     const m=me();
     $('#r-head').innerHTML=`${m&&m.avatar&&st.mode!=='solo'?`<button class="r-me" id="r-me"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
-      <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':'نقطة'}</small></span>
+      <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':'نقطة'}</small></span>
       ${S.myTurn?'<span class="r-turn">دوركم</span>':''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=openReg;
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
@@ -203,7 +203,8 @@
     // ارسم وخمّن: لوحة الرسم للرسام، ومربع التخمين للباقين
     const rs=$('#r-rasm'), isR = S.game==='rasm' && !done && !!S.rasm;
     rs.classList.toggle('hidden', !isR);
-    if(S.game==='rasm') b.style.display='none';
+    if(S.game==='rasm' || S.game==='hawamir') b.style.display='none';
+    { const bs=$('#r-buzz-sub'); if(bs) bs.style.display = S.game==='hawamir' ? 'none' : ''; }
     if(isR) renderRasm(S.rasm); else if(rs.dataset.key){ rs.innerHTML=''; rs.dataset.key=''; }
   }
   // ---------- ارسم وخمّن ----------
