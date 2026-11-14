@@ -21,7 +21,7 @@ window.DAHOOM_DATA.cards = [
     desc:'المتصدر يخسر ربع نقاطه (أقصى شي 250).' },
   { id:'R5', tier:'legendary', kind:'buff', fx:'extraTurn', name:'طقها والحقها', src:'قيمنق', snd:'game:c_gottagofast',
     desc:'تلعب دورين ورا بعض.' },
-  { id:'R6', phase:'late', tier:'legendary', kind:'attack', fx:'undo', target:'prev', name:'كأنك يا بو زيد ما غزيت', src:'سعودي', snd:'game:g_pacman',
+  { id:'R6', phase:'late', tier:'legendary', kind:'attack', fx:'undo', target:'prev', name:'كأنك يا بو زيد ما غزيت', src:'سعودي', snd:'meme:itsgone',
     desc:'اللي لعب قبلك تنمسح كل نقاط دوره الأخير.' },
 
   { id:'R7', tier:'legendary', phase:'late', kind:'buff', fx:'finisher', name:'الضربة القاضية', src:'رياضة', snd:'game:g_fatality',
@@ -33,7 +33,7 @@ window.DAHOOM_DATA.cards = [
   // ===== الذهبية (16) — قوية وتحتاج توقيت =====
   { id:'G1', tier:'medium', kind:'buff', fx:'reroll', name:'اصرمني', src:'سعودي', snd:'meme:sa_khalas',
     desc:'ما عجبك السؤال أو العبارة أو التحدي؟ بدّله مرة وحدة بهالدور.' },
-  { id:'G3', phase:'mid', tier:'medium', kind:'attack', fx:'harder', target:'next', name:'شد حيلك', src:'قيمنق', snd:'game:c_youdied',
+  { id:'G3', phase:'mid', tier:'medium', kind:'attack', fx:'harder', target:'next', name:'شد حيلك', src:'قيمنق', snd:'game:g_megalo',
     desc:'اللي بعدك تطلع له صعوبة أعلى بدرجة وبنفس السعر.' },
   { id:'G5', phase:'mid', tier:'medium', kind:'attack', fx:'ratio', target:'next', name:'نص نص', src:'سعودي', snd:'game:g_ding',
     desc:'أول نقاط يكسبها اللي بعدك تاخذ نصها (أقصى شي 150).' },
@@ -59,16 +59,16 @@ window.DAHOOM_DATA.cards = [
   { id:'G16', tier:'medium', kind:'chaos', fx:'copy', name:'نسخ لصق', src:'رياكشن', snd:'game:c_copy',
     desc:'تلعب آخر بطاقة انلعبت كأنها بطاقتك.' },
 
-  { id:'G17', tier:'medium', phase:'early', kind:'buff', fx:'capital', name:'رأس مال', src:'مواقف', snd:'meme:cash',
+  { id:'G17', tier:'medium', phase:'early', kind:'buff', fx:'capital', name:'رأس مال', src:'مواقف', snd:'meme:stonks',
     desc:'كل نجاح لكم لين آخر المباراة يزيد 25. العبها بدري.' },
   { id:'G18', tier:'medium', phase:'mid', kind:'attack', fx:'bench', target:'choose', name:'خلك برا السالفة', src:'أفلام', snd:'meme:sa_atla',
     desc:'تختار لاعب من فريق ثاني يجلس برا دور فريقه الجاي: لا يجاوب ولا يمثّل.' },
   { id:'G19', tier:'medium', phase:'late', kind:'attack', fx:'brake', target:'leader', name:'على وين؟', src:'أفلام', snd:'meme:sa_lysh',
     desc:'المتصدر ما يقدر يوصل الهدف هاللفة.' },
 
-  { id:'G20', tier:'medium', kind:'duel', fx:'duelBuzz', target:'choose', art:'whistle', name:'وجه لوجه', src:'تحدي', snd:'game:g_mgs',
+  { id:'G20', tier:'medium', kind:'duel', fx:'duelBuzz', target:'choose', art:'whistle', name:'وجه لوجه', src:'تحدي', snd:'game:g_fight',
     desc:'تتحدى فريق على سؤال واحد بالبز، وانت تحدد الرهان: 100 أو 200 أو 300. اللي يجاوب صح ياخذها من الثاني.' },
-  { id:'G21', tier:'medium', kind:'duel', fx:'duelAct', target:'choose', art:'masks', name:'تحدي الصمت', src:'تحدي', snd:'game:g_zelda',
+  { id:'G21', tier:'medium', kind:'duel', fx:'duelAct', target:'choose', art:'masks', name:'تحدي الصمت', src:'تحدي', snd:'meme:shhh',
     desc:'تتحدى فريق بالتمثيل: كل فريق يمثّل عبارة، والأسرع ياخذ 150 من الثاني.' },
 
   // ===== الزرقاء (18) — صغيرة بس تصنع الفرق =====
@@ -80,7 +80,7 @@ window.DAHOOM_DATA.cards = [
     desc:'تسحب بطاقتين وتختار وحدة.' },
   { id:'N6', phase:'mid', tier:'normal', kind:'attack', fx:'lag', target:'next', name:'النت فاصل', src:'مواقف', snd:'meme:winerror',
     desc:'اللي بعدك وقته بالنص بدوره الجاي.' },
-  { id:'N8', tier:'normal', kind:'buff', fx:'choose', name:'على كيفي', src:'تغريدة', snd:'meme:rizz',
+  { id:'N8', tier:'normal', kind:'buff', fx:'choose', name:'على كيفي', src:'تغريدة', snd:'meme:idowhatiwant',
     tweet:{ name:'مزاجي', handle:'@3la_kefi', text:'أنا أختار الخانة. ليش؟ على كيفي.', likes:'987' },
     desc:'تختار خانتك بنفسك هالدور.' },
   { id:'N11', tier:'normal', kind:'defense', fx:'cleanse', name:'رايق', src:'رياكشن', snd:'game:c_chillguy',
