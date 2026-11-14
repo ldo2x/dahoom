@@ -16,7 +16,7 @@ window.DAHOOM_DATA.cards = [
   { id:'R2', phase:'late', tier:'legendary', kind:'buff', fx:'x2next', name:'خلك ذيب', src:'أفلام', snd:'game:c_wolf',
     desc:'إذا نجحت بهالدور تاخذ النقاط دبل.' },
   { id:'R3', phase:'late', tier:'legendary', kind:'chaos', fx:'jackpot', name:'جاك بوت', src:'أنمي', snd:'game:c_hakari',
-    desc:'تنجح بهالدور: نقاط دبل. تفشل: تخسر نقاط السؤال.' },
+    desc:'تنجح بهالدور: نقاطك ×3. تفشل: تخسر نقاط السؤال.' },
   { id:'R4', phase:'late', tier:'legendary', kind:'attack', fx:'snap', target:'leader', name:'شلوطة تايم', src:'سعودي', snd:'game:g_punch',
     desc:'المتصدر يخسر ربع نقاطه (أقصى شي 250). إذا انت المتصدر تنحرق.' },
   { id:'R5', tier:'legendary', kind:'buff', fx:'extraTurn', name:'طقها والحقها', src:'قيمنق', snd:'game:c_gottagofast',
@@ -31,9 +31,9 @@ window.DAHOOM_DATA.cards = [
     desc:'تاخذ 150 نقطة من فريق تختاره.' },
 
   // ===== الذهبية (16) — قوية وتحتاج توقيت =====
-  { id:'G1', tier:'medium', kind:'buff', fx:'reroll', name:'اصرمني', src:'سعودي', snd:'meme:sa_khalas',
+  { id:'G1', tier:'normal', kind:'buff', fx:'reroll', name:'اصرمني', src:'سعودي', snd:'meme:sa_khalas',
     desc:'تبدّل سؤالك أو عبارتك أو تحديك مرة وحدة بهالدور.' },
-  { id:'G3', phase:'mid', tier:'medium', kind:'attack', fx:'harder', target:'next', name:'شد حيلك', src:'قيمنق', snd:'game:g_megalo',
+  { id:'G3', phase:'mid', tier:'normal', kind:'attack', fx:'harder', target:'next', name:'شد حيلك', src:'قيمنق', snd:'game:g_megalo',
     desc:'الفريق اللي بعدك ترتفع صعوبته درجة بنفس النقاط.' },
   { id:'G5', phase:'mid', tier:'medium', kind:'attack', fx:'ratio', target:'next', name:'نص نص', src:'سعودي', snd:'game:g_ding',
     desc:'تاخذ نص أول نقاط يكسبها الفريق اللي بعدك (أقصى شي 150).' },
@@ -67,7 +67,7 @@ window.DAHOOM_DATA.cards = [
     desc:'المتصدر ما يقدر يوصل الهدف هاللفة. إذا انت المتصدر تنحرق.' },
 
   { id:'G20', tier:'medium', kind:'duel', fx:'duelBuzz', target:'choose', art:'whistle', name:'وجه لوجه', src:'تحدي', snd:'game:g_fight',
-    desc:'تحدي بالبز على سؤال واحد ضد فريق تختاره. تحدد الرهان (100 أو 200 أو 300) والفايز ياخذه من الخاسر.' },
+    desc:'تحدي بالبز على سؤال واحد ضد فريق تختاره. تحدد الرهان (100 أو 150 أو 200) والفايز ياخذه من الخاسر.' },
   { id:'G21', tier:'medium', kind:'duel', fx:'duelAct', target:'choose', art:'masks', name:'تحدي الصمت', src:'تحدي', snd:'meme:shhh',
     desc:'تحدي تمثيل ضد فريق تختاره. الأسرع ياخذ 150 من الثاني.' },
 

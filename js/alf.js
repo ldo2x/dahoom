@@ -335,7 +335,7 @@
   function resolveSuccess(t, base, {hard=false, section}={}){
     const f=t.fx; let gain=base; const notes=[];
     if(f.x2next){ gain*=2; delete f.x2next; notes.push('خلك ذيب ×2'); }
-    if(f.jackpot){ gain*=2; delete f.jackpot; notes.push('جاك بوت: دبل'); reaction('jackpotWin',3000); memeSound('correct'); }
+    if(f.jackpot){ gain*=3; delete f.jackpot; notes.push('جاك بوت ×3'); reaction('jackpotWin',3000); memeSound('correct'); }
     if(f.nocap){ const b=hard?50:25; gain+=b; delete f.nocap; notes.push('من جد +'+b); }
     if(f.speedrun){ if(section==='q' && fracLeft()>=.5){ const b=r25(base*.5)||25; gain+=b; notes.push('تفحيط +'+b); } delete f.speedrun; }
     if(f.streak){ gain+=50; notes.push('مولّعة +50'); }
@@ -881,8 +881,8 @@
   }
   // وجه لوجه: سؤال واحد بالبز، الرهان يحدده صاحب البطاقة
   async function duelBuzz(t, x){
-    const stake = await decide(t,{ title:`وجه لوجه مع ${esc(x.name)} — كم الرهان؟`, options:[{v:100,label:'100 · سهل'},{v:200,label:'200 · متوسط'},{v:300,label:'300 · صعب'}] }) || 100;
-    const d=stake/100, item=duelItem('q', d);
+    const stake = await decide(t,{ title:`وجه لوجه مع ${esc(x.name)} — كم الرهان؟`, options:[{v:100,label:'100 · سهل'},{v:150,label:'150 · متوسط'},{v:200,label:'200 · صعب'}] }) || 100;
+    const d=({100:1,150:2,200:3})[stake]||1, item=duelItem('q', d);
     const A={team:t, color:t.color, label:t.name}, B={team:x, color:x.color, label:x.name};
     const m=duelModal(), box=m.querySelector('#du');
     const res = await new Promise(done=>{
@@ -1013,7 +1013,7 @@
     const f=t.fx;
     switch(c.fx){
       case 'x2next': f.x2next=true; return 'خلك ذيب: نجاحك بهالدور دبل';
-      case 'jackpot': f.jackpot=true; return 'جاك بوت: تنجح دبل، تفشل تخسر نفس النقاط';
+      case 'jackpot': f.jackpot=true; return 'جاك بوت: تنجح ×3، تفشل تخسر نقاط السؤال';
       case 'extraTurn': f.extraTurn=true; return 'طقها والحقها: لك دور ثاني بعد هذا';
       case 'reroll': f.reroll=(f.reroll||0)+1; return 'اصرمني: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
       case 'spoiler': f.spoiler=true; return 'سؤالك الجاي فيه سبويلر';
