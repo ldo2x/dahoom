@@ -46,7 +46,6 @@ window.DAHOOM_DATA.cards = [
   { id:'G9', tier:'medium', kind:'defense', fx:'immune', name:'محد قدّك', src:'سعودي', snd:'game:g_powerup',
     desc:'حصانة من كل الهجمات لين نهاية اللفة الجاية.' },
   { id:'G11', tier:'medium', kind:'buff', fx:'wasta', name:'الواسطة', src:'تغريدة', snd:'meme:sa_yasheikh',
-    tweet:{ name:'أبو واسطة', handle:'@wasta_master', text:'كيف وصلت؟ أعرف واحد يعرف واحد.', likes:'12.4K' },
     desc:'تختار خانتك، وتاخذ نقاط الصعوبة الأعلى (الصعب +100).' },
   { id:'G12', phase:'mid', tier:'medium', kind:'chaos', fx:'pot', name:'القطة', src:'مواقف', snd:'game:g_mariocoin',
     desc:'كل فريق يدفع 100. أول فريق ينجح ياخذ المبلغ كله.' },
@@ -66,11 +65,13 @@ window.DAHOOM_DATA.cards = [
   { id:'G19', tier:'medium', phase:'late', kind:'attack', fx:'brake', target:'leader', name:'على وين؟', src:'أفلام', snd:'meme:sa_lysh',
     desc:'المتصدر ما يقدر يوصل الهدف هاللفة. إذا انت المتصدر تنحرق.' },
 
-  { id:'G20', tier:'medium', kind:'duel', fx:'duelBuzz', target:'choose', art:'whistle', name:'وجه لوجه', src:'تحدي', snd:'game:g_fight',
+  { id:'G20', tier:'medium', kind:'duel', fx:'duelBuzz', target:'choose', name:'وجه لوجه', src:'تحدي', snd:'game:g_fight',
     desc:'تحدي بالبز على سؤال واحد ضد فريق تختاره. تحدد الرهان (100 أو 150 أو 200) والفايز ياخذه من الخاسر.' },
-  { id:'G21', tier:'medium', kind:'duel', fx:'duelAct', target:'choose', art:'masks', name:'تحدي الصمت', src:'تحدي', snd:'meme:shhh',
+  { id:'G21', tier:'medium', kind:'duel', fx:'duelAct', target:'choose', name:'تحدي الصمت', src:'تحدي', snd:'meme:shhh',
     desc:'تحدي تمثيل ضد فريق تختاره. الأسرع ياخذ 150 من الثاني.' },
 
+  { id:'G22', tier:'medium', kind:'buff', fx:'mc2', name:'حذف إجابتين', src:'مسابقات', snd:'game:g_fifty',
+    desc:'خانتك بهالدور أسئلة عامة، وسؤالك يجي بخيارين بس.' },
   // ===== الزرقاء (18) — صغيرة بس تصنع الفرق =====
   { id:'N1', phase:'early', tier:'normal', kind:'buff', fx:'streak', name:'مولّعة', src:'قيمنق', snd:'game:c_onfire',
     desc:'+50 الحين، و+50 على كل نجاح ورا بعض. تنتهي مع أول فشل.' },
@@ -81,7 +82,6 @@ window.DAHOOM_DATA.cards = [
   { id:'N6', phase:'mid', tier:'normal', kind:'attack', fx:'lag', target:'next', name:'النت فاصل', src:'مواقف', snd:'meme:winerror',
     desc:'الفريق اللي بعدك ينقص وقته للنص بدوره الجاي.' },
   { id:'N8', tier:'normal', kind:'buff', fx:'choose', name:'على كيفي', src:'تغريدة', snd:'meme:idowhatiwant',
-    tweet:{ name:'مزاجي', handle:'@3la_kefi', text:'أنا أختار الخانة. ليش؟ على كيفي.', likes:'987' },
     desc:'تختار خانتك بهالدور.' },
   { id:'N11', tier:'normal', kind:'defense', fx:'cleanse', name:'رايق', src:'رياكشن', snd:'game:c_chillguy',
     desc:'+50 ويزيل كل التأثيرات السلبية عنك.' },
@@ -96,13 +96,19 @@ window.DAHOOM_DATA.cards = [
   { id:'N17', phase:'mid', tier:'normal', kind:'attack', fx:'roast', target:'choose', name:'طقطقة', src:'سعودي', snd:'meme:sa_tagtaga',
     desc:'تختار فريق فشل بدوره الأخير ويخسر 100. إذا ما كان فاشل تنحرق.' },
   { id:'N18', phase:'mid', tier:'normal', kind:'chaos', fx:'bet', target:'choose', name:'أراهنك', src:'أفلام', snd:'meme:dun',
-    desc:'تتوقع فريق ينجح أو يفشل بدوره الجاي. صح: +100. غلط: −50.' },
+    desc:'تختار فريق وتتوقع: بينجح بدوره الجاي أو بيفشل. توقعك صح: +100. غلط: −50.' },
 
   { id:'N19', tier:'normal', phase:'early', kind:'chaos', fx:'haul', name:'زاد الطريق', src:'مواقف', snd:'game:g_oneup',
     desc:'تسحب بطاقتين.' },
   { id:'N20', tier:'normal', phase:'late', kind:'buff', fx:'comeback', name:'ما بقى شي', src:'رياكشن', snd:'game:g_ohmygod',
     desc:'إذا انتم الأخير: تاخذون ثلث الفرق مع المتصدر (50 إلى 250). غير كذا: +50.' },
 
+  { id:'N21', tier:'normal', kind:'buff', fx:'mc4', name:'عطني خيارات', src:'مسابقات', snd:'game:g_lifeline',
+    desc:'خانتك بهالدور أسئلة عامة، وسؤالك يجي بأربع خيارات.' },
+  { id:'N22', tier:'normal', kind:'defense', fx:'insure', name:'ضامنها', src:'مواقف', snd:'meme:phew',
+    desc:'أول عقوبة فشل عليك تنلغى (جاك بوت، هياط، الجمرة). تبقى معك لين تنستخدم.' },
+  { id:'N23', tier:'normal', kind:'defense', fx:'ambush', name:'كمين', src:'أفلام', snd:'meme:trap',
+    desc:'أول فريق يهاجمك يخسر 100، والهجوم يكمل. يبقى لين أحد يهاجمك.' },
   // ===== السودا (5) — شكلها بس =====
   { id:'K2', tier:'black', kind:'dud', fx:'none', name:'دق علي', src:'سعودي', snd:'game:c_nokia',
     desc:'الرقم المطلوب مغلق. ما تسوي شي.' },

@@ -221,7 +221,7 @@
 
   // مفاتيح الطاقات (تنمسح بفاكت تشيك) والضربات (تنمسح بتشل قاي)
   const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', extraTurn:'طقها والحقها', reroll:'اصرمني', spoiler:'وش السالفة', immune:'محد قدّك', streak:'مولّعة',
-    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'رأس مال', finisher:'الضربة القاضية' };
+    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'رأس مال', finisher:'الضربة القاضية', mc:'خيارات', insure:'ضامنها', ambush:'كمين' };
   const DEBUFFS = { harder:'شد حيلك', lag:'النت فاصل', ratioTo:'نص نص', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
 
   // ---------- العرض ----------
@@ -312,13 +312,14 @@
   const fracLeft = () => timerTotal ? (timerLeft+1)/timerTotal : 0;
 
   // ---------- المحتوى ----------
-  function pickContent(kind, diff, tagsKey){
+  function pickContent(kind, diff, tagsKey, only){
     const list = kind==='q'?DATA.questions: kind==='c'?DATA.charades: DATA.challenges;
     const solo = cur().players.length===1;
     const ok = x => x.d===diff && !(solo && x.tag==='تحديات جماعية');
     let pool = list.filter(x=>ok(x) && S[tagsKey][x.tag]!==false);
     if(!pool.length) pool = list.filter(ok);
     if(!pool.length) pool = list.filter(x=>x.d===diff);
+    if(only){ const p2=pool.filter(only); if(p2.length) pool=p2; }
     let fresh = S.noRepeat ? pool.filter(x=>!G.used[kind].has(x.id)) : pool;
     if(!fresh.length){ toast('خلص المحتوى الجديد لهالمستوى، بنعيد من الأول'); pool.forEach(x=>G.used[kind].delete(x.id)); fresh=pool; }
     const item=rnd(fresh); G.used[kind].add(item.id); used.save(G.used);
@@ -352,8 +353,10 @@
     { const o=ST(t); if(o && section){ o.tries[section]++; o.fails++; } }
     const f=t.fx; const notes=[];
     delete f.x2next; delete f.nocap; delete f.speedrun; delete f.flatBonus;
-    if(f.jackpot){ delete f.jackpot; addScore(t,-base,{silent:true,allowNegative:true}); notes.push(`جاك بوت: خسرت ${base}`); reaction('jackpotLose',2800); }
-    if(f.hayatFail){ delete f.hayatFail; addScore(t,-75,{silent:true}); notes.push('هياط −75'); }
+    const safe = f.insure && (f.jackpot || f.hayatFail || f.coal);
+    if(safe){ delete f.insure; f.safe=true; notes.push('ضامنها: ما خسرت شي'); play('game:g_powerup',{volume:.5,max:1500}); }
+    if(f.jackpot){ delete f.jackpot; if(!safe){ addScore(t,-base,{silent:true,allowNegative:true}); notes.push(`جاك بوت: خسرت ${base}`); reaction('jackpotLose',2800); } }
+    if(f.hayatFail){ delete f.hayatFail; if(!safe){ addScore(t,-75,{silent:true}); notes.push('هياط −75'); } }
     if(f.streak){ delete f.streak; notes.push('طفت المولّعة'); }
     if(f.copium){ delete f.copium; addScore(t,40); notes.push('بسيطة +40'); }
     announce(t, false);
@@ -408,7 +411,7 @@
   }
   function turnIntro(){
     const t=cur(); G.charade=null;
-    const npc = t.fx.npc, choose = t.fx.choose;
+    const npc = t.fx.npc, mc = !npc && t.fx.mc, choose = !mc && t.fx.choose;
     stage(`<div class="row center">${G.finalRound?'<span class="banner">اللفة الأخيرة — الحسم بنهايتها</span>':''}${inFinalStretch()?`<span class="banner">الحسم: وقت السرقة بالنص${inClimax(t)?' · وما لكم أسئلة سهلة':''}</span>`:''}${G.pot?`<span class="banner dim">${ic('coins')} القطة: ${G.pot} لأول واحد ينجح</span>`:''}</div>
       <div class="eyebrow">اللفة ${G.round} · مرحلة ${PHASE_AR[gamePhase()]}</div>
       ${t.fx.benched?`<span class="banner">${ic('cancel')} ${esc(t.fx.benched.name)} برا السالفة هالدور — ما يجاوب ولا يمثّل ولا يخمّن</span>`:''}
@@ -416,11 +419,11 @@
       <div class="row center">${t.players.map(p=>`<span class="pmini" style="--c:${p.color}"><img src="${D.avatarSrc(p.avatar)}" alt=""> ${esc(p.name)}</span>`).join('')}</div>
       ${fxTags(t)}
       <div class="row center mt-s">
-        ${npc? `<button class="btn btn-bad big" id="btn-roll">${ic('person')} تحديات بالغصب</button>` : choose ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} اختر خانتك</button>` : `<button class="btn btn-hype big pulse" id="btn-roll">${ic('dice')} اسحب الخانة</button>`}
+        ${npc? `<button class="btn btn-bad big" id="btn-roll">${ic('person')} تحديات بالغصب</button>` : mc ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} أسئلة عامة بـ${mc===2?'خيارين':'أربع خيارات'}</button>` : choose ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} اختر خانتك</button>` : `<button class="btn btn-hype big pulse" id="btn-roll">${ic('dice')} اسحب الخانة</button>`}
       </div>`);
     G.canPlayNow=true;
     renderHand(t, canPlayCard(t));
-    $('#btn-roll').onclick=()=>{ if(npc){ rollSection('t'); } else if(choose){ delete t.fx.choose; pickSection(); } else rollSection(); };
+    $('#btn-roll').onclick=()=>{ if(npc){ rollSection('t'); } else if(mc){ enterSection('q'); } else if(choose){ delete t.fx.choose; pickSection(); } else rollSection(); };
   }
   const canPlayCard = t => S.cardsEnabled && !t.playedCard && !t.fx.noCard;
 
@@ -468,12 +471,16 @@
   const head = (t, item, sec, d, p, priceD) => `${t.fx.benched?`<span class="fx-tag bad">${esc(t.fx.benched.name)} برا السالفة هالدور</span>`:''}<div class="row center"><span class="pill">${ic(SECTIONS[sec].icon)} ${esc(item.tag)}</span><span class="pill dim">${DIFF[d]} · ${p} نقطة</span>${lowerThird(t,'يلعب')}${priceD&&priceD!==d?`<span class="fx-tag bad">${DIFF[d]} بسعر ${DIFF[priceD]}</span>`:''}</div>`;
 
   // ---------- الأسئلة ----------
-  function runQuestion(t, d, item, {priceD, lag}={}){
-    item = item || pickContent('q', d, 'tagsQ'); logItem('q', item, d);
+  function runQuestion(t, d, item, {priceD, lag, mc}={}){
+    const CH = DATA.choices||{};
+    if(mc==null){ mc = t.fx.mc||0; delete t.fx.mc; }
+    item = item || pickContent('q', d, 'tagsQ', mc ? (x=>!!CH[x.id]) : null); logItem('q', item, d);
+    const ch = mc && CH[item.id];
+    const mcHTML = ch ? `<div class="mc-opts n${mc}">${shuffle(mc===2 ? ch.slice(0,2) : ch.slice(0,4)).map((o,i)=>`<span class="mc-opt"><b>${'أبجد'[i]}</b>${esc(o)}</span>`).join('')}</div>` : '';
     const p = pts(priceD||d), hard = d===3;
     const time = Math.max(3, lag ? Math.ceil(S.answerTime/2) : S.answerTime);
     stage(`${head(t,item,'q',d,p,priceD)}
-      <div class="qtext">${esc(item.q)}</div>
+      <div class="qtext">${esc(item.q)}</div>${mcHTML}
       ${timerHTML(time)}${timeupHTML}
       <div class="row center"><button class="btn small" id="btn-reveal">${ic('eye')} إظهار الإجابة</button>${t.fx.spoiler?`<button class="btn small btn-sky" id="btn-hint">${ic('eye')} سبويلر</button>`:''}${rerollBtn(t)}<button class="btn small ghost" id="btn-restart">${ic('stopwatch')} أعد الوقت</button></div>
       <div class="answer hidden" id="answer">${esc(item.a)}</div>
@@ -491,7 +498,7 @@
       const notes=resolveFail(t,p,'q'); const nt=notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:'';
       if(!timedOut){ play('wrong'); flash('bad'); reaction('wrong'); memeSound('wrong',{volume:.6}); }
       if(t.fx.lock){ delete t.fx.lock; return afterTurn(`ضاع السؤال${nt}. قفل الشات: ما أحد يسرق. الجواب: ${esc(item.a)}`); }
-      if(S.stealEnabled) stealPhase(t, item, p, {ownerCanAnswer:!!timedOut, note:nt});
+      if(S.stealEnabled) stealPhase(t, item, p, {ownerCanAnswer:!!timedOut, note:nt, mcHTML});
       else afterTurn(`ولا نقطة${nt}. الجواب: ${esc(item.a)}`);
     };
     startTimer(time, ()=>{ if(S.stealEnabled) finish(false,true); });
@@ -501,13 +508,13 @@
     $('#btn-ok').onclick=()=>finish(true);
     $('#btn-no').onclick=()=>finish(false);
     const hb=$('#btn-hint'); if(hb) hb.onclick=()=>{ const a=item.a.trim(); delete t.fx.spoiler; hb.outerHTML=`<span class="hint-box">أول حرف: "${esc(a[0])}" · ${a.split(/\s+/).length} كلمة</span>`; play('meme:sus',{volume:.5}); };
-    const rb=$('#btn-reroll'); if(rb) rb.onclick=()=>{ useReroll(t); runQuestion(t,d,null,{priceD,lag}); };
+    const rb=$('#btn-reroll'); if(rb) rb.onclick=()=>{ useReroll(t); runQuestion(t,d,null,{priceD,lag,mc}); };
   }
-  function stealPhase(t, item, p, {ownerCanAnswer=true, note=''}={}){
+  function stealPhase(t, item, p, {ownerCanAnswer=true, note='', mcHTML=''}={}){
     const cands = others(t).filter(x=>x.fx.noSteal==null);
     const stTime = inFinalStretch() ? Math.max(2, Math.round(S.stealTime/2)) : S.stealTime;
     stage(`<div class="big" style="color:var(--steal-ink)">وقت السرقة!</div>${inFinalStretch()?'<span class="banner">الحسم: وقت السرقة بالنص</span>':''}
-      <div class="qtext">${esc(item.q)}</div>${timerHTML(stTime,'steal')}${timeupHTML}
+      <div class="qtext">${esc(item.q)}</div>${mcHTML}${timerHTML(stTime,'steal')}${timeupHTML}
       <p class="muted">أي فريق يجاوب صح ياخذ ${stealPts(p)}. ${ownerCanAnswer? `${esc(t.name)} خلص وقته بدون ما يغلط — لو قالها صح ياخذ ${p} كاملة.` : `${esc(t.name)} غلط وراحت عليه.`}</p>
       <div class="row center">${ownerCanAnswer? `<button class="btn team" style="--c:${t.color}" data-owner>${ic('check')} ${esc(t.name)} (${p})</button>`:''}${cands.map(x=>`<button class="btn team" style="--c:${x.color}" data-steal="${x.id}">${ic('ninja')} ${esc(x.name)} (${x.fx.fullsteal!=null?p:stealPts(p)})</button>`).join('')}</div>
       ${cands.length?'':'<span class="fx-tag bad">ما فيه فريق يقدر يسرق</span>'}
@@ -635,8 +642,10 @@
     G.bets=(G.bets||[]).filter(b=>b.on!==t.id);
     if(t.fx.coal){ delete t.fx.coal;
       if(ok){ const n=G.order.length, i=G.order.indexOf(G.teams.indexOf(t)); const nx=G.teams[G.order[(i+1)%n]]; if(nx&&nx!==t){ nx.fx.coal=true; extra.push(`الجمرة انتقلت لـ ${esc(nx.name)}`); play('game:c_ticking',{volume:.5,max:1500}); } }
+      else if(t.fx.safe){ extra.push(`ضامنها: الجمرة طفت بيد ${esc(t.name)}`); }
       else { addScore(t,-150,{silent:true}); extra.push(`الجمرة انفجرت على ${esc(t.name)} −150`); moment(`الجمرة انفجرت على ${esc(t.name)} (−150)`, t); play('meme:boom',{volume:.9}); flash('bad'); }
     }
+    delete t.fx.safe;
     if(extra.length) msg += `<div class="fx-tags mt-s">${extra.map(x=>`<span class="fx-tag">${x}</span>`).join('')}</div>`;
     const reached = G.teams.find(x=>x.score>=S.target);
     let banner='';
@@ -948,6 +957,11 @@
 
   // هجوم مع فرصة رد الفعل
   async function attack(src, tgt, c){
+    let pre='';
+    if(tgt.fx.ambush && tgt!==src){ delete tgt.fx.ambush; const a=Math.min(100,Math.max(0,src.score)); addScore(src,-a,{silent:true}); play('meme:trap',{volume:.7}); pre=`كمين! ${src.name} خسر ${a}. `; }
+    return pre + await attack0(src, tgt, c);
+  }
+  async function attack0(src, tgt, c){
     if(c.fx==='roast' && !tgt.lastFail){ play('fx_deny',{volume:.6}); return `انحرقت طقطقة: ${tgt.name} ما فشل بدوره الأخير`; }
     if(tgt.fx.immune!=null && c.fx!=='factcheck'){ play('meme:pipe',{volume:.6}); return `محد قدّ ${tgt.name} — ${c.name} ما أثرت`; }
     if(S.reactionsEnabled){
@@ -1023,6 +1037,10 @@
       case 'copium': f.copium=true; return 'كوبيوم: لو فشلت تاخذ 40';
       case 'speedrun': f.speedrun=true; return 'سبيد رن: جاوب صح بنص الوقت الأول وخذ +50%';
       case 'choose': f.choose=true; return 'على كيفي: اختر خانتك';
+      case 'mc4': f.mc=4; return 'عطني خيارات: سؤالك بأربع خيارات';
+      case 'mc2': f.mc=2; return 'حذف إجابتين: سؤالك بخيارين بس';
+      case 'insure': f.insure=true; return 'ضامنها: أول عقوبة فشل عليكم تنلغى';
+      case 'ambush': f.ambush=true; return 'كمين: أول فريق يهاجمكم يخسر 100';
       case 'lock': f.lock=true; return 'قفل الشات: سؤالك الجاي ما ينسرق';
       case 'rizz': f.rizz=true; return 'رز: أول بدون كلام تشارك فيه نصيبك كامل';
       case 'fullsteal': f.fullsteal=G.round+1; return 'ببلاش: أول سرقة لك كاملة';
