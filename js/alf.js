@@ -354,9 +354,9 @@
     const f=t.fx; const notes=[];
     delete f.x2next; delete f.nocap; delete f.speedrun; delete f.flatBonus;
     const safe = f.insure && (f.jackpot || f.hayatFail || f.coal);
-    if(safe){ delete f.insure; f.safe=true; notes.push('ضامنها: ما خسرت شي'); play('game:g_powerup',{volume:.5,max:1500}); }
-    if(f.jackpot){ delete f.jackpot; if(!safe){ addScore(t,-base,{silent:true,allowNegative:true}); notes.push(`جاك بوت: خسرت ${base}`); reaction('jackpotLose',2800); } }
-    if(f.hayatFail){ delete f.hayatFail; if(!safe){ addScore(t,-75,{silent:true}); notes.push('هياط −75'); } }
+    if(safe){ delete f.insure; f.safe=true; notes.push('ضامنها: العقوبة بالنص'); play('meme:phew',{volume:.5,max:1500}); }
+    if(f.jackpot){ delete f.jackpot; const lose=safe?(r25(base/2)||25):base; addScore(t,-lose,{silent:true,allowNegative:true}); notes.push(`جاك بوت: خسرت ${lose}`); if(!safe) reaction('jackpotLose',2800); }
+    if(f.hayatFail){ delete f.hayatFail; const lose=safe?40:75; addScore(t,-lose,{silent:true}); notes.push('هياط −'+lose); }
     if(f.streak){ delete f.streak; notes.push('طفت المولّعة'); }
     if(f.copium){ delete f.copium; addScore(t,40); notes.push('بسيطة +40'); }
     announce(t, false);
@@ -411,7 +411,7 @@
   }
   function turnIntro(){
     const t=cur(); G.charade=null;
-    const npc = t.fx.npc, mc = !npc && t.fx.mc, choose = !mc && t.fx.choose;
+    const npc = t.fx.npc, choose = t.fx.choose;
     stage(`<div class="row center">${G.finalRound?'<span class="banner">اللفة الأخيرة — الحسم بنهايتها</span>':''}${inFinalStretch()?`<span class="banner">الحسم: وقت السرقة بالنص${inClimax(t)?' · وما لكم أسئلة سهلة':''}</span>`:''}${G.pot?`<span class="banner dim">${ic('coins')} القطة: ${G.pot} لأول واحد ينجح</span>`:''}</div>
       <div class="eyebrow">اللفة ${G.round} · مرحلة ${PHASE_AR[gamePhase()]}</div>
       ${t.fx.benched?`<span class="banner">${ic('cancel')} ${esc(t.fx.benched.name)} برا السالفة هالدور — ما يجاوب ولا يمثّل ولا يخمّن</span>`:''}
@@ -419,11 +419,11 @@
       <div class="row center">${t.players.map(p=>`<span class="pmini" style="--c:${p.color}"><img src="${D.avatarSrc(p.avatar)}" alt=""> ${esc(p.name)}</span>`).join('')}</div>
       ${fxTags(t)}
       <div class="row center mt-s">
-        ${npc? `<button class="btn btn-bad big" id="btn-roll">${ic('person')} تحديات بالغصب</button>` : mc ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} أسئلة عامة بـ${mc===2?'خيارين':'أربع خيارات'}</button>` : choose ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} اختر خانتك</button>` : `<button class="btn btn-hype big pulse" id="btn-roll">${ic('dice')} اسحب الخانة</button>`}
+        ${npc? `<button class="btn btn-bad big" id="btn-roll">${ic('person')} تحديات بالغصب</button>` : choose ? `<button class="btn btn-mint big" id="btn-roll">${ic('dice')} اختر خانتك</button>` : `<button class="btn btn-hype big pulse" id="btn-roll">${ic('dice')} اسحب الخانة</button>`}
       </div>`);
     G.canPlayNow=true;
     renderHand(t, canPlayCard(t));
-    $('#btn-roll').onclick=()=>{ if(npc){ rollSection('t'); } else if(mc){ enterSection('q'); } else if(choose){ delete t.fx.choose; pickSection(); } else rollSection(); };
+    $('#btn-roll').onclick=()=>{ if(npc){ rollSection('t'); } else if(choose){ delete t.fx.choose; pickSection(); } else rollSection(); };
   }
   const canPlayCard = t => S.cardsEnabled && !t.playedCard && !t.fx.noCard;
 
@@ -642,7 +642,7 @@
     G.bets=(G.bets||[]).filter(b=>b.on!==t.id);
     if(t.fx.coal){ delete t.fx.coal;
       if(ok){ const n=G.order.length, i=G.order.indexOf(G.teams.indexOf(t)); const nx=G.teams[G.order[(i+1)%n]]; if(nx&&nx!==t){ nx.fx.coal=true; extra.push(`الجمرة انتقلت لـ ${esc(nx.name)}`); play('game:c_ticking',{volume:.5,max:1500}); } }
-      else if(t.fx.safe){ extra.push(`ضامنها: الجمرة طفت بيد ${esc(t.name)}`); }
+      else if(t.fx.safe){ addScore(t,-75,{silent:true}); extra.push(`ضامنها: الجمرة انفجرت على ${esc(t.name)} بالنص −75`); play('meme:boom',{volume:.6}); }
       else { addScore(t,-150,{silent:true}); extra.push(`الجمرة انفجرت على ${esc(t.name)} −150`); moment(`الجمرة انفجرت على ${esc(t.name)} (−150)`, t); play('meme:boom',{volume:.9}); flash('bad'); }
     }
     delete t.fx.safe;
@@ -1026,6 +1026,12 @@
   async function applySelf(t, c){
     const f=t.fx;
     switch(c.fx){
+      case 'fakka': addScore(t,10); return 'فكّة: +10';
+      case 'coin': { const win=Math.random()<.5; addScore(t, win?50:-50, {silent:!win}); play(win?'coin':'fail',{volume:.6}); return win?'يا نصيب: طلعت لك +50':'يا نصيب: راحت عليك −50'; }
+      case 'stick': { const n=G.order.length, i=G.order.indexOf(G.teams.indexOf(t)); const nx=G.teams[G.order[(i+1)%n]];
+        if(!nx || nx===t) return 'لزقة: ما فيه أحد تلزق فيه';
+        if(nx.hand.length>=S.handMax) return `لزقة: يد ${nx.name} مليانة، طاحت بالأرض`;
+        nx.hand.push(c); return `لزقة: لزقت بيد ${nx.name}`; }
       case 'x2next': f.x2next=true; return 'خلك ذيب: نجاحك بهالدور دبل';
       case 'jackpot': f.jackpot=true; return 'جاك بوت: تنجح ×3، تفشل تخسر نقاط السؤال';
       case 'extraTurn': f.extraTurn=true; return 'طقها والحقها: لك دور ثاني بعد هذا';
@@ -1037,9 +1043,9 @@
       case 'copium': f.copium=true; return 'كوبيوم: لو فشلت تاخذ 40';
       case 'speedrun': f.speedrun=true; return 'سبيد رن: جاوب صح بنص الوقت الأول وخذ +50%';
       case 'choose': f.choose=true; return 'على كيفي: اختر خانتك';
-      case 'mc4': f.mc=4; return 'عطني خيارات: سؤالك بأربع خيارات';
-      case 'mc2': f.mc=2; return 'حذف إجابتين: سؤالك بخيارين بس';
-      case 'insure': f.insure=true; return 'ضامنها: أول عقوبة فشل عليكم تنلغى';
+      case 'mc4': f.mc=Math.min(f.mc||4,4); return 'عطني خيارات: أول سؤال عام يجيكم بأربع خيارات';
+      case 'mc2': f.mc=2; return 'حذف إجابتين: أول سؤال عام يجيكم بخيارين بس';
+      case 'insure': f.insure=true; return 'ضامنها: أول عقوبة فشل عليكم تنزل للنص';
       case 'ambush': f.ambush=true; return 'كمين: أول فريق يهاجمكم يخسر 100';
       case 'lock': f.lock=true; return 'قفل الشات: سؤالك الجاي ما ينسرق';
       case 'rizz': f.rizz=true; return 'رز: أول بدون كلام تشارك فيه نصيبك كامل';

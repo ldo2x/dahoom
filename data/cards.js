@@ -71,7 +71,7 @@ window.DAHOOM_DATA.cards = [
     desc:'تحدي تمثيل ضد فريق تختاره. الأسرع ياخذ 150 من الثاني.' },
 
   { id:'G22', tier:'medium', kind:'buff', fx:'mc2', name:'حذف إجابتين', src:'مسابقات', snd:'game:g_fifty',
-    desc:'خانتك بهالدور أسئلة عامة، وسؤالك يجي بخيارين بس.' },
+    desc:'أول سؤال عام يجيك يطلع بخيارين بس. تبقى معك لين يجيك سؤال عام.' },
   // ===== الزرقاء (18) — صغيرة بس تصنع الفرق =====
   { id:'N1', phase:'early', tier:'normal', kind:'buff', fx:'streak', name:'مولّعة', src:'قيمنق', snd:'game:c_onfire',
     desc:'+50 الحين، و+50 على كل نجاح ورا بعض. تنتهي مع أول فشل.' },
@@ -104,16 +104,24 @@ window.DAHOOM_DATA.cards = [
     desc:'إذا انتم الأخير: تاخذون ثلث الفرق مع المتصدر (50 إلى 250). غير كذا: +50.' },
 
   { id:'N21', tier:'normal', kind:'buff', fx:'mc4', name:'عطني خيارات', src:'مسابقات', snd:'game:g_lifeline',
-    desc:'خانتك بهالدور أسئلة عامة، وسؤالك يجي بأربع خيارات.' },
+    desc:'أول سؤال عام يجيك يطلع بأربع خيارات. تبقى معك لين يجيك سؤال عام.' },
   { id:'N22', tier:'normal', kind:'defense', fx:'insure', name:'ضامنها', src:'مواقف', snd:'meme:phew',
-    desc:'أول عقوبة فشل عليك تنلغى (جاك بوت، هياط، الجمرة). تبقى معك لين تنستخدم.' },
+    desc:'أول عقوبة فشل عليك تنزل للنص (جاك بوت، هياط، الجمرة). تبقى معك لين تنستخدم.' },
   { id:'N23', tier:'normal', kind:'defense', fx:'ambush', name:'كمين', src:'أفلام', snd:'meme:trap',
     desc:'أول فريق يهاجمك يخسر 100، والهجوم يكمل. يبقى لين أحد يهاجمك.' },
-  // ===== السودا (5) — شكلها بس =====
+  // ===== السودا (6) — ثلاث ما تسوي شي، وثلاث تسوي شي تافه =====
   { id:'K2', tier:'black', kind:'dud', fx:'none', name:'دق علي', src:'سعودي', snd:'game:c_nokia',
     desc:'الرقم المطلوب مغلق. ما تسوي شي.' },
   { id:'K3', tier:'black', kind:'dud', fx:'none', name:'توصي؟', src:'رياكشن', snd:'meme:sa_hala',
     desc:'يسألك توصي شي ويمشي. ما تسوي شي.' },
+  { id:'K4', tier:'black', kind:'dud', fx:'none', name:'شاحن مقطوع', src:'مواقف', snd:'meme:windowsshut',
+    desc:'يشحن إذا مسكته بزاوية معينة. ما تسوي شي.' },
+  { id:'K5', tier:'black', kind:'buff', fx:'fakka', name:'فكّة', src:'مواقف', snd:'game:g_mariocoin',
+    desc:'+10 نقاط. ايه، بس كذا.' },
+  { id:'K6', tier:'black', kind:'chaos', fx:'coin', name:'يا نصيب', src:'مواقف', snd:'game:g_suspense',
+    desc:'ترمي عملة: +50 أو −50.' },
+  { id:'K7', tier:'black', kind:'chaos', fx:'stick', name:'لزقة', src:'رياكشن', snd:'meme:bruh',
+    desc:'تنتقل ليد الفريق اللي بعدك وتصير مشكلته.' },
 ];
 
 window.DAHOOM_DATA.cardWeights = { legendary: 10, medium: 32, normal: 48, black: 10 };

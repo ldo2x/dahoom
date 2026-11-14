@@ -1,88 +1,189 @@
 /* ===== لعبة هوامير =====
-   اللوحة: طريق دائري من 28 خانة حول ساحة بالنص فيها النرد والقرارات.
-   لون كل مدينة شريط فوق الخانة. العقار المملوك ياخذ إطار بلون مالكه.
+   الفكرة: لوحة لعب حقيقية محطوطة على طاولة المجلس.
+   - الإطار: خشب غامق عليه شريط السدو (توقيع المنصة).
+   - الخانات: ورق عاجي مطبوع، فوق كل مدينة شريط بلون دولتها وعلمها.
+   - وسط اللوحة: جوخ بلون الخريطة، فيه النرد وصك العقار ولوحات اللاعبين.
+   اللوحة شكلها واحد بالوضع الليلي والنهاري لأنها غرض حقيقي، مو واجهة.
+   كل المقاسات بـ cqw (نسبة من عرض اللوحة) عشان تكبر وتصغر كقطعة وحدة.
 */
-.hm .gt-art{background:#0E2A1E}
-.hm-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:10px}
-.hm-logo>span:last-child{font-family:var(--display);font-size:2.6rem;color:#F7F4EF;line-height:1}
-.hm-logo-coins{display:flex;align-items:flex-end;gap:8px;height:74px}
-.hm-logo-coins i{display:block;width:34px;border-radius:6px 6px 2px 2px;background:var(--gold);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
-.hm-logo-coins i:nth-child(1){height:34px}.hm-logo-coins i:nth-child(2){height:54px;background:var(--ok)}.hm-logo-coins i:nth-child(3){height:74px}
-.brand-mark.hm{background:var(--ok)}
+:root{ --hm-paper:#F6EEDC; --hm-paper-2:#EADFC6; --hm-ink:#1B1915; --hm-ink-2:#5E5749; --hm-gold:#E3A43A; --hm-gold-2:#F4CF7A; --hm-wood:#1E1510; }
 
-.hm-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
-.hm-board{position:relative;direction:ltr;aspect-ratio:16/9.4;container-type:inline-size}
-.hm-tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:.55cqw}
-.hm-center{position:absolute;left:10.6%;right:10.6%;top:17.6%;bottom:17.6%;direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2cqw;padding:1.2cqw;text-align:center;
-  border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);overflow:auto}
+/* بلاطة اللعبة بالصفحة الرئيسية */
+.hm .gt-art{background:#0E3B2E;flex-direction:column}
+.hm .gt-art::before{content:'';position:absolute;inset:0;opacity:.09;background:var(--sadu-weave) 0 0/42px 42px}
+.hm-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px}
+.hm-logo-w{font-family:var(--display);font-size:3.4rem;color:var(--hm-gold-2);line-height:1}
+.hm-logo-deeds{display:flex;align-items:flex-end}
+.hm-logo-deeds i{display:block;width:62px;height:82px;border-radius:7px;background:var(--hm-paper);border-top:20px solid var(--g);box-shadow:0 8px 18px -8px rgba(0,0,0,.7);margin-inline:-7px}
+.hm-logo-deeds i:nth-child(1){transform:rotate(9deg) translateY(6px)}
+.hm-logo-deeds i:nth-child(2){transform:translateY(-4px);z-index:1}
+.hm-logo-deeds i:nth-child(3){transform:rotate(-9deg) translateY(6px)}
+.brand-mark.hm{background:var(--hm-gold);color:var(--hm-ink)}
 
-.hm-tile{position:relative;direction:rtl;background:var(--surface);border:2px solid var(--line);border-radius:.9cqw;padding:1.15cqw .3cqw .25cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.1cqw;overflow:hidden;min-width:0;text-align:center}
-.hm-tile.owned{border-color:var(--own);box-shadow:inset 0 0 0 .18cqw var(--own)}
-.hm-tile.focus{outline:.35cqw solid var(--brand);outline-offset:.1cqw;z-index:2}
-.hm-band{position:absolute;inset:0 0 auto 0;height:.8cqw;background:var(--city)}
-.hm-name{font-weight:700;font-size:1.32cqw;line-height:1.2;color:var(--text)}
-.hm-price,.hm-rent{font-family:var(--num);font-weight:800;font-size:1.3cqw;color:var(--mute);line-height:1.1}
-.hm-rent{color:var(--text)}
-.hm-ticon{color:var(--mute);line-height:0}.hm-ticon .ic{width:1.7cqw;height:1.7cqw}
-.hm-tile.start{background:color-mix(in srgb,var(--ok) 16%,var(--surface))}
-.hm-tile.luck{background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
-.hm-tile.saher{background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
-.hm-tile.stocks{background:color-mix(in srgb,var(--info) 14%,var(--surface))}
-.hm-tile.auction{background:color-mix(in srgb,var(--steal) 14%,var(--surface))}
-.hm-lv{position:absolute;top:1.05cqw;inset-inline-start:.4cqw;display:flex;gap:.2cqw}
-.hm-lv i{width:.7cqw;height:.7cqw;border-radius:.15cqw;background:var(--own)}
-.hm-toks{margin-top:auto;display:flex;justify-content:center;flex-wrap:nowrap;gap:0;min-height:2.5cqw}
-.hm-toks .hm-tok+.hm-tok{margin-inline-start:-.7cqw}
-.hm-tiles .hm-tok{width:2.5cqw;height:2.5cqw;font-size:1.2cqw;border-width:.25cqw}
-.hm-tok{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:3px solid var(--c);background:var(--c);color:var(--ink);font-weight:700;font-size:.9rem;object-fit:cover;flex:none;vertical-align:middle}
+/* ---------- الشاشة ---------- */
+#hawamir.screen{padding-bottom:18px}
+#hawamir .roundbar{margin-bottom:10px}
+.hm-board{position:relative;container-type:inline-size;aspect-ratio:16/9.3;width:100%;max-width:calc((100vh - 104px)*16/9.3);margin-inline:auto;
+  border-radius:1.5cqw;background:var(--hm-wood);box-shadow:0 2.2cqw 4cqw -2cqw rgba(0,0,0,.75), inset 0 0 0 .14cqw #3B2A1D;--felt:#0E3B2E;direction:ltr}
+/* شريط السدو حول اللوحة */
+.hm-board::before{content:'';position:absolute;inset:.32cqw;border-radius:1.25cqw;background:var(--sadu-band) 0 0/1.9cqw .83cqw;opacity:.9}
+.hm-tiles,.hm-toks{position:absolute;inset:1.3cqw}
+.hm-tiles{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));gap:.32cqw;padding:.32cqw;background:var(--hm-wood);border-radius:.6cqw}
+.hm-toks{pointer-events:none}
 
-/* وسط اللوحة */
-#hm-stage{min-height:3.4cqw;display:grid;place-items:center}
-.hm-msg{font-size:clamp(1.05rem,1.9cqw,1.9rem);font-weight:700;line-height:1.5;display:flex;gap:.8cqw;align-items:center;justify-content:center;flex-wrap:wrap}
-.hm-msg.bad{color:var(--bad-ink)}
-.hm-dice{display:inline-flex;gap:.5cqw;direction:ltr}
-.hm-dice b{display:grid;place-items:center;width:3.4cqw;height:3.4cqw;min-width:38px;min-height:38px;border-radius:.6cqw;background:var(--text);color:var(--bg);font-family:var(--num);font-weight:900;font-size:clamp(1.3rem,2.2cqw,2.2rem)}
-.hm-luck{background:color-mix(in srgb,var(--gold) 18%,var(--surface));border:2px solid var(--gold);border-radius:var(--r-m);padding:1.2cqw 2.4cqw;max-width:80%}
-.hm-luck-t{font-family:var(--display);font-size:clamp(1.3rem,2.4cqw,2.4rem);line-height:1.35}
-#hm-ask{width:100%}
-.hm-q{display:flex;flex-direction:column;align-items:center;gap:.7cqw}
-.hm-q h3{font-size:clamp(1.15rem,2cqw,2rem);margin:0;line-height:1.35}
-.hm-q p{margin:0}
-.hm-q .eyebrow{display:flex;align-items:center;gap:8px;color:var(--text)}
-.hm-q .row{gap:8px;flex-wrap:wrap}
-.hm-auc-rows{display:grid;gap:6px;width:min(640px,100%)}
-.hm-auc-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-inline-start:5px solid var(--c);border-radius:var(--r-s);padding:5px 10px;text-align:start}
-.hm-auc-row b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hm-auc-row small{color:var(--mute);font-family:var(--num);font-weight:800}
+/* ---------- الخانات ---------- */
+.hm-tile{position:relative;direction:rtl;background:var(--hm-paper);color:var(--hm-ink);border-radius:.45cqw;overflow:hidden;min-width:0;display:flex;flex-direction:column;text-align:center;
+  box-shadow:inset 0 -.22cqw 0 rgba(60,40,10,.13)}
+.hm-band{flex:none;height:1.75cqw;background:var(--g);color:#fff;display:flex;align-items:center;gap:.4cqw;padding:0 .4cqw;font-size:.88cqw;font-weight:700;line-height:1;white-space:nowrap}
+.hm-band em{font-style:normal;overflow:hidden;text-overflow:ellipsis;padding-top:.1cqw}
+.hm-flag{flex:none;width:1.25cqw;height:1.25cqw;border-radius:50%;object-fit:cover;box-shadow:0 0 0 .1cqw rgba(255,255,255,.85);display:inline-grid;place-items:center}
+.hm-flag.ltr{color:#fff;font-size:.8cqw;font-weight:700;box-shadow:0 0 0 .1cqw rgba(255,255,255,.85), inset 0 0 0 1cqw rgba(0,0,0,.25);padding-top:.1cqw}
+.hm-flag.air{box-shadow:none;color:#fff}.hm-flag.air .ic{width:1.15cqw;height:1.15cqw}
+.hm-body{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:.22cqw .25cqw 0}
+.hm-name{font-weight:700;font-size:1.12cqw;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-sub{font-family:var(--num);font-weight:800;font-size:1.18cqw;line-height:1.05;color:var(--hm-ink-2);letter-spacing:.01em}
+.hm-sub{display:inline-flex;align-items:baseline;gap:.25cqw}
+.hm-sub small{font-family:var(--body);font-size:.7cqw;font-weight:700;color:var(--hm-ink-2)}
+.hm-own{position:absolute;inset:auto 0 0 0;height:0;background:var(--own)}
+.hm-tile.owned{box-shadow:inset 0 0 0 .2cqw var(--own);background:color-mix(in srgb,var(--own) 16%,var(--hm-paper))}
+.hm-tile.owned .hm-own{height:.55cqw}
+.hm-tile.owned .hm-sub{color:var(--hm-ink)}
+.hm-bld{position:absolute;top:.17cqw;inset-inline-end:.22cqw;height:1.4cqw;display:none;align-items:center;gap:.1cqw;background:var(--hm-paper);color:var(--hm-ink);border-radius:.35cqw;padding:0 .25cqw;font-family:var(--num);font-weight:900;font-size:.95cqw;line-height:1}
+.hm-bld.on{display:inline-flex}
+.hm-bld .ic{width:1.1cqw;height:1.1cqw}
+.hm-bld.l4{background:var(--hm-gold-2);color:var(--hm-ink)}
+.hm-tile.focus{z-index:3;box-shadow:0 0 0 .32cqw var(--hm-gold-2), 0 .6cqw 1.4cqw rgba(0,0,0,.6);transform:scale(1.07);transition:transform .15s}
+.hm-tile.focus.owned{box-shadow:inset 0 0 0 .2cqw var(--own), 0 0 0 .32cqw var(--hm-gold-2), 0 .6cqw 1.4cqw rgba(0,0,0,.6)}
+/* الخانات الخاصة */
+.hm-tile.sp{align-items:center;justify-content:flex-start;gap:.05cqw;padding-top:.5cqw}
+.hm-spic{line-height:0;color:var(--hm-ink)}.hm-spic .ic{width:2cqw;height:2cqw}
+.hm-tile.luck{background:#F4D58A}
+.hm-tile.saher{background:#F0B4A8}
+.hm-tile.jet{background:#B5D6EE}
+.hm-tile.s-corner{background:var(--hm-ink);color:var(--hm-paper);box-shadow:inset 0 0 0 .14cqw var(--hm-gold)}
+.hm-tile.s-corner .hm-spic{color:var(--hm-gold-2)}
+.hm-tile.s-corner .hm-sub{color:var(--hm-gold-2)}
+.hm-tile.s-corner .hm-name{font-family:var(--display);font-weight:400;font-size:1.45cqw;padding-top:.15cqw}
+.hm-tile.start{background:var(--hm-gold);color:var(--hm-ink)}
+.hm-tile.start .hm-spic,.hm-tile.start .hm-sub{color:var(--hm-ink)}
+
+/* ---------- القطع ---------- */
+.hm-tok{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:3px solid var(--c);background:var(--c);color:var(--ink);font-weight:700;font-size:.9rem;flex:none;overflow:hidden;vertical-align:middle}
+.hm-tok img{width:100%;height:100%;object-fit:cover;display:block}
+.hm-toks .hm-tok{position:absolute;left:0;top:0;width:2.25cqw;height:2.25cqw;border-width:.24cqw;font-size:1.2cqw;box-shadow:0 .28cqw 0 rgba(0,0,0,.35), 0 .5cqw .8cqw rgba(0,0,0,.45);transition:transform .19s cubic-bezier(.3,.9,.4,1.25);will-change:transform}
+.hm-toks .hm-tok.me{outline:.22cqw solid var(--hm-gold-2);outline-offset:.12cqw}
+
+/* ---------- وسط اللوحة ---------- */
+.hm-center{grid-row:2/8;grid-column:2/12;direction:rtl;border-radius:.6cqw;position:relative;overflow:hidden;color:var(--hm-paper);
+  background:radial-gradient(120% 90% at 50% 40%, rgba(255,255,255,.07), transparent 60%), var(--felt);
+  box-shadow:inset 0 0 0 .1cqw rgba(0,0,0,.5), inset 0 0 0 .75cqw var(--felt), inset 0 0 0 .86cqw rgba(227,164,58,.55), inset 0 0 6cqw rgba(0,0,0,.45);
+  display:grid;grid-template-columns:minmax(0,1fr) 24.5cqw;gap:1.2cqw;padding:1.7cqw 1.8cqw}
+.hm-mid{min-width:0;min-height:0;display:flex;flex-direction:column;gap:.9cqw}
+.hm-head{display:flex;align-items:center;gap:.7cqw;flex-wrap:wrap}
+.hm-word{font-family:var(--display);font-size:2.9cqw;line-height:1;color:var(--hm-gold-2);padding-top:.3cqw}
+.hm-mapname{font-weight:700;font-size:1.05cqw;color:rgba(246,238,220,.75);margin-inline-end:auto;padding-top:.5cqw}
+.hm-chip{display:inline-flex;align-items:center;gap:.4cqw;background:rgba(0,0,0,.32);border-radius:99px;padding:.3cqw .9cqw;font-weight:700;font-size:1.05cqw;line-height:1.3;white-space:nowrap}
+.hm-chip.clock{font-family:var(--num);font-weight:800;font-size:1.3cqw;letter-spacing:.03em}
+.hm-chip.pot{background:var(--hm-gold);color:var(--hm-ink)}
+.hm-chip.pot b{font-family:var(--num);font-weight:900;font-size:1.3cqw}
+.hm-chip .ic{width:1.2cqw;height:1.2cqw}
+#hm-stage{min-height:5.2cqw;display:grid;place-items:center;text-align:center}
+.hm-msg{font-size:1.75cqw;font-weight:700;line-height:1.45;display:flex;gap:.9cqw;align-items:center;justify-content:center;flex-wrap:wrap}
+.hm-msg.bad{color:#FFB3A6}
+.hm-num{font-family:var(--num);font-weight:900;font-size:1.25em;letter-spacing:.01em;color:var(--hm-gold-2)}
+.hm-tag{display:inline-block;background:var(--hm-gold);color:var(--hm-ink);border-radius:.4cqw;padding:.1cqw .7cqw;font-size:1.05cqw;font-weight:700}
+.hm-tag.off{background:rgba(0,0,0,.3);color:rgba(246,238,220,.7)}
+/* النرد */
+.hm-dice{display:inline-flex;gap:.7cqw;direction:ltr}
+.hm-die{width:4.3cqw;height:4.3cqw;border-radius:.8cqw;background:#FFFDF6;box-shadow:inset 0 -.45cqw 0 #D9CDB2, 0 .5cqw .9cqw rgba(0,0,0,.45);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:.6cqw .6cqw .9cqw;gap:.1cqw}
+.hm-die i{border-radius:50%;margin:auto;width:.78cqw;height:.78cqw}
+.hm-die i.on{background:var(--hm-ink)}
+.hm-dice.roll .hm-die{animation:hmRoll .14s linear infinite}
+.hm-dice.roll .hm-die:nth-child(2){animation-direction:reverse}
+@keyframes hmRoll{0%{transform:rotate(-14deg) translateY(-.5cqw)}50%{transform:rotate(12deg) translateY(.2cqw)}100%{transform:rotate(-14deg) translateY(-.5cqw)}}
+/* بطاقة حظك */
+.hm-luck{background:var(--hm-paper);color:var(--hm-ink);border-radius:.9cqw;padding:1.1cqw 2.2cqw 1.3cqw;max-width:36cqw;transform:rotate(-1.5deg);box-shadow:0 .9cqw 1.8cqw -.6cqw rgba(0,0,0,.7);border-top:.9cqw solid var(--hm-gold);animation:hmDeal .3s cubic-bezier(.2,1.3,.4,1) both}
+.hm-luck small{display:inline-flex;align-items:center;gap:.35cqw;font-weight:700;font-size:1cqw;color:var(--hm-ink-2)}
+.hm-luck small .ic{width:1.2cqw;height:1.2cqw}
+.hm-luck-t{font-family:var(--display);font-size:2.2cqw;line-height:1.35}
+@keyframes hmDeal{from{opacity:0;transform:translateY(1.5cqw) rotate(4deg)}}
+/* السؤال والأزرار */
+#hm-ask{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.hm-q{display:flex;align-items:center;justify-content:center;gap:2cqw;width:100%}
+.hm-q-in{display:flex;flex-direction:column;align-items:center;gap:.8cqw;min-width:0;text-align:center}
+.hm-who{display:inline-flex;align-items:center;gap:.6cqw;font-weight:700;font-size:1.2cqw}
+.hm-who .hm-tok{width:2.3cqw;height:2.3cqw;border-width:.22cqw}
+.hm-who small{display:inline-flex;align-items:center;gap:.3cqw;font-weight:600;font-size:.95cqw;color:rgba(246,238,220,.7)}
+.hm-who .ic{width:1.3cqw;height:1.3cqw}
+.hm-q h3{font-family:var(--display);font-weight:400;font-size:2.3cqw;line-height:1.3;margin:0}
+.hm-q-t{margin:0;font-size:1.12cqw;color:rgba(246,238,220,.78);line-height:1.5}
+.hm-opts{display:flex;gap:.7cqw;flex-wrap:wrap;justify-content:center}
+.hm-opts.many .btn{font-size:1cqw;padding:.5cqw .9cqw}
+#hm-ask .btn{font-size:1.25cqw;padding:.65cqw 1.5cqw;border-radius:.8cqw}
+#hm-ask .btn.big{font-size:1.6cqw;padding:.85cqw 2.2cqw;border-radius:1cqw}
+#hm-ask .btn.small{font-size:1cqw;padding:.4cqw .9cqw;border-radius:.6cqw}
+#hm-ask .btn.ghost{color:var(--hm-paper);border-color:rgba(246,238,220,.4)}
+/* صك العقار */
+.hm-deed{flex:none;width:15.5cqw;background:var(--hm-paper);color:var(--hm-ink);border-radius:.8cqw;overflow:hidden;transform:rotate(-2deg);box-shadow:0 1cqw 2cqw -.7cqw rgba(0,0,0,.75);animation:hmDeal .3s cubic-bezier(.2,1.3,.4,1) both;text-align:center}
+.hm-deed-h{background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;gap:.5cqw;padding:.55cqw .6cqw .45cqw;font-weight:700;font-size:1.05cqw;line-height:1}
+.hm-deed-h .hm-flag{width:1.5cqw;height:1.5cqw}
+.hm-deed-n{font-family:var(--display);font-size:2cqw;line-height:1.2;padding:.5cqw .5cqw 0}
+.hm-deed-p{font-family:var(--num);font-weight:900;font-size:1.9cqw;line-height:1.1;color:#12693F}
+.hm-deed-r{margin:.4cqw .8cqw 0;border-top:.1cqw dashed rgba(27,25,21,.3);padding-top:.35cqw;display:grid;gap:.1cqw}
+.hm-deed-r div{display:flex;justify-content:space-between;align-items:center;font-size:.92cqw;font-weight:600;line-height:1.45}
+.hm-deed-r span{display:inline-flex;align-items:center;gap:.3cqw;color:var(--hm-ink-2)}
+.hm-deed-r .ic{width:1cqw;height:1cqw}
+.hm-deed-r b{font-family:var(--num);font-weight:800;font-size:1.08cqw}
+.hm-deed-f{background:var(--hm-paper-2);margin-top:.45cqw;padding:.3cqw;font-size:.85cqw;font-weight:600;color:var(--hm-ink-2)}
+.hm-deed:not(:has(.hm-deed-f)){padding-bottom:.7cqw}
+/* المزاد */
+.hm-auc-rows{display:grid;gap:.4cqw;width:100%;min-width:30cqw}
+.hm-auc-row{display:flex;align-items:center;gap:.6cqw;background:rgba(0,0,0,.28);border-inline-start:.4cqw solid var(--c);border-radius:.6cqw;padding:.35cqw .7cqw;text-align:start}
+.hm-auc-row .hm-tok{width:2cqw;height:2cqw;border-width:.2cqw}
+.hm-auc-row>b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.1cqw}
+.hm-auc-row small{font-family:var(--num);font-weight:800;font-size:1.1cqw;color:rgba(246,238,220,.75)}
 .hm-auc-row.off{opacity:.5}
-.hm-auc-row.top{border-color:var(--ok)}
+.hm-auc-row.top{background:rgba(227,164,58,.25)}
 
-/* قائمة اللاعبين */
-.hm-side{padding:16px}
-.hm-side h3{margin:0 0 10px}
-#hm-players{display:grid;gap:8px}
-.hm-pl{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-inline-start:5px solid var(--c);border-radius:var(--r-s);padding:8px 10px}
-.hm-pl.turn{border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
-.hm-pl.out{opacity:.5}
-.hm-rk{font-family:var(--num);font-weight:900;color:var(--mute);width:1.1em;text-align:center}
-.hm-pn,.hm-pw{display:flex;flex-direction:column;line-height:1.25;min-width:0}
-.hm-pn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hm-pn small,.hm-pw small{color:var(--mute);font-size:.78rem;font-weight:600}
-.hm-pw{align-items:flex-end}
-.hm-pw b{font-family:var(--num);font-weight:900;font-size:1.25rem}
-.hm-dots{grid-column:1/-1;display:flex;gap:4px;flex-wrap:wrap;min-height:10px}
-.hm-dots i{width:14px;height:10px;border-radius:3px;background:var(--city)}
+/* ---------- لوحات اللاعبين ---------- */
+.hm-side{min-width:0;min-height:0;display:flex}
+#hm-players{display:flex;flex-direction:column;gap:.55cqw;width:100%;justify-content:center}
+.hm-pl{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;column-gap:.6cqw;row-gap:.15cqw;background:var(--hm-paper);color:var(--hm-ink);border-radius:.7cqw;padding:.45cqw .7cqw .45cqw .6cqw;border-inline-start:.55cqw solid var(--c);box-shadow:0 .3cqw .6cqw -.2cqw rgba(0,0,0,.6);transition:transform .2s}
+.hm-pl .hm-tok{width:2.5cqw;height:2.5cqw;border-width:.22cqw}
+.hm-pl.turn{box-shadow:0 0 0 .26cqw var(--hm-gold-2), 0 .5cqw 1cqw -.2cqw rgba(0,0,0,.7);transform:translateX(-.5cqw)}
+.hm-pl.out{opacity:.45}
+.hm-pn,.hm-cash{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.hm-pn b{font-size:1.15cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:.3cqw}
+.hm-pn .ic{width:1cqw;height:1cqw;flex:none}
+.hm-pn small,.hm-cash small{color:var(--hm-ink-2);font-size:.82cqw;font-weight:600}
+.hm-pn small{font-family:var(--body);white-space:nowrap}
+.hm-cash{align-items:flex-end}
+.hm-cash b{font-family:var(--num);font-weight:900;font-size:1.6cqw;line-height:1;color:#12693F}
+.hm-rk{font-family:var(--num);font-weight:900;font-size:1.1cqw;width:1.7cqw;height:1.7cqw;border-radius:50%;background:var(--hm-ink);color:var(--hm-paper);display:grid;place-items:center}
+.hm-dots{grid-column:1/-1;display:flex;gap:.22cqw;flex-wrap:wrap;min-height:.6cqw}
+.hm-dots i{width:1cqw;height:.6cqw;border-radius:.15cqw;background:var(--g)}
+.hm-dots i.b{height:.9cqw;margin-top:-.3cqw;box-shadow:inset 0 .2cqw 0 var(--hm-gold)}
 
-/* جدول النتائج */
+/* ---------- الإعدادات: اختيار الخريطة ---------- */
+#hawamir-maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-bottom:20px}
+.hm-map{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:12px;padding:16px 16px 14px;border-radius:var(--r-l);background:var(--felt);color:#F6EEDC;position:relative;
+  box-shadow:inset 0 0 0 5px var(--felt), inset 0 0 0 6px rgba(227,164,58,.5), var(--shadow);transition:transform .15s}
+.hm-map:hover{transform:translate3d(0,-3px,0)}
+.hm-map:focus-visible{outline:3px solid var(--info);outline-offset:3px}
+.hm-map.on{box-shadow:inset 0 0 0 5px var(--felt), inset 0 0 0 6px rgba(227,164,58,.5), 0 0 0 4px var(--hm-gold-2)}
+.hm-map.on::after{content:'الخريطة المختارة';position:absolute;top:-12px;inset-inline-start:16px;background:var(--hm-gold-2);color:var(--hm-ink);font-weight:700;font-size:.8rem;border-radius:6px;padding:1px 10px}
+.hm-map-top{display:flex;flex-direction:column;gap:2px}
+.hm-map-top b{font-family:var(--display);font-weight:400;font-size:1.9rem;line-height:1.15;color:var(--hm-gold-2)}
+.hm-map-top small{font-size:.92rem;color:rgba(246,238,220,.8)}
+.hm-map-gs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.hm-map-g{display:flex;align-items:center;gap:6px;background:var(--hm-paper);color:var(--hm-ink);border-radius:6px;border-top:6px solid var(--g);padding:4px 6px;font-size:.8rem;font-weight:700;min-width:0}
+.hm-map-g em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-map-g .hm-flag{width:18px;height:18px;box-shadow:0 0 0 1px rgba(0,0,0,.2);font-size:11px}
+
+/* ---------- جدول النتائج ---------- */
 .hm-table{display:grid;gap:4px;overflow:auto}
 .hm-tr{display:grid;grid-template-columns:1.4fr repeat(6,1fr);gap:8px;padding:6px 10px;border-radius:var(--r-xs);background:var(--surface-2);text-align:center;font-family:var(--num);font-weight:700;min-width:560px}
 .hm-tr span:first-child{text-align:start;font-family:var(--body)}
 .hm-th{background:transparent;color:var(--mute);font-family:var(--body);font-size:.85rem}
 
-@media (max-width:1100px){
-  .hm-layout{grid-template-columns:1fr}
-  #hm-players{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-}
-@media (max-width:700px){
-  .hm-name{font-size:1.5cqw}.hm-price,.hm-rent{font-size:1.4cqw}
-}
+@media (prefers-reduced-motion:reduce){ .hm-toks .hm-tok,.hm-tile.focus,.hm-pl{transition:none} .hm-luck,.hm-deed{animation:none} .hm-dice.roll .hm-die{animation:none} }

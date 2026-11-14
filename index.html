@@ -50,7 +50,7 @@
       </div>
       <div class="gt-body">
         <h3>ألف نقطة</h3>
-        <p>أسئلة، تمثيل بدون كلام، تحديات… و42 بطاقة تقلب الطاولة، منها بطاقات تحدي فريق ضد فريق. أول فريق يوصل ألف يفوز.</p>
+        <p>أسئلة، تمثيل بدون كلام، تحديات… و50 بطاقة تقلب الطاولة، منها بطاقات تحدي فريق ضد فريق. أول فريق يوصل ألف يفوز.</p>
         <div class="row">
           <span class="chip">فرق أو أفراد</span><span class="chip">بطاقات هجوم ورد فعل</span><span class="chip">المضيف هو الحكم</span>
         </div>
@@ -72,12 +72,12 @@
     </article>
     <article class="game-tile hm" id="card-hawamir" tabindex="0">
       <div class="gt-art">
-        <div class="hm-logo"><span class="hm-logo-coins"><i></i><i></i><i></i></span><span>هوامير</span></div>
+        <div class="hm-logo"><span class="hm-logo-deeds"><i style="--g:#D9483B"></i><i style="--g:#E3A43A"></i><i style="--g:#2478C8"></i></span><span class="hm-logo-w">هوامير</span></div>
       </div>
       <div class="gt-body">
         <h3>هوامير</h3>
-        <p>اشترِ أحياء ومطارات من الطائف لين نيوم، ابنِ وارفع الإيجار، وزايد وسوِّ صفقات. أغنى واحد لما يخلص الوقت يفوز.</p>
-        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">مزادات وصفقات</span><span class="chip">القرارات من الجوال</span></div>
+        <p>لوحة عقار وتجارة: اجمع مدن الدولة كلها وابنِ فيها من بيت لين برج، وزايد وسوِّ صفقات. أغنى واحد لما يخلص الوقت يفوز.</p>
+        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">ثلاث خرائط</span><span class="chip">القرارات من الجوال</span></div>
       </div>
     </article>
     <article class="game-tile rs" id="card-rasm" tabindex="0">
@@ -108,7 +108,7 @@
         <p>بعد أول لفتين، كل فريق يسحب بطاقة بداية دوره. تقدر تخزّن لين 3 بطاقات، بس <b>تلعب وحدة بس كل دور</b>.</p>
         <p>فيه خمس أنواع: <b>هجوم</b> يضرب خصم محدد، <b>دفاع</b> يحميك، <b>دعم</b> يقويك، <b>فوضى</b> تخلط الأوراق، و<b>رد فعل</b> تنلعب برا دورك لحظة ما أحد يهاجمك.</p>
         <p>بعض البطاقات تحدد هدفها بنفسها (اللي قبلك، اللي بعدك، المتصدر)، وبعضها <b>تختار الهدف انت</b> — مثل طقطقة، خذ وهات، أراهنك، وروح انت أول.</p>
-        <p>السودا ما تسوي شي… بس <b>كل سودتين تقدر تدمجهم</b> وتطلع بطاقة زرقا عشوائية، أو ترميها على خصمك بـ"خذ وهات".</p>
+        <p>السودا أضعف البطاقات: نصها ما يسوي شي ونصها يسوي شي تافه… بس <b>كل سودتين تقدر تدمجهم</b> وتطلع بطاقة زرقا عشوائية، أو ترميها على خصمك بـ"خذ وهات".</p>
         <div class="tier-legend">
           <span class="tl legendary">حمراء · نادرة جدًا</span><span class="tl medium">ذهبية · قوية</span><span class="tl normal">زرقاء · كثيرة</span><span class="tl black">سودا · شكلها بس</span>
         </div>
@@ -383,17 +383,19 @@
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات هوامير</h1>
+  <h3 class="mt-s">اختر الخريطة</h3>
+  <div id="hawamir-maps" class="mt-s"></div>
   <div class="settings-grid" id="hawamir-form">
     <div class="panel stack">
       <h3>المباراة</h3>
       <label class="field">مدة المباراة
-        <select data-k="minutes"><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">60 دقيقة</option></select>
+        <select data-k="minutes"><option value="20">20 دقيقة</option><option value="30">30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">60 دقيقة</option><option value="90">90 دقيقة</option></select>
       </label>
       <label class="field">كاش البداية لكل لاعب
-        <select data-k="startCash"><option value="1000">1,000</option><option value="1500">1,500</option><option value="2000">2,000</option></select>
+        <select data-k="startCash"><option value="100000">100,000</option><option value="150000">150,000</option><option value="200000">200,000</option></select>
       </label>
       <label class="field">الراتب كل ما تمر على البداية
-        <select data-k="salary"><option value="100">100</option><option value="200">200</option><option value="300">300</option></select>
+        <select data-k="salary"><option value="10000">10,000</option><option value="20000">20,000</option><option value="30000">30,000</option></select>
       </label>
     </div>
     <div class="panel stack">
@@ -411,20 +413,29 @@
   <div class="roundbar">
     <div class="brand small"><span class="brand-mark hm">هـ</span> هوامير</div>
     <div class="row">
-      <span class="pill" id="hm-round">اللفة 1</span>
-      <span class="pill" id="hm-clock">45:00</span>
       <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
       <button class="btn ghost small" id="hm-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
       <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
       <button class="btn ghost small" id="hm-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
     </div>
   </div>
-  <div class="hm-layout">
-    <div class="hm-board">
-      <div class="hm-tiles" id="hm-tiles"></div>
-      <div class="hm-center"><div id="hm-stage"></div><div id="hm-ask"></div></div>
+  <div class="hm-board" id="hm-board">
+    <div class="hm-tiles" id="hm-tiles">
+      <div class="hm-center">
+        <div class="hm-mid">
+          <div class="hm-head">
+            <span class="hm-word">هوامير</span><span class="hm-mapname" id="hm-mapname"></span>
+            <span class="hm-chip" id="hm-round">اللفة 1</span>
+            <span class="hm-chip clock" id="hm-clock">45:00</span>
+            <span class="hm-chip pot"><i class="ic" style="--i:url(../assets/icons/hm-building-bank.svg)"></i> الصندوق <b id="hm-pot">0</b></span>
+          </div>
+          <div id="hm-stage"></div>
+          <div id="hm-ask"></div>
+        </div>
+        <aside class="hm-side"><div id="hm-players"></div></aside>
+      </div>
     </div>
-    <aside class="panel hm-side"><h3>الترتيب بالثروة</h3><div id="hm-players"></div></aside>
+    <div class="hm-toks" id="hm-toks"></div>
   </div>
 </section>
 

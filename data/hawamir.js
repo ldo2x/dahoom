@@ -1,64 +1,97 @@
-// لعبة هوامير — لوحة العقار وبطاقات الحظ
-// الخانات بالترتيب مع عقارب الساعة. t: start / prop / air / luck / saher / stocks / auction
+// لعبة هوامير — الخرائط واللوحة وبطاقات الحظ
+// اللوحة ثابتة لكل الخرائط (36 خانة): نفس الأسعار ونفس أماكن الخانات الخاصة، والخريطة تغيّر الدول والمدن بس.
+// كذا الموازنة وحدة مهما كانت الخريطة.
 window.DAHOOM_DATA = window.DAHOOM_DATA || {};
 window.DAHOOM_DATA.hawamir = {
-  cities: {
-    taif:   { name:'الطائف',  color:'#7CB342' },
-    abha:   { name:'أبها',    color:'#26A69A' },
-    khobar: { name:'الخبر',   color:'#29B6F6' },
-    jeddah: { name:'جدة',     color:'#FFB300' },
-    riyadh: { name:'الرياض',  color:'#EF5350' },
-    mega:   { name:'المشاريع الكبرى', color:'#AB47BC' },
-  },
-  tiles: [
-    { t:'start',  name:'البداية' },
-    { t:'prop', city:'taif',   name:'الشفا',        price:60 },
-    { t:'prop', city:'taif',   name:'الهدا',        price:60 },
-    { t:'luck',   name:'حظك' },
-    { t:'prop', city:'taif',   name:'الردف',        price:80 },
-    { t:'air',    name:'مطار أبها',   price:150 },
-    { t:'prop', city:'abha',   name:'السودة',       price:100 },
-    { t:'prop', city:'abha',   name:'المفتاحة',     price:100 },
-    { t:'saher',  name:'ساهر' },
-    { t:'prop', city:'abha',   name:'الحبلة',       price:120 },
-    { t:'prop', city:'khobar', name:'الكورنيش',     price:140 },
-    { t:'prop', city:'khobar', name:'الراكة',       price:140 },
-    { t:'air',    name:'مطار الدمام', price:150 },
-    { t:'prop', city:'khobar', name:'حي الشاطئ',    price:160 },
-    { t:'stocks', name:'سوق الأسهم' },
-    { t:'prop', city:'jeddah', name:'البلد',        price:180 },
-    { t:'prop', city:'jeddah', name:'الحمراء',      price:200 },
-    { t:'air',    name:'مطار جدة',    price:150 },
-    { t:'prop', city:'jeddah', name:'كورنيش جدة',   price:220 },
-    { t:'luck',   name:'حظك' },
-    { t:'prop', city:'riyadh', name:'العليا',       price:240 },
-    { t:'prop', city:'riyadh', name:'التحلية',      price:260 },
-    { t:'air',    name:'مطار الرياض', price:150 },
-    { t:'prop', city:'riyadh', name:'حطين',         price:280 },
-    { t:'auction',name:'مزاد' },
-    { t:'prop', city:'mega',   name:'العلا',        price:300 },
-    { t:'prop', city:'mega',   name:'القدية',       price:320 },
-    { t:'prop', city:'mega',   name:'نيوم',         price:400 },
+  // t: start / city (g رقم الدولة، k رقم المدينة فيها) / air مطار / co شركة / luck / saher / jet / stocks / pot / auction
+  layout: [
+    { t:'start' },
+    { t:'city', g:0, k:0 }, { t:'luck' }, { t:'city', g:0, k:1 }, { t:'city', g:0, k:2 }, { t:'air', k:0 },
+    { t:'city', g:1, k:0 }, { t:'saher' }, { t:'city', g:1, k:1 }, { t:'city', g:1, k:2 }, { t:'co', k:0 },
+    { t:'stocks' },
+    { t:'city', g:2, k:0 }, { t:'city', g:2, k:1 }, { t:'air', k:1 }, { t:'city', g:3, k:0 }, { t:'city', g:3, k:1 }, { t:'city', g:3, k:2 },
+    { t:'pot' },
+    { t:'city', g:4, k:0 }, { t:'luck' }, { t:'city', g:4, k:1 }, { t:'city', g:4, k:2 }, { t:'air', k:2 },
+    { t:'city', g:5, k:0 }, { t:'jet' }, { t:'city', g:5, k:1 }, { t:'city', g:5, k:2 }, { t:'co', k:1 },
+    { t:'auction' },
+    { t:'city', g:6, k:0 }, { t:'city', g:6, k:1 }, { t:'air', k:3 }, { t:'city', g:7, k:0 }, { t:'city', g:7, k:1 }, { t:'city', g:7, k:2 },
   ],
-  // إيجار المطارات حسب عدد المطارات اللي تملكها
-  airRent: [50, 100, 150, 250],
-  // بطاقات الحظ — k: نوع التأثير
+  // سعر كل مدينة حسب ترتيب الدولة على اللوحة (من الأرخص للأغلى)
+  prices: [ [6000,6000,8000], [10000,10000,12000], [14000,16000], [18000,18000,20000], [22000,22000,24000], [26000,26000,28000], [30000,32000], [35000,35000,40000] ],
+  // لون كل دولة حسب ترتيبها (ثابت بكل الخرائط)
+  colors: ['#1FA39A','#F0685A','#E0A526','#7B5BD6','#3A97E8','#D5489A','#2E9E5B','#15161F'],
+  airPrice: 20000,
+  airRent: [5000, 10000, 20000, 40000],          // حسب عدد المطارات اللي تملكها
+  seatBonus: 6000,                                // كاش زيادة لكل لاعب حسب ترتيبه بالدور (الأول 0، الثاني 6,000…)
+  coPrice: 15000,
+  coRent: [1000, 2500],                           // إيجار الشركة = مجموع النرد × هذا الرقم (شركة وحدة / الشركتين)
+  rentPct: 0.12,                                  // إيجار المدينة الفاضية من سعرها
+  setMult: 2,                                     // لو تملك الدولة كاملة بدون بناء
+  upMult: [5, 10, 16, 24],                        // مضاعف الإيجار لكل مستوى بناء
+  takeMult: 2,                                    // سعر الاستحواذ على عقار غيرك (مضاعف السعر)
+  upCostPct: 0.5,                                 // تكلفة كل مستوى من سعر المدينة
+  levels: [ { name:'بيت', icon:'hm-home' }, { name:'عمارة', icon:'hm-building' }, { name:'فندق', icon:'hm-building-community' }, { name:'برج', icon:'hm-building-skyscraper' } ],
+  names: { start:'البداية', luck:'حظك', saher:'ساهر', tax:'الضريبة', jet:'رحلة مجانية', stocks:'سوق الأسهم', pot:'الصندوق', auction:'المزاد' },
+  icons: { start:'star', luck:'hm-clover', saher:'hm-camera', tax:'hm-receipt-tax', jet:'hm-plane-departure', stocks:'hm-trending-up', pot:'hm-building-bank', auction:'hm-gavel', air:'hm-plane', co:'hm-building-factory-2' },
+
+  maps: [
+    { id:'arab', name:'جولة العرب', desc:'من الإسكندرية لين الرياض: ثمان دول عربية.', felt:'#0E3B2E',
+      groups: [
+        { name:'مصر',      flag:'eg', cities:['الإسكندرية','شرم الشيخ','القاهرة'] },
+        { name:'المغرب',   flag:'ma', cities:['طنجة','مراكش','الدار البيضاء'] },
+        { name:'البحرين',  flag:'bh', cities:['المحرق','المنامة'] },
+        { name:'عُمان',    flag:'om', cities:['نزوى','صلالة','مسقط'] },
+        { name:'قطر',      flag:'qa', cities:['الوكرة','لوسيل','الدوحة'] },
+        { name:'الإمارات', flag:'ae', cities:['الشارقة','أبوظبي','دبي'] },
+        { name:'الكويت',   flag:'kw', cities:['السالمية','مدينة الكويت'] },
+        { name:'السعودية', flag:'sa', cities:['الخبر','جدة','الرياض'] },
+      ],
+      airports: ['مطار القاهرة','مطار مسقط','مطار دبي','مطار الرياض'], companies: ['شركة النفط','شركة الطيران'] },
+    { id:'world', name:'حول العالم', desc:'من بانكوك لين نيويورك: ثمان دول من كل القارات.', felt:'#12324F',
+      groups: [
+        { name:'تايلاند',  flag:'th', cities:['شيانغ ماي','بوكيت','بانكوك'] },
+        { name:'تركيا',    flag:'tr', cities:['طرابزون','أنطاليا','إسطنبول'] },
+        { name:'البرازيل', flag:'br', cities:['ساو باولو','ريو'] },
+        { name:'إسبانيا',  flag:'es', cities:['ملقا','مدريد','برشلونة'] },
+        { name:'اليابان',  flag:'jp', cities:['كيوتو','أوساكا','طوكيو'] },
+        { name:'فرنسا',    flag:'fr', cities:['ليون','نيس','باريس'] },
+        { name:'بريطانيا', flag:'gb', cities:['مانشستر','لندن'] },
+        { name:'أمريكا',   flag:'us', cities:['ميامي','لوس أنجلوس','نيويورك'] },
+      ],
+      airports: ['مطار إسطنبول','مطار طوكيو','مطار باريس','مطار نيويورك'], companies: ['شركة التقنية','شركة السيارات'] },
+    { id:'ksa', name:'ديرتنا', desc:'مناطق السعودية من جازان لين مشاريع الرؤية.', felt:'#3A2415',
+      groups: [
+        { name:'جازان',        flag:null, cities:['أبو عريش','فرسان','جيزان'] },
+        { name:'عسير',         flag:null, cities:['النماص','خميس مشيط','أبها'] },
+        { name:'حائل',         flag:null, cities:['جبة','حائل'] },
+        { name:'القصيم',       flag:null, cities:['الرس','عنيزة','بريدة'] },
+        { name:'الشرقية',      flag:null, cities:['الأحساء','الدمام','الخبر'] },
+        { name:'الغربية',      flag:null, cities:['ينبع','الطائف','جدة'] },
+        { name:'الرياض',       flag:null, cities:['الدرعية','الرياض'] },
+        { name:'الرؤية',       flag:null, cities:['البحر الأحمر','القدية','نيوم'] },
+      ],
+      airports: ['مطار أبها','مطار الدمام','مطار جدة','مطار الرياض'], companies: ['شركة البترول','شركة الاتصالات'] },
+  ],
+
+  // بطاقات الحظ — k: نوع التأثير. الغرامات تروح للصندوق.
   luck: [
-    { text:'راتبك نزل بدري',                     k:'cash', v:200 },
-    { text:'مخالفة ساهر على طريق الملك فهد',      k:'cash', v:-100 },
-    { text:'خالك يبي سلف ويقول برجعها',           k:'cash', v:-50 },
-    { text:'فزت بسحب البنك',                      k:'cash', v:150 },
-    { text:'فاتورة الكهرباء بالصيف',              k:'cash', v:-120 },
-    { text:'استرداد ضريبة',                       k:'cash', v:80 },
-    { text:'بعت سيارتك القديمة',                  k:'cash', v:120 },
-    { text:'جوالك طاح بالموية',                   k:'cash', v:-150 },
-    { text:'عيدية: كل لاعب يعطيك 25',             k:'each', v:25 },
-    { text:'عزمت الشباب عشا: تعطي كل لاعب 25',    k:'payeach', v:25 },
-    { text:'رحلة مفاجئة: تروح أقرب مطار',         k:'airport' },
-    { text:'ارجع البداية وخذ راتبك',              k:'tostart' },
-    { text:'صيانة: تدفع 40 عن كل مستوى بناء عندك', k:'repair', v:40 },
-    { text:'ضربة حظ: ارمِ نرد وخذ الرقم × 30',    k:'dice', v:30 },
-    { text:'خصم خاص: أول عقار تشتريه بنص السعر',  k:'discount' },
-    { text:'عين: أغنى لاعب يدفع 100',             k:'rich', v:100 },
+    { text:'راتبك نزل بدري',                          k:'cash', v:20000 },
+    { text:'مخالفة قطع إشارة',                        k:'cash', v:-10000 },
+    { text:'خالك يبي سلف ويقول برجعها',               k:'cash', v:-5000 },
+    { text:'فزت بسحب البنك',                          k:'cash', v:15000 },
+    { text:'فاتورة الكهرباء بالصيف',                  k:'cash', v:-12000 },
+    { text:'أرباح أسهمك نزلت',                        k:'cash', v:8000 },
+    { text:'بعت سيارتك القديمة',                      k:'cash', v:12000 },
+    { text:'جوالك طاح بالموية',                       k:'cash', v:-8000 },
+    { text:'عيدية: كل لاعب يعطيك 3,000',              k:'each', v:3000 },
+    { text:'عزمت الشباب عشا: تعطي كل لاعب 3,000',     k:'payeach', v:3000 },
+    { text:'رحلة مفاجئة: تروح أقرب مطار',             k:'airport' },
+    { text:'ارجع البداية وخذ راتبك',                  k:'tostart' },
+    { text:'صيانة: تدفع 4,000 عن كل مستوى بناء عندك',  k:'repair', v:4000 },
+    { text:'ضربة حظ: ارمِ نرد وخذ الرقم × 3,000',     k:'dice', v:3000 },
+    { text:'خصم خاص: أول عقار تشتريه بنص السعر',      k:'discount' },
+    { text:'عين: أغنى لاعب يدفع 10,000 للصندوق',      k:'rich', v:10000 },
+    { text:'ورثت أرض: تاخذ أرخص مدينة ما لها مالك',   k:'freeprop' },
+    { text:'البنك يوزّع أرباح: كل لاعب ياخذ 5,000',   k:'all', v:5000 },
   ],
 };
