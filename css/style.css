@@ -297,6 +297,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .tchip .sw img{width:100%;height:100%;object-fit:cover}
 .tchip .sw:empty{width:10px;height:46px;border-radius:4px}
 .tchip .nm{font-weight:700;line-height:1.15;font-size:1.08rem;display:flex;align-items:center;white-space:nowrap}
+.tchip .hbacks{display:inline-flex;gap:3px;align-items:center}
+.tchip .hbacks i{width:13px;height:18px;border-radius:3px;background:var(--sadu-weave) 0 0/12px 12px,#8A1A2B;box-shadow:0 0 0 1.5px var(--surface),0 0 0 2.5px var(--line)}
 .tchip .sub{font-size:.82rem;color:var(--mute);display:flex;gap:8px;align-items:center;font-weight:600;min-height:1.2em}
 .tchip .sc{font-family:var(--num);font-weight:800;font-size:2.4rem;line-height:1;margin-inline-start:auto;padding-inline-start:16px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .tchip .bar{position:absolute;bottom:0;right:0;left:0;height:4px;background:var(--line-soft);overflow:hidden}

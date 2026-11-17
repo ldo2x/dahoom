@@ -220,7 +220,7 @@
   function gamePhase(){ if(!G) return null; const r=Math.max(0,...G.teams.map(t=>t.score))/S.target; return r<0.35?'early': r<0.75?'mid':'late'; }
 
   // مفاتيح الطاقات (تنمسح بفاكت تشيك) والضربات (تنمسح بتشل قاي)
-  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', extraTurn:'طقها والحقها', reroll:'اصرمني', spoiler:'وش السالفة', immune:'محد قدّك', streak:'مولّعة',
+  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'اصرمني', spoiler:'وش السالفة', immune:'محد قدّك', streak:'مولّعة',
     nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'رأس مال', finisher:'الضربة القاضية', mc:'خيارات', insure:'ضامنها', ambush:'كمين' };
   const DEBUFFS = { harder:'شد حيلك', lag:'النت فاصل', ratioTo:'نص نص', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
 
@@ -233,7 +233,7 @@
       d.style.setProperty('--c',t.color);
       const sw = t.players.length===1 ? `<span class="sw"><img src="${D.avatarSrc(t.players[0].avatar)}" alt=""></span>` : `<span class="sw"></span>`;
       const nb=Object.keys(BUFFS).filter(k=>t.fx[k]!=null).length, nd=Object.keys(DEBUFFS).filter(k=>t.fx[k]!=null).length;
-      d.innerHTML=`${sw}<span><div class="nm">${esc(t.name)}${phoneOf(t)?ic('phone','tphone'):''}</div><div class="sub">${S.cardsEnabled?`${ic('cards')} ${t.hand.length}`:''}<span class="fxdots">${'<i></i>'.repeat(nb)}${'<i class="bad"></i>'.repeat(nd)}</span></div></span><span class="sc">${t.score}</span><span class="bar"><i style="transform:scaleX(${Math.max(0,Math.min(1,t.score/top)).toFixed(3)})"></i></span>`;
+      d.innerHTML=`${sw}<span><div class="nm">${esc(t.name)}${phoneOf(t)?ic('phone','tphone'):''}</div><div class="sub">${S.cardsEnabled?`<span class="hbacks" title="${t.hand.length} بطاقات">${t.hand.length?'<i></i>'.repeat(t.hand.length):'ما معه بطايق'}</span>`:''}<span class="fxdots">${'<i></i>'.repeat(nb)}${'<i class="bad"></i>'.repeat(nd)}</span></div></span><span class="sc">${t.score}</span><span class="bar"><i style="transform:scaleX(${Math.max(0,Math.min(1,t.score/top)).toFixed(3)})"></i></span>`;
       d.title=fxList(t).map(x=>x[0]).join('، ');
       sb.appendChild(d);
     });
@@ -279,7 +279,7 @@
   function previewCard(team, idx, playable){
     const c=team.hand[idx];
     const canPlay = playable && c.kind!=='reaction' && c.fx!=='none';
-    const why = c.kind==='reaction' ? 'هذي رد فعل: تطلع لحالها لما أحد يهاجمك' : c.fx==='none' ? 'سودا… ما تنلعب. ادمجها أو ارمها بعرض تجاري' : '';
+    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'هذي رد فعل: تطلع لحالها لما خصمك يلعب بطاقة دعم' : 'هذي رد فعل: تطلع لحالها لما أحد يهاجمك') : c.fx==='none' ? 'سودا… ما تنلعب. ادمجها أو ارمها بعرض تجاري' : '';
     const m=modal(`<div class="co-wrap">${cardHTML(c,{size:'big',anim:true})}
       ${why?`<p class="muted mt-s">${why}</p>`:''}
       <div class="row center mt-s">${canPlay?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${canPlay?'تراجع':'إغلاق'}</button><button class="btn ghost small" data-rep-card>${ic('flag')} بلّغ</button></div></div>`,{onMount(m){
@@ -338,11 +338,12 @@
     const f=t.fx; let gain=base; const notes=[];
     if(f.x2next){ gain*=2; delete f.x2next; delete f.x2back; notes.push('خلك ذيب ×2'); }
     if(f.finisher){ const m = t.score>=S.target*0.75 ? 3 : 1.5; gain=r25(gain*m)||gain; delete f.finisher; notes.push(`الضربة القاضية ×${m}`); }
-    if(f.jackpot){ gain+=250; delete f.jackpot; notes.push('جاك بوت +250'); reaction('jackpotWin',3000); memeSound('correct'); }
+    if(f.jackpot){ gain*=2; delete f.jackpot; notes.push('جاك بوت ×2'); reaction('jackpotWin',3000); memeSound('correct'); }
     if(f.nocap){ const b=hard?50:25; gain+=b; delete f.nocap; notes.push('من جد +'+b); }
     if(f.speedrun){ if(section==='q' && fracLeft()>=.5){ const b=r25(base*.5)||25; gain+=b; notes.push('تفحيط +'+b); } delete f.speedrun; }
     if(f.streak){ gain+=50; notes.push('مولّعة +50'); }
     if(f.capital){ gain+=25; notes.push('رأس مال +25'); }
+    if(f.wolf){ const v=G.teams.find(x=>x.id===f.wolf); delete f.wolf; if(v && v!==t){ const a=Math.min(gain, Math.max(0,v.score)); if(a){ addScore(v,-a,{silent:true}); notes.push(`خلك ذيب: ${esc(v.name)} −${a}`); } } }
     if(f.flatBonus){ gain+=f.flatBonus; notes.push((f.hayatFail?'هياط':'واسطة')+' +'+f.flatBonus); delete f.flatBonus; }
     delete f.hayatFail; delete f.copium;
     announce(t, true);
@@ -355,7 +356,8 @@
     const f=t.fx; const notes=[];
     if(f.x2back){ const c=f.x2back; delete f.x2back; if(f.x2next && t.hand.length<S.handMax){ t.hand.push(c); notes.push('خلك ذيب رجعت ليدك'); } }
     delete f.x2next; delete f.nocap; delete f.speedrun; delete f.flatBonus;
-    if(f.jackpot){ delete f.jackpot; const s0=t.score; addScore(t,-150,{silent:true}); notes.push(`جاك بوت: خسرت ${s0-t.score}`); reaction('jackpotLose',2800); }
+    if(f.jackpot){ delete f.jackpot; notes.push(`جاك بوت: راحت الـ${JACKPOT_COST}`); reaction('jackpotLose',2800); }
+    delete f.wolf;
     if(f.hayatFail){ delete f.hayatFail; const s0=t.score; addScore(t,-50,{silent:true}); notes.push('هياط −'+(s0-t.score)); }
     if(f.streak){ delete f.streak; notes.push('طفت المولّعة'); }
     if(f.copium){ delete f.copium; addScore(t,40); notes.push('بسيطة +40'); }
@@ -785,7 +787,8 @@
     const c=t.hand[idx]; if(!c) return;
     t.playedCard=true; t.hand.splice(idx,1);
     G.log.cards.push({ id:c.id, as:null, team:t.id, r:G.round, ph:gamePhase(), s:t.score, lead:leader().score, tgt:null, burned:1 });
-    play('fx_deny',{volume:.6}); toast(`انحرقت "${c.name}": ${why}`, 3600);
+    const pen={legendary:100, medium:50, normal:25}[c.tier]||0; if(pen) addScore(t,-pen,{silent:true,noInsure:true});
+    play('fx_deny',{volume:.6}); toast(`انحرقت "${c.name}": ${why}${pen?` — خسرتوا ${pen}`:''}`, 4000);
     renderBoard(); turnIntro();
   }
   async function playCard(t, idx){
@@ -793,6 +796,7 @@
     const c=t.hand[idx];
     let real=c, target=null;
     if(c.fx==='copy'){ real=G.lastCard; if(!real) return burnCard(t, idx, 'ما انلعبت بطاقة قبل'); }
+    if(real.fx==='jackpot' && t.score<JACKPOT_COST){ toast(`جاك بوت تحتاج ${JACKPOT_COST} نقطة معك عشان تلعبها`); return; }
     if(real.target){
       if(real.target==='choose'){ target=await chooseTarget(t,real); if(!target) return;
         if(typeof target==='string') return burnCard(t, idx, target.slice(5));
@@ -815,8 +819,11 @@
     if(real.kind==='duel') msg = await duel(t,target,real);
     else if(real.fx==='bet') msg = await placeBet(t,target);
     else if(real.kind==='attack' || real.fx==='trade') msg = await attack(t, target, real);
-    else msg = await applySelf(t, real);
-    if(c.fx==='x2next') t.fx.x2back=c;     // خلك ذيب الأصلية بس ترجع لو فشلت (مو النسخة)
+    else {
+      if(real.fx==='jackpot'){ addScore(t,-JACKPOT_COST,{silent:true,noInsure:true}); }
+      const env = real.kind==='buff' ? await envyCheck(t, real) : null;
+      msg = env ? env : await applySelf(t, real);
+    }
     if(real!==c) msg = 'نسخ لصق → '+real.name+(msg?': '+msg:'');
     if(msg) toast(msg.replace(/<[^>]+>/g,''), 3600);
     renderBoard(); turnIntro();
@@ -954,17 +961,34 @@
     return msg;
   }
 
+  const JACKPOT_COST = 150;
+  // ما تهنى: أي فريق معه البطاقة يقدر يلغي تقوية خصمه لحظة ما تنلعب
+  async function envyCheck(t, real){
+    if(!S.reactionsEnabled) return null;
+    for(const x of others(t)){
+      const card = x.hand.find(h=>h.fx==='envy'); if(!card) continue;
+      const yes = await decide(x,{ title:`${esc(t.name)} لعب "${esc(real.name)}" — تخربونها عليه؟`, text:real.fx==='jackpot'?`لو خربتوها الـ${JACKPOT_COST} اللي دفعها تجيكم`:'', options:[{v:true,card}], cancel:'خلوه يتهنى' });
+      if(!yes) continue;
+      x.hand.splice(x.hand.indexOf(card),1); showPlayed(card, x);
+      { const fx=FX(); if(fx){ fx.sound(card); fx.visual(card); } const o=ST(x); if(o) o.reactions++; moment(`${esc(x.name)} خرب "${esc(real.name)}" على ${esc(t.name)}`, x); }
+      if(real.fx==='jackpot') addScore(x, JACKPOT_COST);
+      return `ما تهنى! ${x.name} خرب "${real.name}" على ${t.name}${real.fx==='jackpot'?` وأخذ ${JACKPOT_COST}`:''}`;
+    }
+    return null;
+  }
+  // البطايق اللي تخترق الحصانة
+  const PIERCE = { factcheck:true, steal:true };
   // هجوم مع فرصة رد الفعل
   async function attack(src, tgt, c){
     let pre='';
-    if(tgt.fx.ambush && tgt!==src){ delete tgt.fx.ambush; const a=Math.min(100,Math.max(0,src.score)); addScore(src,-a,{silent:true}); play('meme:trap',{volume:.7}); pre=`كمين! ${src.name} خسر ${a}. `; }
+    if(tgt.fx.ambush && tgt!==src && c.fx!=='factcheck'){ delete tgt.fx.ambush; const a=Math.min(100,Math.max(0,src.score)); addScore(src,-a,{silent:true}); play('meme:trap',{volume:.7}); pre=`كمين! ${src.name} خسر ${a}. `; }
     return pre + await attack0(src, tgt, c);
   }
   async function attack0(src, tgt, c){
     if(c.fx==='roast' && !tgt.lastFail){ play('fx_deny',{volume:.6}); return `انحرقت طقطقة: ${tgt.name} ما فشل بدوره الأخير`; }
-    if(tgt.fx.immune!=null && c.fx!=='factcheck'){ play('meme:pipe',{volume:.6}); return `محد قدّ ${tgt.name} — ${c.name} ما أثرت`; }
-    if(S.reactionsEnabled){
-      const reacts = tgt.hand.filter(x=>x.kind==='reaction');
+    if(tgt.fx.immune!=null && !PIERCE[c.fx]){ play('meme:pipe',{volume:.6}); return `محد قدّ ${tgt.name} — ${c.name} ما أثرت`; }
+    if(S.reactionsEnabled && c.fx!=='factcheck'){
+      const reacts = tgt.hand.filter(x=>x.kind==='reaction' && x.fx!=='envy');
       if(reacts.length){
         const choice = await decide(tgt,{ title:`${esc(src.name)} رمى "${esc(c.name)}" عليكم — تردون؟`, options:reacts.map(r=>({v:r.id,card:r})), cancel:'خلها تمر' });
         if(choice){
@@ -992,9 +1016,24 @@
       case 'npc': f.npc=true; return `${tgt.name}: دوره الجاي تحديات بالغصب`;
       case 'skipDraw': f.skipDraw=true; return `${tgt.name}: ما يسحب بطاقة دوره الجاي`;
       case 'shadowban': f.noSteal=G.round; f.noCard=true; return `${tgt.name}: ممنوع يسرق هاللفة وممنوع بطاقات دوره الجاي`;
-      case 'factcheck': { const found=Object.keys(BUFFS).filter(k=>f[k]!=null); found.forEach(k=>delete f[k]);
-        let burned=''; if(tgt.hand.length){ const i=Math.floor(Math.random()*tgt.hand.length); burned=tgt.hand.splice(i,1)[0].name; }
-        return `كاشفك على ${tgt.name}: ${found.length?`انلغت ${found.length} طاقة`:'ما عنده طاقات'}${burned?` وانحرقت "${burned}"`:''}`; }
+      case 'factcheck': { const DEF={immune:'محد قدّك', ambush:'كمين', insure:'ضامنها'}; const had=Object.keys(DEF).filter(k=>f[k]!=null); had.forEach(k=>delete f[k]);
+        const burned=tgt.hand.filter(x=>x.kind==='reaction'); tgt.hand=tgt.hand.filter(x=>x.kind!=='reaction');
+        if(!had.length && !burned.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `كاشفك على الفاضي: ${tgt.name} ما عنده دفاع — ${src.name} خسر 50`; }
+        return `كاشفك كسر دفاع ${tgt.name}: ${[...had.map(k=>DEF[k]), ...burned.map(x=>x.name)].join('، ')}`; }
+      case 'wolf': src.fx.wolf=tgt.id; return `خلك ذيب: لو ${src.name} نجح بهالدور، نقاطه تنخصم من ${tgt.name}`;
+      case 'steal': { const ks=Object.keys(BUFFS).filter(k=>f[k]!=null);
+        if(!ks.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `على حسابي على الفاضي: ${tgt.name} ما عنده طاقة — ${src.name} خسر 50`; }
+        const k = ks.length>1 ? (await decide(src,{ title:`على حسابي — وش تاخذ من ${esc(tgt.name)}؟`, options:ks.map(k=>({v:k,label:BUFFS[k]})) }) || ks[0]) : ks[0];
+        src.fx[k]=f[k]; delete f[k]; if(k==='immune' || k==='fullsteal' || k==='yasalam') src.fx[k]=Math.max(src.fx[k], G.round);
+        return `على حسابي: ${src.name} أخذ "${BUFFS[k]}" من ${tgt.name}`; }
+      case 'pick': case 'hawk': {
+        if(!tgt.hand.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `يد ${tgt.name} فاضية — ${src.name} خسر 50`; }
+        const open = c.fx==='hawk';
+        const i = await decide(src,{ title: open ? `عين الصقر: هذي يد ${esc(tgt.name)} — اختاروا وحدة` : `نشّال: يد ${esc(tgt.name)} مقلوبة — اختاروا وحدة على عماكم`,
+          options: tgt.hand.map((h,k)=> open ? {v:k,card:h} : {v:k,label:'البطاقة '+(k+1)}) });
+        const take = tgt.hand.splice(i==null?0:i,1)[0];
+        await addToHand(src, take);
+        return open ? `عين الصقر: ${src.name} أخذ "${take.name}" من ${tgt.name}` : `نشّال: ${src.name} سحب بطاقة من يد ${tgt.name}`; }
       case 'bench': { const pl=tgt.players||[]; if(pl.length<2) return `${tgt.name} لاعب واحد — ما فيه أحد يطلع`;
         const pid = G.benchPick && G.benchPick.teamId===tgt.id ? G.benchPick.pid : rnd(pl).id; G.benchPick=null;
         const pp=pl.find(x=>x.id===pid)||rnd(pl); f.benched={pid:pp.id, name:pp.name}; return `${pp.name} من ${tgt.name} برا السالفة بدورهم الجاي`; }
@@ -1032,7 +1071,7 @@
         if(nx.hand.length>=S.handMax) return `لزقة: يد ${nx.name} مليانة، طاحت بالأرض`;
         nx.hand.push(c); return `لزقة: لزقت بيد ${nx.name}`; }
       case 'x2next': f.x2next=true; return 'خلك ذيب: نجاحك بهالدور دبل، ولو فشلت ترجع لك';
-      case 'jackpot': f.jackpot=true; return 'جاك بوت: تنجح +250، تفشل −150';
+      case 'jackpot': f.jackpot=true; return `جاك بوت: دفعتوا ${JACKPOT_COST} — تنجحون تاخذون النقاط ×2`;
       case 'extraTurn': f.extraTurn=true; return 'طقها والحقها: لك دور ثاني بعد هذا';
       case 'reroll': f.reroll=(f.reroll||0)+1; return 'اصرمني: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
       case 'spoiler': f.spoiler=true; return 'سؤالك الجاي فيه سبويلر';
