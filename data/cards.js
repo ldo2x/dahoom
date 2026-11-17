@@ -14,9 +14,9 @@ window.DAHOOM_DATA.cards = [
   { id:'R1', tier:'legendary', kind:'reaction', fx:'reverse', name:'العب غيرها', src:'رياكشن', snd:'game:c_unoreverse',
     desc:'رد فعل: إذا أحد هاجمك، يرجع الهجوم عليه.' },
   { id:'R2', phase:'late', tier:'legendary', kind:'buff', fx:'x2next', name:'خلك ذيب', src:'أفلام', snd:'game:c_wolf',
-    desc:'إذا نجحت بهالدور تاخذ النقاط دبل.' },
+    desc:'إذا نجحت بهالدور تاخذ النقاط دبل. لو فشلت ترجع البطاقة ليدك.' },
   { id:'R3', phase:'late', tier:'legendary', kind:'chaos', fx:'jackpot', name:'جاك بوت', src:'أنمي', snd:'game:c_hakari',
-    desc:'تنجح بهالدور: نقاطك ×3. تفشل: تخسر نقاط السؤال.' },
+    desc:'تنجح بهالدور: +250 فوق نقاطك. تفشل: تخسر 150.' },
   { id:'R4', phase:'late', tier:'legendary', kind:'attack', fx:'snap', target:'leader', name:'شلوطة تايم', src:'سعودي', snd:'game:g_punch',
     desc:'المتصدر يخسر ربع نقاطه (أقصى شي 250). إذا انت المتصدر تنحرق.' },
   { id:'R5', tier:'legendary', kind:'buff', fx:'extraTurn', name:'طقها والحقها', src:'قيمنق', snd:'game:c_gottagofast',
@@ -71,7 +71,7 @@ window.DAHOOM_DATA.cards = [
     desc:'تحدي تمثيل ضد فريق تختاره. الأسرع ياخذ 150 من الثاني.' },
 
   { id:'G22', tier:'medium', kind:'buff', fx:'mc2', name:'حذف إجابتين', src:'مسابقات', snd:'game:g_fifty',
-    desc:'أول سؤال عام يجيك يطلع بخيارين بس. تبقى معك لين يجيك سؤال عام.' },
+    desc:'أول سؤالين عامين يجونك يطلعون بخيارين بس. تبقى معك لين تنستخدم.' },
   // ===== الزرقاء (18) — صغيرة بس تصنع الفرق =====
   { id:'N1', phase:'early', tier:'normal', kind:'buff', fx:'streak', name:'مولّعة', src:'قيمنق', snd:'game:c_onfire',
     desc:'+50 الحين، و+50 على كل نجاح ورا بعض. تنتهي مع أول فشل.' },
@@ -88,7 +88,7 @@ window.DAHOOM_DATA.cards = [
   { id:'N12', tier:'normal', kind:'buff', fx:'fullsteal', name:'ببلاش', src:'رياكشن', snd:'game:c_freeestate',
     desc:'أول سرقة لك تاخذ نقاطها كاملة بدل النص. صالحة لين نهاية اللفة الجاية.' },
   { id:'N13', tier:'normal', kind:'chaos', fx:'hayat', name:'هياط', src:'سعودي', snd:'meme:sa_majnoon',
-    desc:'لازم تختار صعب. تنجح: +150 زيادة. تفشل: −75.' },
+    desc:'لازم تختار صعب. تنجح: +200 زيادة. تفشل: −50.' },
   { id:'N15', phase:'mid', tier:'normal', kind:'attack', fx:'prank', target:'next', name:'مقلب', src:'سعودي', snd:'game:g_clashlaugh',
     desc:'تحط بطاقة سودا بيد الفريق اللي بعدك.' },
   { id:'N16', phase:'mid', tier:'normal', kind:'chaos', fx:'swapTurn', target:'choose', name:'روح انت أول', src:'أفلام', snd:'game:g_swoosh',
@@ -106,7 +106,7 @@ window.DAHOOM_DATA.cards = [
   { id:'N21', tier:'normal', kind:'buff', fx:'mc4', name:'عطني خيارات', src:'مسابقات', snd:'game:g_lifeline',
     desc:'أول سؤال عام يجيك يطلع بأربع خيارات. تبقى معك لين يجيك سؤال عام.' },
   { id:'N22', tier:'normal', kind:'defense', fx:'insure', name:'ضامنها', src:'مواقف', snd:'meme:phew',
-    desc:'أول عقوبة فشل عليك تنزل للنص (جاك بوت، هياط، الجمرة). تبقى معك لين تنستخدم.' },
+    desc:'أول خسارة نقاط تجيك تنزل للنص، من هجوم أو عقوبة. تبقى معك لين تنستخدم.' },
   { id:'N23', tier:'normal', kind:'defense', fx:'ambush', name:'كمين', src:'أفلام', snd:'meme:trap',
     desc:'أول فريق يهاجمك يخسر 100، والهجوم يكمل. يبقى لين أحد يهاجمك.' },
   // ===== السودا (6) — ثلاث ما تسوي شي، وثلاث تسوي شي تافه =====

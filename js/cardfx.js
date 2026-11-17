@@ -11,7 +11,7 @@ window.DahoomFX = (function(){
   const SND_DELAY = { legendary:650, medium:450, normal:150, black:300 };
   // نص الختم الكبير لكل تأثير
   const LOOK = {
-    reverse:'العب غيرها', x2next:'ذيب ×2', jackpot:'JACKPOT', snap:'شلوطة', extraTurn:'طقها', undo:'ما غزيت',
+    reverse:'العب غيرها', x2next:'ذيب ×2', jackpot:'جاك بوت', snap:'شلوطة', extraTurn:'طقها', undo:'ما غزيت',
     reroll:'اصرمني', spoiler:'وش السالفة', harder:'شد حيلك', lag:'النت فاصل', ratio:'نص نص', trade:'خذ وهات',
     factcheck:'كاشفك', shadowban:'ولا كلمة', immune:'محد قدّك', wasta:'واسطة', pot:'القطة', evilEye:'عين',
     yasalam:'يا سلام', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
