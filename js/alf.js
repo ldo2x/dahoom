@@ -193,6 +193,8 @@
   const others = t => G.teams.filter(x=>x!==t);
   // ---------- سجل الموازنة: كل سؤال/تحدي ونتيجته، وكل بطاقة انلعبت ----------
   const LOG = () => window.DahoomLog;
+  // سؤال فيه صورة (مثل الأعلام): الصورة فوق نص السؤال
+  const qBody = item => `${item.img?`<img class="qimg" src="${esc(item.img)}" alt="">`:''}<div class="qtext">${esc(item.q)}</div>`;
   function itemRef(k, item, d){ const sp = k==='t' ? splitAnswer(item.t) : null;
     return { kind:k, id:item.id, d, tag:item.tag, text: k==='q'?item.q : k==='t'?sp.t : item.t, answer: k==='q'?item.a : k==='t'?(sp.a||'') : '' }; }
   function logItem(k, item, d){
@@ -487,7 +489,7 @@
     const p = pts(priceD||d), hard = d===3;
     const time = Math.max(3, lag ? Math.ceil(S.answerTime/2) : S.answerTime);
     stage(`${head(t,item,'q',d,p,priceD)}
-      <div class="qtext">${esc(item.q)}</div>${mcHTML}
+      ${qBody(item)}${mcHTML}
       ${timerHTML(time)}${timeupHTML}
       <div class="row center"><button class="btn small" id="btn-reveal">${ic('eye')} إظهار الإجابة</button>${t.fx.spoiler?`<button class="btn small btn-sky" id="btn-hint">${ic('eye')} سبويلر</button>`:''}${rerollBtn(t)}<button class="btn small ghost" id="btn-restart">${ic('stopwatch')} أعد الوقت</button></div>
       <div class="answer hidden" id="answer">${esc(item.a)}</div>
@@ -521,7 +523,7 @@
     const cands = others(t).filter(x=>x.fx.noSteal==null);
     const stTime = inFinalStretch() ? Math.max(2, Math.round(S.stealTime/2)) : S.stealTime;
     stage(`<div class="big" style="color:var(--steal-ink)">وقت السرقة!</div>${inFinalStretch()?'<span class="banner">الحسم: وقت السرقة بالنص</span>':''}
-      <div class="qtext">${esc(item.q)}</div>${mcHTML}${timerHTML(stTime,'steal')}${timeupHTML}
+      ${qBody(item)}${mcHTML}${timerHTML(stTime,'steal')}${timeupHTML}
       <p class="muted">أي فريق يجاوب صح ياخذ ${stealPts(p)}. ${ownerCanAnswer? `${esc(t.name)} خلص وقته بدون ما يغلط — لو قالها صح ياخذ ${p} كاملة.` : `${esc(t.name)} غلط وراحت عليه.`}</p>
       <div class="row center">${ownerCanAnswer? `<button class="btn team" style="--c:${t.color}" data-owner>${ic('check')} ${esc(t.name)} (${p})</button>`:''}${cands.map(x=>`<button class="btn team" style="--c:${x.color}" data-steal="${x.id}">${ic('ninja')} ${esc(x.name)} (${x.fx.fullsteal!=null?p:stealPts(p)})</button>`).join('')}</div>
       ${cands.length?'':'<span class="fx-tag bad">ما فيه فريق يقدر يسرق</span>'}
@@ -885,7 +887,7 @@
         const who = n%2===0 ? A : B, other = who===A ? B : A, d = Math.min(3, 1+Math.floor(n/4)), item=duelItem('q', d);
         box.innerHTML=`${duelHead('انزلي', A, B, STAKE)}
           <div class="du-turn">سؤال ${Math.floor(n/2)+1} · ${DIFF[d]} — يجاوب <span class="who" style="--c:${who.color}">${esc(who.label)}</span> <b class="du-time"></b></div>
-          <div class="qtext">${esc(item.q)}</div>
+          ${qBody(item)}
           <div class="answer hidden" id="du-ans">${esc(item.a)}</div>
           <div class="row center"><button class="btn small" id="du-show">${ic('eye')} الإجابة</button></div>
           <div class="row center"><button class="btn btn-mint big" data-dq="ok">${ic('check')} صح</button><button class="btn btn-bad big" data-dq="no">${ic('cancel')} غلط — خسر</button></div>
@@ -917,7 +919,7 @@
         box.querySelector('[data-dq="no"]').onclick=()=>{ tried.push(who); play('wrong',{volume:.5}); if(tried.includes(other)) done(null); else judge(other); };
       };
       box.innerHTML=`${duelHead('الكلاسيكو', A, B, stake)}
-        <div class="qtext">${esc(item.q)}</div>
+        ${qBody(item)}
         <div class="answer hidden" id="du-ans">${esc(item.a)}</div>
         <div class="row center"><button class="btn small" id="du-show">${ic('eye')} الإجابة</button></div>
         <div id="du-act"><div class="du-turn">مين يبز أول؟</div>
