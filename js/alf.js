@@ -1036,11 +1036,11 @@
       case 'pick': case 'hawk': {
         if(!tgt.hand.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `يد ${tgt.name} فاضية — ${src.name} خسر 50`; }
         const open = c.fx==='hawk';
-        const i = await decide(src,{ title: open ? `عين الصقر: هذي يد ${esc(tgt.name)} — اختاروا وحدة` : `نشّال: يد ${esc(tgt.name)} مقلوبة — اختاروا وحدة على عماكم`,
+        const i = await decide(src,{ title: open ? `عين الصقر: هذي بطايق ${esc(tgt.name)} — اختاروا وحدة تسرقونها` : `نشّال: بطايق ${esc(tgt.name)} مقلوبة — اسحبوا وحدة على عماكم`,
           options: tgt.hand.map((h,k)=> open ? {v:k,card:h} : {v:k,label:'البطاقة '+(k+1)}) });
         const take = tgt.hand.splice(i==null?0:i,1)[0];
         await addToHand(src, take);
-        return open ? `عين الصقر: ${src.name} أخذ "${take.name}" من ${tgt.name}` : `نشّال: ${src.name} سحب بطاقة من يد ${tgt.name}`; }
+        return open ? `عين الصقر: ${src.name} سرق "${take.name}" من ${tgt.name}` : `نشّال: ${src.name} سحب بطاقة من يد ${tgt.name}`; }
       case 'bench': { const pl=tgt.players||[]; if(pl.length<2) return `${tgt.name} لاعب واحد — ما فيه أحد يطلع`;
         const pid = G.benchPick && G.benchPick.teamId===tgt.id ? G.benchPick.pid : rnd(pl).id; G.benchPick=null;
         const pp=pl.find(x=>x.id===pid)||rnd(pl); f.benched={pid:pp.id, name:pp.name}; return `${pp.name} من ${tgt.name} برا السالفة بدورهم الجاي`; }

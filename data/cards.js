@@ -30,7 +30,7 @@ window.DAHOOM_DATA.cards = [
   { id:'R8', tier:'legendary', kind:'attack', fx:'hamour', target:'choose', name:'الهامور', src:'مواقف', snd:'meme:yoink',
     desc:'تاخذ 150 نقطة من فريق تختاره.' },
   { id:'R9', tier:'legendary', kind:'attack', fx:'hawk', target:'choose', name:'عين الصقر', src:'أفلام', snd:'meme:sus',
-    desc:'تشوف يد فريق تختاره مكشوفة، وتاخذ منها البطاقة اللي تبيها. يده فاضية؟ تخسر 50.' },
+    desc:'تسرق بطاقة من فريق تختاره: تنكشف لك كل بطايقه، وتاخذ منها اللي تبيها. لو ما معه ولا بطاقة تخسر 50.' },
 
   // ===== الذهبية (16) — قوية وتحتاج توقيت =====
   { id:'G1', tier:'normal', kind:'buff', fx:'reroll', name:'اصرمني', src:'سعودي', snd:'meme:skibidi',
@@ -75,7 +75,7 @@ window.DAHOOM_DATA.cards = [
   { id:'G22', tier:'medium', kind:'buff', fx:'mc2', name:'حذف إجابتين', src:'مسابقات', snd:'game:g_fifty',
     desc:'أول سؤالين عامين يجونك يطلعون بخيارين بس. تبقى معك لين تنستخدم.' },
   { id:'G23', tier:'medium', kind:'attack', fx:'pick', target:'choose', name:'نشّال', src:'أفلام', snd:'game:g_pacman',
-    desc:'تشوف ظهر بطايق فريق تختاره، وتسحب وحدة منها على عماك. يده فاضية؟ تخسر 50.' },
+    desc:'تسرق بطاقة من فريق تختاره بس على عماك: بطايقه تطلع لك مقلوبة وتسحب وحدة ما تدري وش هي. لو ما معه ولا بطاقة تخسر 50.' },
   { id:'G24', tier:'medium', kind:'attack', fx:'steal', target:'choose', name:'اللي لك لي', src:'مواقف', snd:'meme:yoink',
     desc:'اختراق: تاخذ طاقة شغالة من فريق تختاره وتصير لك (ستونكس، مولّعة، وضع الطيران…). ما عنده طاقة؟ تخسر 50.' },
   { id:'G25', tier:'medium', kind:'reaction', fx:'envy', name:'ما تهنى', src:'سعودي', snd:'game:g_nope',
