@@ -24,8 +24,8 @@ window.DAHOOM_DATA.cards = [
   { id:'R6', phase:'late', tier:'legendary', kind:'attack', fx:'undo', target:'prev', name:'كأنك يا بو زيد ما غزيت', src:'سعودي', snd:'meme:itsgone',
     desc:'يمسح نقاط آخر دور للفريق اللي قبلك. إذا ما كسب شي تنحرق.' },
 
-  { id:'R7', tier:'legendary', phase:'late', kind:'buff', fx:'finisher', name:'فاتاليتي', src:'قيمنق', snd:'game:g_fatality',
-    desc:'نجاحك بهالدور ينضرب: ×3 لو نقاطك فوق 75% من الهدف، وإلا ×1.5.' },
+  { id:'R7', tier:'legendary', phase:'mid', kind:'attack', fx:'fatality', target:'choose', name:'فاتاليتي', src:'قيمنق', snd:'game:g_fatality',
+    desc:'فنش هم! تختار فريق معه بطايق، وكل بطايقه تنحرق. لو ردها عليك بالعب غيرها، تنحرق بطايقك انت.' },
 
   { id:'R8', tier:'legendary', kind:'attack', fx:'hamour', target:'choose', name:'الهامور', src:'مواقف', snd:'meme:yoink',
     desc:'تاخذ 150 نقطة من فريق تختاره.' },

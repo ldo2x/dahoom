@@ -784,6 +784,7 @@
     if(c.fx==='swapTurn'){ const l=notPlayedYet(t); if(!l.length) return Promise.resolve('none:ما فيه فريق باقي له دور هاللفة'); return pickTeam(t,'روح انت أول — مين يلعب بدالك الحين؟', l); }
     if(c.fx==='bet') return pickTeam(t,'أراهنك — على أي فريق تراهن؟', others(t));
     if(c.fx==='bench'){ const l=others(t).filter(x=>x.players.length>=2); if(!l.length) return Promise.resolve('none:ما فيه فريق فيه لاعبين أو أكثر'); return pickTeam(t,'خلك برا السالفة — أي فريق؟', l); }
+    if(c.fx==='fatality'){ const l=others(t).filter(x=>x.hand.length); if(!l.length) return Promise.resolve('none:ما فيه فريق معه بطايق'); return pickTeam(t,'فاتاليتي — مين تخلص عليه؟', l); }
     if(c.kind==='duel') return pickTeam(t,`${esc(c.name)} — مين تتحدى؟`, others(t));
     return pickTeam(t,`${esc(c.name)} — اختار الفريق`, others(t));
   }
@@ -1031,6 +1032,7 @@
         const k = ks.length>1 ? (await decide(src,{ title:`اللي لك لي — وش تاخذ من ${esc(tgt.name)}؟`, options:ks.map(k=>({v:k,label:BUFFS[k]})) }) || ks[0]) : ks[0];
         src.fx[k]=f[k]; delete f[k]; if(k==='immune' || k==='fullsteal' || k==='yasalam') src.fx[k]=Math.max(src.fx[k], G.round);
         return `اللي لك لي: ${src.name} أخذ "${BUFFS[k]}" من ${tgt.name}`; }
+      case 'fatality': { const n=tgt.hand.length; if(!n) return `${tgt.name} ما معه بطايق — راحت فاتاليتي`; tgt.hand=[]; return `فاتاليتي! انحرقت كل بطايق ${tgt.name} (${n})`; }
       case 'pick': case 'hawk': {
         if(!tgt.hand.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `يد ${tgt.name} فاضية — ${src.name} خسر 50`; }
         const open = c.fx==='hawk';

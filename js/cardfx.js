@@ -18,7 +18,7 @@ window.DahoomFX = (function(){
     copium:'بسيطة', seen:'بلوك', gacha:'باكج فيفا', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',
     swapTurn:'روح انت أول', roast:'طقطقة', bet:'أراهنك',
     duelQ:'انزلي', hamour:'الهامور', mc4:'المليون', mc2:'خيارين', insure:'تأمين ضد الغير', ambush:'إنه فخ', duelBuzz:'الكلاسيكو', duelAct:'فيلم صامت',
-    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'ستونكس', bench:'برا!', brake:'على وين؟', finisher:'فاتاليتي', haul:'مقاضي الشهر', comeback:'ريمونتادا',
+    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'ستونكس', bench:'برا!', brake:'على وين؟', finisher:'فاتاليتي', fatality:'فاتاليتي', haul:'مقاضي الشهر', comeback:'ريمونتادا',
   };
 
   // ---------- طبقة DOM خفيفة (عناصر قليلة، transform/opacity بس) ----------
