@@ -12,7 +12,7 @@ window.DahoomFX = (function(){
   // نص الختم الكبير لكل تأثير
   const LOOK = {
     reverse:'العب غيرها', x2next:'ذيب ×2', wolf:'ذيب', envy:'ما تهنى', wow:'يا سلام', steal:'اللي لك لي', pick:'نشّال', hawk:'عين الصقر', jackpot:'جاك بوت', snap:'فرقعة!', extraTurn:'طقها', undo:'ما غزيت',
-    reroll:'تخطي الإعلان', spoiler:'وش السالفة', harder:'زيدوها ملح', lag:'النت فاصل', ratio:'شريك مخالف', trade:'خذ وهات',
+    reroll:'اصرمني', spoiler:'وش السالفة', harder:'زيدوها ملح', lag:'النت فاصل', ratio:'شريك مخالف', trade:'خذ وهات',
     factcheck:'الفار', shadowban:'ولا كلمة', immune:'وضع الطيران', wasta:'واسطة', pot:'القطة', evilEye:'عين',
     yasalam:'يا سلام', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
     copium:'بسيطة', seen:'بلوك', gacha:'باكج فيفا', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',

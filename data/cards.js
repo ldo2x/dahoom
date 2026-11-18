@@ -33,7 +33,7 @@ window.DAHOOM_DATA.cards = [
     desc:'تشوف يد فريق تختاره مكشوفة، وتاخذ منها البطاقة اللي تبيها. يده فاضية؟ تخسر 50.' },
 
   // ===== الذهبية (16) — قوية وتحتاج توقيت =====
-  { id:'G1', tier:'normal', kind:'buff', fx:'reroll', name:'تخطي الإعلان', src:'يوتيوب', snd:'meme:skibidi',
+  { id:'G1', tier:'normal', kind:'buff', fx:'reroll', name:'اصرمني', src:'سعودي', snd:'meme:skibidi',
     desc:'تتخطى سؤالك أو عبارتك أو تحديك وتاخذ غيره، مرة وحدة بهالدور.' },
   { id:'G3', phase:'mid', tier:'normal', kind:'attack', fx:'harder', target:'next', name:'زيدوها ملح', src:'ميمز', snd:'meme:salt',
     desc:'ترش ملح على الفريق اللي بعدك: صعوبته ترتفع درجة بنفس النقاط.' },

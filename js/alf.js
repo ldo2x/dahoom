@@ -220,7 +220,7 @@
   function gamePhase(){ if(!G) return null; const r=Math.max(0,...G.teams.map(t=>t.score))/S.target; return r<0.35?'early': r<0.75?'mid':'late'; }
 
   // مفاتيح الطاقات (تنمسح بفاكت تشيك) والضربات (تنمسح بتشل قاي)
-  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'تخطي الإعلان', spoiler:'وش السالفة', immune:'وضع الطيران', streak:'مولّعة',
+  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'اصرمني', spoiler:'وش السالفة', immune:'وضع الطيران', streak:'مولّعة',
     nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'ستونكس', finisher:'فاتاليتي', mc:'خيارات', insure:'تأمين ضد الغير', ambush:'إنه فخ' };
   const DEBUFFS = { harder:'زيدوها ملح', lag:'النت فاصل', ratioTo:'شريك مخالف', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
 
@@ -473,7 +473,7 @@
       const lag = !!t.fx.lag; delete t.fx.lag;
       play('pop'); if(k==='q') runQuestion(t,d,null,{priceD,lag}); else if(k==='c') runCharade(t,d,null,{priceD,lag}); else runChallenge(t,d,null,{priceD,lag}); }; });
   }
-  const rerollBtn = t => t.fx.reroll ? `<button class="btn small" id="btn-reroll">${ic('next')} تخطي الإعلان</button>` : '';
+  const rerollBtn = t => t.fx.reroll ? `<button class="btn small" id="btn-reroll">${ic('next')} اصرمني</button>` : '';
   function useReroll(t){ t.fx.reroll--; if(!t.fx.reroll) delete t.fx.reroll; clearTimer(); play('meme:skibidi',{volume:.6}); }
   const head = (t, item, sec, d, p, priceD) => `${t.fx.benched?`<span class="fx-tag bad">${esc(t.fx.benched.name)} برا السالفة هالدور</span>`:''}<div class="row center"><span class="pill">${ic(SECTIONS[sec].icon)} ${esc(item.tag)}</span><span class="pill dim">${DIFF[d]} · ${p} نقطة</span>${lowerThird(t,'يلعب')}${priceD&&priceD!==d?`<span class="fx-tag bad">${DIFF[d]} بسعر ${DIFF[priceD]}</span>`:''}</div>`;
 
@@ -1078,7 +1078,7 @@
       case 'x2next': f.x2next=true; return 'خلك ذيب: نجاحك بهالدور دبل، ولو فشلت ترجع لك';
       case 'jackpot': f.jackpot=true; return `جاك بوت: دفعتوا ${JACKPOT_COST} — تنجحون تاخذون النقاط ×2`;
       case 'extraTurn': f.extraTurn=true; return 'طقها والحقها: لك دور ثاني بعد هذا';
-      case 'reroll': f.reroll=(f.reroll||0)+1; return 'تخطي الإعلان: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
+      case 'reroll': f.reroll=(f.reroll||0)+1; return 'اصرمني: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
       case 'spoiler': f.spoiler=true; return 'سؤالك الجاي فيه سبويلر';
       case 'immune': f.immune=G.round+1; return 'وضع الطيران: محصّن لين نهاية اللفة الجاية';
       case 'streak': f.streak=true; addScore(t,50); return 'مولّعة: +50 وكل نجاح ورا بعض +50 لين تفشل';
