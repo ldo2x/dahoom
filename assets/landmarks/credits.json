@@ -1,0 +1,152 @@
+{
+ "eiffel": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/960px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg"
+ },
+ "burjkhalifa": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Burj_Khalifa_%28worlds_tallest_building%29_and_the_Dubai_skyline_%2825781049892%29.jpg/960px-Burj_Khalifa_%28worlds_tallest_building%29_and_the_Dubai_skyline_%2825781049892%29.jpg"
+ },
+ "giza": {
+  "page": "https://en.wikipedia.org/wiki/Great_Pyramid_of_Giza",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Great_Pyramid_of_Giza_-_Pyramid_of_Khufu.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "liberty": {
+  "page": "https://en.wikipedia.org/wiki/Statue_of_Liberty",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/8/89/Front_view_of_Statue_of_Liberty_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "tajmahal": {
+  "page": "https://en.wikipedia.org/wiki/Taj_Mahal",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Taj_Mahal_%28Edited%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "bigben": {
+  "page": "https://en.wikipedia.org/wiki/Big_Ben",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/Elizabeth_Tower_and_the_north_front_of_the_Palace_of_Westminster%2C_London.jpg/3840px-Elizabeth_Tower_and_the_north_front_of_the_Palace_of_Westminster%2C_London.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "colosseum": {
+  "page": "https://en.wikipedia.org/wiki/Colosseum",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/3840px-Colosseo_2020.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "greatwall": {
+  "page": "https://en.wikipedia.org/wiki/Great_Wall_of_China",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/3840px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "kingdom": {
+  "page": "https://en.wikipedia.org/wiki/Kingdom_Centre",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Kingdom_Centre_Riyadh_2024.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "pisa": {
+  "page": "https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Italy_-_Pisa_-_Leaning_Tower.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "sydney": {
+  "page": "https://en.wikipedia.org/wiki/Sydney_Opera_House",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Sydney_Opera_House_2026.jpg/3840px-Sydney_Opera_House_2026.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "clocktower": {
+  "page": "https://en.wikipedia.org/wiki/Abraj_Al_Bait",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Abraj_Al_Bait_Tower_2017.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "redeemer": {
+  "page": "https://en.wikipedia.org/wiki/Christ_the_Redeemer_(statue)",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Christ_the_Redeemer_-_Cristo_Redentor.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "burjarab": {
+  "page": "https://en.wikipedia.org/wiki/Burj_Al_Arab",
+  "file": "https://upload.wikimedia.org/wikipedia/en/2/2a/Burj_Al_Arab%2C_Dubai%2C_by_Joi_Ito_Dec2007.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "faisaliah": {
+  "page": "https://en.wikipedia.org/wiki/Al_Faisaliah_Tower",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/e/e1/All_Faisaliah_Tower_Riyadh%2C_2023.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "petra": {
+  "page": "https://en.wikipedia.org/wiki/Petra",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Al_Deir_Petra.JPG/3840px-Al_Deir_Petra.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "hagia": {
+  "page": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Hagia_Sophia_%28228968325%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "alhambra": {
+  "page": "https://en.wikipedia.org/wiki/Alhambra",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Dawn_Charles_V_Palace_Alhambra_Granada_Andalusia_Spain.jpg/3840px-Dawn_Charles_V_Palace_Alhambra_Granada_Andalusia_Spain.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "machu": {
+  "page": "https://en.wikipedia.org/wiki/Machu_Picchu",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Machu_Picchu%2C_2023_%28012%29.jpg/3840px-Machu_Picchu%2C_2023_%28012%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "zayed": {
+  "page": "https://en.wikipedia.org/wiki/Sheikh_Zayed_Grand_Mosque",
+  "file": "https://upload.wikimedia.org/wikipedia/en/7/7d/Sheikh_Zayed_Mosque_view.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "neuschwanstein": {
+  "page": "https://en.wikipedia.org/wiki/Neuschwanstein_Castle",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Schloss_Neuschwanstein_%2845_mm%29.jpg/3840px-Schloss_Neuschwanstein_%2845_mm%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "sagrada": {
+  "page": "https://en.wikipedia.org/wiki/Sagrada_Fam%C3%ADlia",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/e/ef/SF_maig_2_cropped.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "towerbridge": {
+  "page": "https://en.wikipedia.org/wiki/Tower_Bridge",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/Tower_Bridge_at_Dawn.jpg/3840px-Tower_Bridge_at_Dawn.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "goldengate": {
+  "page": "https://en.wikipedia.org/wiki/Golden_Gate_Bridge",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bf/Golden_Gate_Bridge_as_seen_from_Battery_East.jpg/3840px-Golden_Gate_Bridge_as_seen_from_Battery_East.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "elephant": {
+  "page": "https://en.wikipedia.org/wiki/Elephant_Rock_(Saudi_Arabia)",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Elephant_rock%2C_Al-%27Ula.jpg/3840px-Elephant_rock%2C_Al-%27Ula.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "basil": {
+  "page": "https://en.wikipedia.org/wiki/Saint_Basil%27s_Cathedral",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/18/Saint_Basil%27s_Cathedral_in_Moscow.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "angkor": {
+  "page": "https://en.wikipedia.org/wiki/Angkor_Wat",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/41/Angkor_Wat.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "chichen": {
+  "page": "https://en.wikipedia.org/wiki/Chichen_Itza",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Chichen_Itza_3.jpg/3840px-Chichen_Itza_3.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "moai": {
+  "page": "https://en.wikipedia.org/wiki/Moai",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/5/50/AhuTongariki.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "shwedagon": {
+  "page": "https://en.wikipedia.org/wiki/Shwedagon_Pagoda",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Shwedagon_Pagoda_2017.jpg/3840px-Shwedagon_Pagoda_2017.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "montsaint": {
+  "page": "https://en.wikipedia.org/wiki/Mont-Saint-Michel",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Mont-Saint-Michel_vu_du_ciel.jpg/3840px-Mont-Saint-Michel_vu_du_ciel.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "meteora": {
+  "page": "https://en.wikipedia.org/wiki/Meteora",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Meteora%27s_monastery_2.jpg/3840px-Meteora%27s_monastery_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "sigiriya": {
+  "page": "https://en.wikipedia.org/wiki/Sigiriya",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Sigiriya_%28141688197%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "potala": {
+  "page": "https://en.wikipedia.org/wiki/Potala_Palace",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Potala_Palace_HQ.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "borobudur": {
+  "page": "https://en.wikipedia.org/wiki/Borobudur",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/Pradaksina.jpg/3840px-Pradaksina.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "masmak": {
+  "page": "https://en.wikipedia.org/wiki/Masmak_Fort",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/81/Masmak_Fort_%2812753717253%29.jpg/3840px-Masmak_Fort_%2812753717253%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "djenne": {
+  "page": "https://en.wikipedia.org/wiki/Great_Mosque_of_Djenn%C3%A9",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/7/75/Djenne_great_mud_mosque.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+ },
+ "aitben": {
+  "page": "https://en.wikipedia.org/wiki/A%C3%AFt_Benhaddou",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d5/Ksar_A%C3%AFt_Benhaddou%2C_Marocco_%28%D8%A3%D9%8A%D8%AA_%D8%A8%D9%86_%D8%AD%D8%AF%D9%88%D8%8C_%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8%2C_%E2%B4%B0%E2%B5%A2%E2%B5%9C_%E2%B5%83%E2%B4%B0%E2%B4%B7%E2%B4%B7%E2%B5%93%29.jpg/3840px-Ksar_A%C3%AFt_Benhaddou%2C_Marocco_%28%D8%A3%D9%8A%D8%AA_%D8%A8%D9%86_%D8%AD%D8%AF%D9%88%D8%8C_%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8%2C_%E2%B4%B0%E2%B5%A2%E2%B5%9C_%E2%B5%83%E2%B4%B0%E2%B4%B7%E2%B4%B7%E2%B5%93%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ }
+}
