@@ -220,9 +220,9 @@
   function gamePhase(){ if(!G) return null; const r=Math.max(0,...G.teams.map(t=>t.score))/S.target; return r<0.35?'early': r<0.75?'mid':'late'; }
 
   // مفاتيح الطاقات (تنمسح بفاكت تشيك) والضربات (تنمسح بتشل قاي)
-  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'اصرمني', spoiler:'وش السالفة', immune:'محد قدّك', streak:'مولّعة',
-    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'رأس مال', finisher:'الضربة القاضية', mc:'خيارات', insure:'ضامنها', ambush:'كمين' };
-  const DEBUFFS = { harder:'شد حيلك', lag:'النت فاصل', ratioTo:'نص نص', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
+  const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'تخطي الإعلان', spoiler:'وش السالفة', immune:'محد قدّك', streak:'مولّعة',
+    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'ستونكس', finisher:'فاتاليتي', mc:'خيارات', insure:'تأمين ضد الغير', ambush:'إنه فخ' };
+  const DEBUFFS = { harder:'زيدوها ملح', lag:'النت فاصل', ratioTo:'شريك مخالف', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
 
   // ---------- العرض ----------
   function renderBoard(bumpId){
@@ -243,7 +243,7 @@
   }
   function stage(html){ if(G){ G.canPlayNow=false; closeBuzz(); } const s=$('#stage'); s.innerHTML=html; pushAll(); return s; }
   function addScore(team, n, {silent, allowNegative, noInsure}={}){
-    if(n<0 && team.fx && team.fx.insure && !noInsure){ delete team.fx.insure; const half=Math.min(-25, -(r25(-n/2)||25)); toast(`ضامنها: ${team.name} خسر ${-half} بدل ${-n}`, 3200); play('meme:phew',{volume:.5,max:1500}); n=half; }
+    if(n<0 && team.fx && team.fx.insure && !noInsure){ delete team.fx.insure; const half=Math.min(-25, -(r25(-n/2)||25)); toast(`تأمين ضد الغير: ${team.name} خسر ${-half} بدل ${-n}`, 3200); play('meme:phew',{volume:.5,max:1500}); n=half; }
     team.score = allowNegative ? team.score + n : Math.max(team.score<0?team.score:0, team.score + n);
     renderBoard(team.id);
     if(!silent && n>0) play('coin',{volume:.8});
@@ -337,12 +337,12 @@
   function resolveSuccess(t, base, {hard=false, section}={}){
     const f=t.fx; let gain=base; const notes=[];
     if(f.x2next){ gain*=2; delete f.x2next; delete f.x2back; notes.push('خلك ذيب ×2'); }
-    if(f.finisher){ const m = t.score>=S.target*0.75 ? 3 : 1.5; gain=r25(gain*m)||gain; delete f.finisher; notes.push(`الضربة القاضية ×${m}`); }
+    if(f.finisher){ const m = t.score>=S.target*0.75 ? 3 : 1.5; gain=r25(gain*m)||gain; delete f.finisher; notes.push(`فاتاليتي ×${m}`); }
     if(f.jackpot){ gain*=2; delete f.jackpot; notes.push('جاك بوت ×2'); reaction('jackpotWin',3000); memeSound('correct'); }
     if(f.nocap){ const b=hard?50:25; gain+=b; delete f.nocap; notes.push('من جد +'+b); }
     if(f.speedrun){ if(section==='q' && fracLeft()>=.5){ const b=r25(base*.5)||25; gain+=b; notes.push('تفحيط +'+b); } delete f.speedrun; }
     if(f.streak){ gain+=50; notes.push('مولّعة +50'); }
-    if(f.capital){ gain+=25; notes.push('رأس مال +25'); }
+    if(f.capital){ gain+=25; notes.push('ستونكس +25'); }
     if(f.wolf){ const v=G.teams.find(x=>x.id===f.wolf); delete f.wolf; if(v && v!==t){ const a=Math.min(gain, Math.max(0,v.score)); if(a){ addScore(v,-a,{silent:true}); notes.push(`خلك ذيب: ${esc(v.name)} −${a}`); } } }
     if(f.flatBonus){ gain+=f.flatBonus; notes.push((f.hayatFail?'هياط':'واسطة')+' +'+f.flatBonus); delete f.flatBonus; }
     delete f.hayatFail; delete f.copium;
@@ -456,7 +456,7 @@
     const minD = hayat ? 3 : (climax||npc) ? 2 : 1;
     stage(`<span class="pill">${ic(sec.icon)} ${sec.name}</span><div class="big">اختر الصعوبة</div>
       <div class="diff-btns">${[1,2,3].map(d=>`<button class="diff d${d}" data-d="${d}" ${d<minD?'disabled':''}><span class="dn">${DIFF[d]}</span><span class="dp">${pts(d)}</span><span class="dc">${countFresh(k,d,tagsKey)} متاح</span></button>`).join('')}</div>
-      ${t.fx.harder ? '<span class="fx-tag bad">شد حيلك: الصعوبة بترتفع درجة بنفس السعر</span>':''}
+      ${t.fx.harder ? '<span class="fx-tag bad">زيدوها ملح: الصعوبة بترتفع درجة بنفس السعر</span>':''}
       ${t.fx.lag ? '<span class="fx-tag bad">النت فاصل: وقتك بالنص هالدور</span>':''}
       ${climax ? '<span class="banner">الحسم: قربتوا تفوزون، ما فيه سهل</span>':''}${npc?'<span class="fx-tag bad">قم تحرك: متوسط أو أعلى</span>':''}${hayat?'<span class="fx-tag">هياط: صعب بس — تنجح +150 تفشل −75</span>':''}${wasta?'<span class="fx-tag">الواسطة: نقاطك بسعر الصعوبة اللي فوق</span>':''}`);
     renderHand(t,false);
@@ -464,7 +464,7 @@
     $$('#stage [data-d]').forEach(b=>{ if(b.disabled) return; b.onclick=()=>{ let d=Number(b.dataset.d); let priceD=d;
       if(hayat){ t.fx.flatBonus=200; t.fx.hayatFail=true; }
       if(wasta){ if(d<3) priceD=d+1; else t.fx.flatBonus=100; }
-      if(t.fx.harder){ delete t.fx.harder; if(d<3){ d++; toast(`شد حيلك: صارت ${DIFF[d]} بسعر ${DIFF[priceD]}`); } else toast('الصعب يبقى صعب'); }
+      if(t.fx.harder){ delete t.fx.harder; if(d<3){ d++; toast(`زيدوها ملح: صارت ${DIFF[d]} بسعر ${DIFF[priceD]}`); } else toast('الصعب يبقى صعب'); }
       const lag = !!t.fx.lag; delete t.fx.lag;
       play('pop'); if(k==='q') runQuestion(t,d,null,{priceD,lag}); else if(k==='c') runCharade(t,d,null,{priceD,lag}); else runChallenge(t,d,null,{priceD,lag}); }; });
   }
@@ -981,7 +981,7 @@
   // هجوم مع فرصة رد الفعل
   async function attack(src, tgt, c){
     let pre='';
-    if(tgt.fx.ambush && tgt!==src && c.fx!=='factcheck'){ delete tgt.fx.ambush; const a=Math.min(100,Math.max(0,src.score)); addScore(src,-a,{silent:true}); play('meme:trap',{volume:.7}); pre=`كمين! ${src.name} خسر ${a}. `; }
+    if(tgt.fx.ambush && tgt!==src && c.fx!=='factcheck'){ delete tgt.fx.ambush; const a=Math.min(100,Math.max(0,src.score)); addScore(src,-a,{silent:true}); play('meme:trap',{volume:.7}); pre=`إنه فخ! ${src.name} خسر ${a}. `; }
     return pre + await attack0(src, tgt, c);
   }
   async function attack0(src, tgt, c){
@@ -996,7 +996,7 @@
           { const o=ST(tgt); if(o) o.reactions++; moment(`${esc(tgt.name)} ردّ "${esc(c.name)}" بـ"${esc(r.name)}"`, tgt); }
           const fx=FX(); if(fx){ fx.sound(r); fx.visual(r); }
           reaction('reverse',2600);
-          if(r.fx==='seen') return `${tgt.name} طنّش — ${c.name} انلغت`;
+          if(r.fx==='seen') return `${tgt.name} سوّى بلوك — ${c.name} انلغت`;
           if(r.fx==='reverse'){
             if(c.fx==='snap' && src.score<=0) return 'العب غيرها! بس ما عنده نقاط تنشلط';
             const m2 = await applyAttack(tgt, src, c);
@@ -1016,7 +1016,7 @@
       case 'npc': f.npc=true; return `${tgt.name}: دوره الجاي تحديات بالغصب`;
       case 'skipDraw': f.skipDraw=true; return `${tgt.name}: ما يسحب بطاقة دوره الجاي`;
       case 'shadowban': f.noSteal=G.round; f.noCard=true; return `${tgt.name}: ممنوع يسرق هاللفة وممنوع بطاقات دوره الجاي`;
-      case 'factcheck': { const DEF={immune:'محد قدّك', ambush:'كمين', insure:'ضامنها'}; const had=Object.keys(DEF).filter(k=>f[k]!=null); had.forEach(k=>delete f[k]);
+      case 'factcheck': { const DEF={immune:'محد قدّك', ambush:'إنه فخ', insure:'تأمين ضد الغير'}; const had=Object.keys(DEF).filter(k=>f[k]!=null); had.forEach(k=>delete f[k]);
         const burned=tgt.hand.filter(x=>x.kind==='reaction'); tgt.hand=tgt.hand.filter(x=>x.kind!=='reaction');
         if(!had.length && !burned.length){ addScore(src,-50,{silent:true,noInsure:true}); play('fx_deny',{volume:.6}); return `كاشفك على الفاضي: ${tgt.name} ما عنده دفاع — ${src.name} خسر 50`; }
         return `كاشفك كسر دفاع ${tgt.name}: ${[...had.map(k=>DEF[k]), ...burned.map(x=>x.name)].join('، ')}`; }
@@ -1044,7 +1044,7 @@
       case 'evilEye': f.evilEye=true; return `عين وصابت ${tgt.name}: نص نجاحه الجاي يطير`;
       case 'prank': { const b=randomCard('black'); if(tgt.hand.length>=S.handMax) tgt.hand.splice(Math.floor(Math.random()*tgt.hand.length),1); tgt.hand.push(b); return `مقلب! ${tgt.name} لقى "${b.name}" بيده`; }
       case 'snap': { const loss=Math.max(Math.min(250, r25(tgt.score*.25)), tgt.score>0?25:0); addScore(tgt,-loss,{silent:true}); play('meme:inevitable',{volume:.4});
-        return `شلوطة: ${tgt.name} خسر ${loss}`; }
+        return `فرقعة ثانوس: ${tgt.name} خسر ${loss}`; }
       case 'undo': { const g=tgt.lastGain||0; tgt.lastGain=0; if(!g) return `${tgt.name} ما كسب شي بدوره الأخير — راحت البطاقة`; addScore(tgt,-g,{silent:true}); return `ما غزيت: انمسحت ${g} نقطة من ${tgt.name}`; }
       case 'trade': {
         if(!tgt.hand.length) return `يد ${tgt.name} فاضية — ما فيه شي ينتبادل`;
@@ -1073,7 +1073,7 @@
       case 'x2next': f.x2next=true; return 'خلك ذيب: نجاحك بهالدور دبل، ولو فشلت ترجع لك';
       case 'jackpot': f.jackpot=true; return `جاك بوت: دفعتوا ${JACKPOT_COST} — تنجحون تاخذون النقاط ×2`;
       case 'extraTurn': f.extraTurn=true; return 'طقها والحقها: لك دور ثاني بعد هذا';
-      case 'reroll': f.reroll=(f.reroll||0)+1; return 'اصرمني: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
+      case 'reroll': f.reroll=(f.reroll||0)+1; return 'تخطي الإعلان: تقدر تبدّل السؤال أو العبارة أو التحدي مرة';
       case 'spoiler': f.spoiler=true; return 'سؤالك الجاي فيه سبويلر';
       case 'immune': f.immune=G.round+1; return 'محد قدّك: محصّن لين نهاية اللفة الجاية';
       case 'streak': f.streak=true; addScore(t,50); return 'مولّعة: +50 وكل نجاح ورا بعض +50 لين تفشل';
@@ -1081,20 +1081,20 @@
       case 'copium': f.copium=true; return 'كوبيوم: لو فشلت تاخذ 40';
       case 'speedrun': f.speedrun=true; return 'سبيد رن: جاوب صح بنص الوقت الأول وخذ +50%';
       case 'choose': f.choose=true; return 'على كيفي: اختر خانتك';
-      case 'mc4': if(f.mc!==2){ f.mc=4; f.mcN=1; } return 'عطني خيارات: أول سؤال عام يجيكم بأربع خيارات';
+      case 'mc4': if(f.mc!==2){ f.mc=4; f.mcN=1; } return 'من سيربح المليون: أول سؤال عام يجيكم بأربع خيارات';
       case 'mc2': f.mc=2; f.mcN=2; return 'حذف إجابتين: أول سؤالين عامين يجونكم بخيارين بس';
-      case 'insure': f.insure=true; return 'ضامنها: أول خسارة نقاط تجيكم تنزل للنص';
-      case 'ambush': f.ambush=true; return 'كمين: أول فريق يهاجمكم يخسر 100';
+      case 'insure': f.insure=true; return 'تأمين ضد الغير: أول خسارة نقاط تجيكم تنزل للنص';
+      case 'ambush': f.ambush=true; return 'إنه فخ: أول فريق يهاجمكم يخسر 100';
       case 'lock': f.lock=true; return 'قفل الشات: سؤالك الجاي ما ينسرق';
       case 'rizz': f.rizz=true; return 'رز: أول بدون كلام تشارك فيه نصيبك كامل';
       case 'fullsteal': f.fullsteal=G.round+1; return 'ببلاش: أول سرقة لك كاملة';
       case 'cleanse': { const n=Object.keys(DEBUFFS).filter(k=>f[k]!=null); n.forEach(k=>delete f[k]); addScore(t,50); return `رايق: +50${n.length?` ومسحنا ${n.length} ضربة`:''}`; }
-      case 'gacha': await pickFrom(t,[randomCard(),randomCard()],'ضربة حظ — اختر وحدة'); return '';
-      case 'capital': f.capital=true; return 'رأس مال: كل نجاح لكم لين آخر المباراة +25';
-      case 'finisher': f.finisher=true; return `الضربة القاضية: نجاحكم الجاي ×${t.score>=S.target*0.75?3:1.5}`;
-      case 'haul': { await drawCard(t); await drawCard(t); return 'زاد الطريق: سحبتوا بطاقتين'; }
+      case 'gacha': await pickFrom(t,[randomCard(),randomCard()],'باكج فيفا — اختر وحدة'); return '';
+      case 'capital': f.capital=true; return 'ستونكس: كل نجاح لكم لين آخر المباراة +25';
+      case 'finisher': f.finisher=true; return `فاتاليتي: نجاحكم الجاي ×${t.score>=S.target*0.75?3:1.5}`;
+      case 'haul': { await drawCard(t); await drawCard(t); return 'مقاضي الشهر: سحبتوا بطاقتين'; }
       case 'comeback': { const L=leader(), last=[...G.teams].sort((a,b)=>a.score-b.score)[0];
-        const amt = last===t && L!==t ? Math.min(250, Math.max(50, r25((L.score-t.score)/3))) : 50; addScore(t,amt); return `ما بقى شي: +${amt}`; }
+        const amt = last===t && L!==t ? Math.min(250, Math.max(50, r25((L.score-t.score)/3))) : 50; addScore(t,amt); return `ريمونتادا: +${amt}`; }
       case 'yasalam': f.yasalam=G.round+1; return 'يا سلام: كل نجاح لغيرك لين نهاية اللفة الجاية يعطيك +30';
       case 'wasta': f.wasta=true; f.choose=true; return 'الواسطة: اختر خانتك، ونقاطك بسعر الصعوبة اللي فوق';
       case 'hayat': f.hayat=true; return 'هياط: لازم صعب — تنجح +200 تفشل −50';
@@ -1179,7 +1179,7 @@
       <p><b>التحديات:</b> نفّذ بالوقت المحدد. ما فيه سرقة.</p>
       <p>كل لفة الترتيب يتغير: الأعلى نقاط يبدأ.</p>
       <p><b>البطاقات:</b> من اللفة ${S.noCardRounds+1} كل فريق يسحب بطاقة بداية دوره ويحتفظ لين ${S.handMax}. بطاقة وحدة بس كل دور. البطاقة اللي لها شرط وتلعبها وشرطها مو متحقق تنحرق وتنحسب بطاقة دورك. ${S.reactionsEnabled?'بطاقات رد الفعل تنلعب برا دورك لحظة ما أحد يهاجمك.':''}</p>
-      <p><b>مراحل المباراة:</b> البداية (المتصدر تحت 35% من الهدف)، الوسط (لين 75%)، والنهاية. بطاقات كل مرحلة تنسحب أكثر بوقتها، وبعضها أقوى فيه — مثل "رأس مال" بالبداية و"الضربة القاضية" بالنهاية.</p>
+      <p><b>مراحل المباراة:</b> البداية (المتصدر تحت 35% من الهدف)، الوسط (لين 75%)، والنهاية. بطاقات كل مرحلة تنسحب أكثر بوقتها، وبعضها أقوى فيه — مثل "ستونكس" بالبداية و"فاتاليتي" بالنهاية.</p>
       ${S.comebackEnabled?'<p><b>دفعة الرجعة:</b> لو متأخر 400 نقطة أو أكثر عن المتصدر، تسحب بطاقتين وتختار وحدة.</p>':''}
       ${S.endgameEnabled?`<p><b>الحسم:</b> أول ما فريق يوصل ${endgameAt()} نقطة: هو ما له أسئلة سهلة، ووقت السرقة للكل ينقص للنص.</p>`:''}
       <p><b>بطاقات التحدي:</b> وجه لوجه وتحدي الصمت — تتحدى فيها فريق ثاني، والفايز ياخذ الرهان من الخاسر.</p>

@@ -11,14 +11,14 @@ window.DahoomFX = (function(){
   const SND_DELAY = { legendary:650, medium:450, normal:150, black:300 };
   // نص الختم الكبير لكل تأثير
   const LOOK = {
-    reverse:'العب غيرها', x2next:'ذيب ×2', wolf:'ذيب', envy:'ما تهنى', steal:'على حسابي', pick:'نشّال', hawk:'عين الصقر', jackpot:'جاك بوت', snap:'شلوطة', extraTurn:'طقها', undo:'ما غزيت',
-    reroll:'اصرمني', spoiler:'وش السالفة', harder:'شد حيلك', lag:'النت فاصل', ratio:'نص نص', trade:'خذ وهات',
+    reverse:'العب غيرها', x2next:'ذيب ×2', wolf:'ذيب', envy:'ما تهنى', steal:'على حسابي', pick:'نشّال', hawk:'عين الصقر', jackpot:'جاك بوت', snap:'ثانوس', extraTurn:'طقها', undo:'ما غزيت',
+    reroll:'تخطي الإعلان', spoiler:'وش السالفة', harder:'زيدوها ملح', lag:'النت فاصل', ratio:'شريك مخالف', trade:'خذ وهات',
     factcheck:'كاشفك', shadowban:'ولا كلمة', immune:'محد قدّك', wasta:'واسطة', pot:'القطة', evilEye:'عين',
     yasalam:'يا سلام', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
-    copium:'بسيطة', seen:'طنّش', gacha:'ضربة حظ', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',
+    copium:'بسيطة', seen:'بلوك', gacha:'باكج فيفا', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',
     swapTurn:'روح انت أول', roast:'طقطقة', bet:'أراهنك',
-    duelQ:'انزلي', hamour:'الهامور', mc4:'خيارات', mc2:'خيارين', insure:'ضامنها', ambush:'كمين', duelBuzz:'وجه لوجه', duelAct:'تحدي الصمت',
-    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'رأس مال', bench:'برا!', brake:'على وين؟', finisher:'K.O.', haul:'زاد الطريق', comeback:'ما بقى شي',
+    duelQ:'انزلي', hamour:'الهامور', mc4:'خيارات', mc2:'خيارين', insure:'تأمين ضد الغير', ambush:'إنه فخ', duelBuzz:'وجه لوجه', duelAct:'تحدي الصمت',
+    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'ستونكس', bench:'برا!', brake:'على وين؟', finisher:'فاتاليتي', haul:'مقاضي الشهر', comeback:'ريمونتادا',
   };
 
   // ---------- طبقة DOM خفيفة (عناصر قليلة، transform/opacity بس) ----------
