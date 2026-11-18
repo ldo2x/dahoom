@@ -157,5 +157,134 @@
  },
  "fahdfountain": {
   "file": "https://upload.wikimedia.org/wikipedia/commons/9/91/King_Fahd%E2%80%99s_Fountain.jpg"
+ },
+ "sphinx": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/42/Sphinx_with_the_third_pyramid.jpg"
+ },
+ "arc": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Arc_de_Triomphe_-_Ao%C3%BBt_2026.jpg"
+ },
+ "petronas": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f6/The_Twins_SE_Asia_2019_%2849171985716%29_%28cropped%29_2.jpg"
+ },
+ "rushmore": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/8/87/Mount_Rushmore_detail_view_%28100MP%29.jpg"
+ },
+ "empire": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/10/Empire_State_Building_%28aerial_view%29.jpg"
+ },
+ "niagara": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/a/ab/3Falls_Niagara.jpg"
+ },
+ "nabawi": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Masjid_Nabawi_The_Prophet%27s_Mosque%2C_Madina.jpg"
+ },
+ "domerock": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Jerusalem_DomeoftheRock_J65_%28cropped%29.JPG"
+ },
+ "stonehenge": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Stonehenge2007_07_30.jpg"
+ },
+ "brandenburg": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Brandenburger_Tor_abends.jpg"
+ },
+ "whitehouse": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/1d/White_House_north_and_south_sides.jpg"
+ },
+ "fuji": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f8/View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg"
+ },
+ "palm": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/30/Artificial_Archipelagos%2C_Dubai%2C_United_Arab_Emirates_ISS022-E-024940_lrg_%28cropped%29.jpg"
+ },
+ "bluemosque": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/0/03/Istanbul_%2834223582516%29_%28cropped%29.jpg"
+ },
+ "parthenon": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/d/da/The_Parthenon_in_Athens.jpg"
+ },
+ "notredame": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Notre-Dame_de_Paris%2C_4_October_2017.jpg"
+ },
+ "brooklyn": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Brooklyn_Bridge_and_the_Lower_Manhattan_skyline_from_Pebble_Beach%2C_New_York.jpg"
+ },
+ "cntower": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b7/CN_Tower_from_Puente_de_Luz%2C_Toronto%2C_Ontario%2C_2025-08-25_01.jpg"
+ },
+ "tokyotower": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/5/58/Tokyo_Tower_2023.jpg"
+ },
+ "marinabay": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Marina_Bay_Sands_%28I%29.jpg"
+ },
+ "abusimbel": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Ramsis%2C_Aswan_Governorate%2C_Egypt_-_panoramio.jpg"
+ },
+ "rijal": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/40/Rijal_Almaa_village_2021.jpg"
+ },
+ "grandcanyon": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/31/Canyon_River_Tree_%28165872763%29.jpeg"
+ },
+ "halong": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/7/79/Ha_Long_Bay_in_2019.jpg"
+ },
+ "cappadocia": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/5/59/Cappadocia_balloon_trip%2C_Ortahisar_Castle_%2811893715185%29.jpg"
+ },
+ "plitvice": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/39/View_in_Plitvice_Lakes_National_Park.jpg"
+ },
+ "uluru": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/a/a8/ULURU.jpg"
+ },
+ "baalbek": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Temple_of_Bacchus%2C_Baalbek%2C_Lebanon_%2849890013476%29.jpg"
+ },
+ "hallstatt": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Hallstatt_-_Zentrum_.JPG"
+ },
+ "persepolis": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/5/5c/2018-09-21_Iran%2C_Persepolis%2C_Tachara_%28from_the_southeast%29.jpg"
+ },
+ "registan": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/8/8c/RegistanSquare_Samarkand.jpg"
+ },
+ "hallgrims": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Hallgrimskirkja_mai_2026.jpg"
+ },
+ "watarun": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/2/2a/%E0%B9%80%E0%B8%88%E0%B8%94%E0%B8%B5%E0%B8%A2%E0%B9%8C%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%97%E0%B8%A3%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B2%E0%B8%87%E0%B8%84%E0%B9%8C%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%AD%E0%B8%A3%E0%B8%B8%E0%B8%932.jpg"
+ },
+ "leptis": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/33/Leptis_Magna_%2829%29_%288288918733%29.jpg"
+ },
+ "jerash": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/5/51/Oval_Plaza_%28Forum_Romanum%2C_Gerasa_-_Jerash%2C_Jordan%29_-_%D8%B3%D8%A7%D8%AD%D8%A9_%D8%A7%D9%84%D9%86%D8%AF%D9%88%D8%A9%2C_%D8%AC%D8%B1%D8%B4.jpg"
+ },
+ "trevi": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Trevi_Fountain_-_Roma.jpg"
+ },
+ "stpeter": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg"
+ },
+ "qutb": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Qutb_Minar_2022.jpg"
+ },
+ "victoria": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/d/da/Cataratas_Victoria%2C_Zambia-Zimbabue%2C_2018-07-27%2C_DD_04.jpg"
+ },
+ "matterhorn": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/6/60/Matterhorn_from_Domh%C3%BCtte_-_2.jpg"
+ },
+ "cordoba": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Mezquita_de_C%C3%B3rdoba_desde_el_aire_%28C%C3%B3rdoba%2C_Espa%C3%B1a%29.jpg"
+ },
+ "iguazu": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/9/91/Aerial_Foz_de_Igua%C3%A7u_26_Nov_2005.jpg"
+ },
+ "tablemtn": {
+  "file": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Table_Mountain_DanieVDM.jpg"
  }
 }
