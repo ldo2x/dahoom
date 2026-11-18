@@ -221,8 +221,8 @@
 
   // مفاتيح الطاقات (تنمسح بفاكت تشيك) والضربات (تنمسح بتشل قاي)
   const BUFFS = { x2next:'خلك ذيب ×2', jackpot:'جاك بوت', wolf:'خلك ذيب', extraTurn:'طقها والحقها', reroll:'تخطي الإعلان', spoiler:'وش السالفة', immune:'وضع الطيران', streak:'مولّعة',
-    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'المطبّل', capital:'ستونكس', finisher:'فاتاليتي', mc:'خيارات', insure:'تأمين ضد الغير', ambush:'إنه فخ' };
-  const DEBUFFS = { harder:'زيدوها ملح', lag:'النت فاصل', ratioTo:'شريك مخالف', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'مطب صناعي' };
+    nocap:'من جد', copium:'بسيطة', speedrun:'تفحيط', choose:'على كيفي', lock:'خلها بيننا', rizz:'فنّان', fullsteal:'ببلاش', wasta:'الواسطة', hayat:'هياط', sawalif:'سواليف', yasalam:'يا سلام', capital:'ستونكس', finisher:'فاتاليتي', mc:'خيارات', insure:'تأمين ضد الغير', ambush:'إنه فخ' };
+  const DEBUFFS = { harder:'زيدوها ملح', lag:'النت فاصل', ratioTo:'شريك مخالف', noSteal:'ممنوع يسرق', noCard:'ممنوع بطاقات', npc:'قم تحرك', skipDraw:'رح نام', evilEye:'عين وصابتك', coal:'الجمرة بيده', benched:'خلك برا', brake:'على وين؟' };
 
   // ---------- العرض ----------
   function renderBoard(bumpId){
@@ -279,7 +279,7 @@
   function previewCard(team, idx, playable){
     const c=team.hand[idx];
     const canPlay = playable && c.kind!=='reaction' && c.fx!=='none';
-    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'هذي رد فعل: تطلع لحالها لما خصمك يلعب بطاقة دعم' : 'هذي رد فعل: تطلع لحالها لما أحد يهاجمك') : c.fx==='none' ? 'سودا… ما تنلعب. ادمجها أو ارمها بعرض تجاري' : '';
+    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'هذي رد فعل: تطلع لحالها لما خصمك يلعب بطاقة دعم' : c.fx==='wow' ? 'هذي رد فعل: تطلع لحالها لما فريق يكسب 200 أو أكثر بدور واحد' : 'هذي رد فعل: تطلع لحالها لما أحد يهاجمك') : c.fx==='none' ? 'سودا… ما تنلعب. ادمجها أو ارمها بعرض تجاري' : '';
     const m=modal(`<div class="co-wrap">${cardHTML(c,{size:'big',anim:true})}
       ${why?`<p class="muted mt-s">${why}</p>`:''}
       <div class="row center mt-s">${canPlay?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${canPlay?'تراجع':'إغلاق'}</button><button class="btn ghost small" data-rep-card>${ic('flag')} بلّغ</button></div></div>`,{onMount(m){
@@ -375,7 +375,7 @@
   }
   // يطبق الريشيو ويضيف النقاط — يرجع النص
   function payout(t, gain, notes=[]){
-    if(t.fx.brake!=null && gain>0 && t.score+gain >= S.target){ const cap=Math.max(0, S.target-25-t.score); notes.push(`مطب صناعي: توقف عند ${S.target-25}`); gain=cap; }
+    if(t.fx.brake!=null && gain>0 && t.score+gain >= S.target){ const cap=Math.max(0, S.target-25-t.score); notes.push(`على وين؟ توقف عند ${S.target-25}`); gain=cap; }
     if(t.fx.evilEye && gain>0){ delete t.fx.evilEye; const lost=r25(gain/2)||25; gain-=lost; notes.push(`عين وصابتك −${lost}`); play('meme:sa_yasatr',{volume:.6}); }
     if(G.pot>0 && gain>0){ notes.push(`أخذ القطة +${G.pot}`); gain+=G.pot; G.pot=0; play('game:g_mariocoin'); }
     if(t.fx.ratioTo && gain>0){
@@ -383,7 +383,12 @@
       if(to && to!==t){ const cut=Math.min(150, r25(gain/2)||25); gain-=cut; addScore(to,cut,{silent:true}); notes.push(`ريشيو: ${esc(to.name)} أخذ ${cut}`); }
     }
     addScore(t,gain);
-    if(gain>0) G.teams.forEach(y=>{ if(y!==t && y.fx.yasalam!=null){ addScore(y,30,{silent:true}); notes.push(`المطبّل: ${esc(y.name)} +30`); } });
+    // يا سلام: أول فريق ماسكها ياخذ ربع أي دور فيه 200 أو أكثر
+    if(gain>=200 && S.reactionsEnabled){ const x=others(t).find(y=>y.hand.some(h=>h.fx==='wow'));
+      if(x){ const card=x.hand.find(h=>h.fx==='wow'); x.hand.splice(x.hand.indexOf(card),1); showPlayed(card, x); { const fx=FX(); if(fx){ fx.sound(card); fx.visual(card); } }
+        const cut=r25(gain/4)||25, s0=t.score; addScore(t,-cut,{silent:true}); const got=s0-t.score; addScore(x,got); gain-=got;
+        notes.push(`يا سلام! ${esc(x.name)} أخذ ${got}`); moment(`${esc(x.name)} قال يا سلام وأخذ ${got} من ${esc(t.name)}`, x); } }
+    if(gain>0) G.teams.forEach(y=>{ if(y!==t && y.fx.yasalam!=null){ addScore(y,30,{silent:true}); notes.push(`يا سلام: ${esc(y.name)} +30`); } });
     return { net:gain, note: notes.length?` <span class="muted">(${notes.join(' · ')})</span>`:'' };
   }
 
@@ -792,7 +797,7 @@
     renderBoard(); turnIntro();
   }
   async function playCard(t, idx){
-    if(!canPlayCard(t)){ toast(t.fx.noCard?'حظر تجول: ممنوع بطاقات هالدور':'بطاقة وحدة بس كل دور'); return; }
+    if(!canPlayCard(t)){ toast(t.fx.noCard?'ولا كلمة: ممنوع بطاقات هالدور':'بطاقة وحدة بس كل دور'); return; }
     const c=t.hand[idx];
     let real=c, target=null;
     if(c.fx==='copy'){ real=G.lastCard; if(!real) return burnCard(t, idx, 'ما انلعبت بطاقة قبل'); }
@@ -988,7 +993,7 @@
     if(c.fx==='roast' && !tgt.lastFail){ play('fx_deny',{volume:.6}); return `انحرقت طقطقة: ${tgt.name} ما فشل بدوره الأخير`; }
     if(tgt.fx.immune!=null && !PIERCE[c.fx]){ play('meme:pipe',{volume:.6}); return `${tgt.name} على وضع الطيران — ${c.name} ما وصلت`; }
     if(S.reactionsEnabled && c.fx!=='factcheck'){
-      const reacts = tgt.hand.filter(x=>x.kind==='reaction' && x.fx!=='envy');
+      const reacts = tgt.hand.filter(x=>x.kind==='reaction' && x.fx!=='envy' && x.fx!=='wow');
       if(reacts.length){
         const choice = await decide(tgt,{ title:`${esc(src.name)} رمى "${esc(c.name)}" عليكم — تردون؟`, options:reacts.map(r=>({v:r.id,card:r})), cancel:'خلها تمر' });
         if(choice){
@@ -1037,13 +1042,13 @@
       case 'bench': { const pl=tgt.players||[]; if(pl.length<2) return `${tgt.name} لاعب واحد — ما فيه أحد يطلع`;
         const pid = G.benchPick && G.benchPick.teamId===tgt.id ? G.benchPick.pid : rnd(pl).id; G.benchPick=null;
         const pp=pl.find(x=>x.id===pid)||rnd(pl); f.benched={pid:pp.id, name:pp.name}; return `${pp.name} من ${tgt.name} برا السالفة بدورهم الجاي`; }
-      case 'brake': f.brake=G.round; return `مطب صناعي: ${tgt.name} ما يعدّي الهدف هاللفة`;
+      case 'brake': f.brake=G.round; return `على وين؟ ${tgt.name} ما يعدّي الهدف هاللفة`;
       case 'coal': f.coal=true; return `الجمرة بيد ${tgt.name}: ينجح تنتقل، يفشل تنفجر −150`;
       case 'roast': { const a=Math.min(100,Math.max(0,tgt.score)); addScore(tgt,-a,{silent:true}); tgt.lastFail=false; return `طقطقة على ${tgt.name}: −${a}`; }
       case 'hamour': { const amt=Math.min(150, Math.max(0,tgt.score)); if(!amt) return `${tgt.name} ما عنده شي ينوخذ`; addScore(tgt,-amt,{silent:true}); addScore(src,amt); return `الهامور: ${src.name} أخذ ${amt} من ${tgt.name}`; }
       case 'evilEye': f.evilEye=true; return `عين وصابت ${tgt.name}: نص نجاحه الجاي يطير`;
       case 'prank': { const b=randomCard('black'); if(tgt.hand.length>=S.handMax) tgt.hand.splice(Math.floor(Math.random()*tgt.hand.length),1); tgt.hand.push(b); return `مقلب! ${tgt.name} لقى "${b.name}" بيده`; }
-      case 'snap': { const loss=Math.max(Math.min(250, r25(tgt.score*.25)), tgt.score>0?25:0); addScore(tgt,-loss,{silent:true}); play('meme:inevitable',{volume:.4});
+      case 'snap': { const loss=Math.max(Math.min(250, r25(tgt.score*.25)), tgt.score>0?25:0); addScore(tgt,-loss,{silent:true});
         return `فرقعة ثانوس: ${tgt.name} خسر ${loss}`; }
       case 'undo': { const g=tgt.lastGain||0; tgt.lastGain=0; if(!g) return `${tgt.name} ما كسب شي بدوره الأخير — راحت البطاقة`; addScore(tgt,-g,{silent:true}); return `ما غزيت: انمسحت ${g} نقطة من ${tgt.name}`; }
       case 'trade': {
@@ -1095,7 +1100,7 @@
       case 'haul': { await drawCard(t); await drawCard(t); return 'مقاضي الشهر: سحبتوا بطاقتين'; }
       case 'comeback': { const L=leader(), last=[...G.teams].sort((a,b)=>a.score-b.score)[0];
         const amt = last===t && L!==t ? Math.min(250, Math.max(50, r25((L.score-t.score)/3))) : 50; addScore(t,amt); return `ريمونتادا: +${amt}`; }
-      case 'yasalam': f.yasalam=G.round+1; return 'المطبّل: كل نجاح لغيرك لين نهاية اللفة الجاية يعطيك +30';
+      case 'yasalam': f.yasalam=G.round+1; return 'يا سلام: كل نجاح لغيرك لين نهاية اللفة الجاية يعطيك +30';
       case 'wasta': f.wasta=true; f.choose=true; return 'الواسطة: اختر خانتك، ونقاطك بسعر الصعوبة اللي فوق';
       case 'hayat': f.hayat=true; return 'هياط: لازم صعب — تنجح +200 تفشل −50';
       case 'sawalif': f.sawalif=true; return 'سواليف: أول بدون كلام تمثله مسموح لك كلمة';

@@ -11,14 +11,14 @@ window.DahoomFX = (function(){
   const SND_DELAY = { legendary:650, medium:450, normal:150, black:300 };
   // نص الختم الكبير لكل تأثير
   const LOOK = {
-    reverse:'العب غيرها', x2next:'ذيب ×2', wolf:'ذيب', envy:'ما تهنى', steal:'اللي لك لي', pick:'نشّال', hawk:'عين الصقر', jackpot:'جاك بوت', snap:'ثانوس', extraTurn:'طقها', undo:'ما غزيت',
+    reverse:'العب غيرها', x2next:'ذيب ×2', wolf:'ذيب', envy:'ما تهنى', wow:'يا سلام', steal:'اللي لك لي', pick:'نشّال', hawk:'عين الصقر', jackpot:'جاك بوت', snap:'فرقعة!', extraTurn:'طقها', undo:'ما غزيت',
     reroll:'تخطي الإعلان', spoiler:'وش السالفة', harder:'زيدوها ملح', lag:'النت فاصل', ratio:'شريك مخالف', trade:'خذ وهات',
-    factcheck:'الفار', shadowban:'حظر تجول', immune:'وضع الطيران', wasta:'واسطة', pot:'القطة', evilEye:'عين',
-    yasalam:'المطبّل', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
+    factcheck:'الفار', shadowban:'ولا كلمة', immune:'وضع الطيران', wasta:'واسطة', pot:'القطة', evilEye:'عين',
+    yasalam:'يا سلام', coal:'الجمرة', copy:'نسخ لصق', streak:'مولّعة', hayat:'هياط', sawalif:'سواليف', prank:'مقلب',
     copium:'بسيطة', seen:'بلوك', gacha:'باكج فيفا', choose:'على كيفي', lock:'بيننا', cleanse:'رايق', fullsteal:'ببلاش',
     swapTurn:'روح انت أول', roast:'طقطقة', bet:'أراهنك',
-    duelQ:'انزلي', hamour:'الهامور', mc4:'خيارات', mc2:'خيارين', insure:'تأمين ضد الغير', ambush:'إنه فخ', duelBuzz:'الكلاسيكو', duelAct:'فيلم صامت',
-    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'ستونكس', bench:'برا!', brake:'مطب صناعي', finisher:'فاتاليتي', haul:'مقاضي الشهر', comeback:'ريمونتادا',
+    duelQ:'انزلي', hamour:'الهامور', mc4:'المليون', mc2:'خيارين', insure:'تأمين ضد الغير', ambush:'إنه فخ', duelBuzz:'الكلاسيكو', duelAct:'فيلم صامت',
+    fakka:'فكّة', coin:'يا نصيب', stick:'لزقة', capital:'ستونكس', bench:'برا!', brake:'على وين؟', finisher:'فاتاليتي', haul:'مقاضي الشهر', comeback:'ريمونتادا',
   };
 
   // ---------- طبقة DOM خفيفة (عناصر قليلة، transform/opacity بس) ----------

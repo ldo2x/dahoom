@@ -316,7 +316,7 @@
   function preview(i){
     const S=st.S, c=C(S.hand[i]); if(!c) return;
     const can = S.canPlay && c.kind!=='reaction' && c.fx!=='none';
-    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'رد فعل: تطلع لكم لحالها لما خصمكم يلعب بطاقة دعم' : 'رد فعل: تطلع لكم لحالها لما أحد يهاجمكم') : c.fx==='none' ? 'سودا — ما تنلعب. ادمجوها أو ارموها بـ"خذ وهات"' : !S.canPlay ? 'البطاقات تنلعب بداية دوركم' : '';
+    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'رد فعل: تطلع لكم لحالها لما خصمكم يلعب بطاقة دعم' : c.fx==='wow' ? 'رد فعل: تطلع لكم لحالها لما فريق يكسب 200 أو أكثر بدور واحد' : 'رد فعل: تطلع لكم لحالها لما أحد يهاجمكم') : c.fx==='none' ? 'سودا — ما تنلعب. ادمجوها أو ارموها بـ"خذ وهات"' : !S.canPlay ? 'البطاقات تنلعب بداية دوركم' : '';
     sheet(`<div class="r-big">${cardHTML(c,{size:'big',anim:true})}</div>${why?`<p class="muted center">${why}</p>`:''}
       <div class="r-actions">${can?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${can?'تراجع':'إغلاق'}</button></div>`);
     const p=$('#r-sheet [data-play]'); if(p) p.onclick=()=>{ vibe(40); send({t:'play', idx:i}); closeSheet(); };
