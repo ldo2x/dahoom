@@ -1104,6 +1104,8 @@
       case 'wasta': f.wasta=true; f.choose=true; return 'الواسطة: اختر خانتك، ونقاطك بسعر الصعوبة اللي فوق';
       case 'hayat': f.hayat=true; return 'هياط: لازم صعب — تنجح +200 تفشل −50';
       case 'sawalif': f.sawalif=true; return 'سواليف: أول بدون كلام تمثله مسموح لك كلمة';
+      case 'snap': { const parts=G.teams.map(x=>{ const s0=x.score; const loss=s0>0?(r25(s0/2)||25):0; if(loss) addScore(x,-loss,{silent:true}); return `${x.name} −${s0-x.score}`; });
+        return `فرقعة ثانوس: الكل انقص للنص — ${parts.join('، ')}`; }
       case 'pot': { let sum=0; G.teams.forEach(x=>{ const a=Math.min(100,Math.max(0,x.score)); addScore(x,-a,{silent:true,noInsure:true}); sum+=a; }); G.pot=(G.pot||0)+sum; return `القطة فيها ${G.pot} — أول واحد ينجح ياخذها`; }
     }
     return '';
