@@ -100,7 +100,7 @@
 
   // ---------- الدور ----------
   function startTurn(){
-    stopTimer(); G.phase='claim'; G.result=null; G.rateBy={}; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[];
+    stopTimer(); G.phase='claim'; G.result=null; G.rateBy={}; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[]; G.solved=[]; G.dpTurn=0;
     clearBoard(); setTvDraw(false); renderScore(); turnIntro();
   }
   function turnIntro(){
@@ -140,7 +140,7 @@
   function choose(i){
     if(G.phase!=='pick' || !G.choices || !G.choices[i]) return;
     G.word=G.choices[i]; G.choices=null; G.used.add(G.word.id); used.save(G.used);
-    G.phase='draw'; G.feed=[]; G.revealed=new Set(); clearBoard();
+    G.phase='draw'; G.feed=[]; G.solved=[]; G.dpTurn=0; G.revealed=new Set(); clearBoard();
     { const L=G.log.items, last=L[L.length-1]; if(last && last.r==='?') last.r='skip';
       L.push({ k:'w', id:G.word.id, d:G.word.d, tag:G.word.tag, r:'?', x:G.word.w, by:G.drawer.name||null }); }
     window.DAHOOM_ITEM = null; // الكلمة سرية لين تنكشف
@@ -154,18 +154,27 @@
       ${G.drawer.tv?`<div class="covered rs-secret" id="rs-sec"><div class="qtext">${esc(w.w)}</div><div class="cover"><span>${ic('eye')} الكلمة (للرسام بس)</span></div></div>`:''}
       <div class="rs-hint" id="rs-hint" aria-label="عدد حروف الكلمة">${hintPattern()}</div>
       <div class="timer smooth" id="rs-timer"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="num">${S.drawTime}</div></div>
+      <div class="rs-prog" id="rs-prog"></div>
       <div class="rs-feed" id="rs-feed"></div>
       <div class="lbl">خمّنوها بصوت؟ اضغط الفريق:</div>
-      <div class="row center">${G.teams.map(x=>`<button class="btn team small" style="--c:${x.color}" data-g="${x.id}">${esc(x.name)}</button>`).join('')}</div>
+      <div class="row center">${guessers().map(x=>`<button class="btn team small" style="--c:${x.color}" data-g="${x.id}">${esc(x.name)}</button>`).join('')}</div>
       <div class="row center"><button class="btn ghost small" id="rs-nobody">ما أحد عرفها — اكشف الكلمة</button></div>`);
     const sec=$('#rs-sec'); if(sec) sec.onclick=()=>{ const c=sec.querySelector('.cover'); c.style.display = c.style.display==='none' ? 'flex' : 'none'; };
     $$('#rs-panel [data-g]').forEach(b=>b.onclick=()=>win(b.dataset.g, null));
-    $('#rs-nobody').onclick=()=>reveal(null);
-    renderFeed();
+    $('#rs-nobody').onclick=()=>endTurn();
+    renderFeed(); renderSolved();
   }
   function renderFeed(){
     const el=$('#rs-feed'); if(!el) return;
-    el.innerHTML = G.feed.length ? G.feed.slice(-7).map(f=>`<div class="rs-msg ${f.close?'close':''}" style="--c:${f.color}"><b>${esc(f.name)}</b><span>${f.close?'قريب جداً!':esc(f.text)}</span></div>`).join('') : '<p class="muted small">التخمينات تطلع هنا</p>';
+    el.innerHTML = G.feed.length ? G.feed.slice(-7).map(f=>`<div class="rs-msg ${f.ok?'ok':f.close?'close':''}" style="--c:${f.color}"><b>${esc(f.name)}</b><span>${f.ok?'خمّنها صح!':f.close?'قريب جداً!':esc(f.text)}</span></div>`).join('') : '<p class="muted small">التخمينات تطلع هنا</p>';
+  }
+  // مين خمّنها للحين — والدور مكمّل لين الكل يعرفها
+  function renderSolved(){
+    const el=$('#rs-prog'); if(!el || !G.solved) return;
+    const all=guessers(), n=G.solved.length;
+    el.innerHTML = `<div class="rs-prog-h"><b>${n}</b> من ${all.length} خمّنوها</div><div class="rs-prog-l">${all.map(t=>{ const s=solvedBy(t.id); return `<span class="${s?'ok':''}" style="--c:${t.color}">${esc(s?s.n:t.name)}</span>`; }).join('')}</div>`;
+    $$('#rs-panel [data-g]').forEach(b=>{ b.disabled=!!solvedBy(b.dataset.g); });
+    const nb=$('#rs-nobody'); if(nb) nb.textContent = n ? 'خلّص الدور واكشف الكلمة' : 'ما أحد عرفها — اكشف الكلمة';
   }
 
   // ---------- المؤقت + التلميحات ----------
@@ -204,42 +213,59 @@
   }
 
   // ---------- التخمين والنتيجة ----------
+  // الدور ما يخلص بأول تخمين صح: كل فريق (أو لاعب بالفردي) يخمّن لحاله، والدور يخلص لما الكل يعرفها أو يخلص الوقت
+  const guessers = () => G.teams.filter(t => t!==cur() || t.players.length>1);
+  const solvedBy = id => (G.solved||[]).find(s=>s.teamId===id);
   function onGuess(teamId, cid, pid, text){
     if(!G || G.phase!=='draw' || !G.word) return;
     if(G.drawer && G.drawer.cid && G.drawer.cid===cid) return;
+    const t=teamById(teamId); if(!t) return;
+    if(solvedBy(teamId)){ NET().send(teamId,{t:'notice', msg:'خمّنتوها صح — انتظروا الباقين'}); return; }
     const now=Date.now(); if(now-(G.lastGuessAt[cid]||0)<900) return; G.lastGuessAt[cid]=now;
     text=String(text||'').trim().slice(0,40); if(!text) return;
-    const t=teamById(teamId); if(!t) return;
     const name=nameOf(t,pid)||t.name, res=check(G.word, text);
-    if(res===2){ G.feed.push({name, color:t.color, text, ok:true}); return win(teamId, name); }
+    if(res===2) return win(teamId, name);
     if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('tick',{volume:.7}); }
     else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; tally(G.stats.wrongBy, name); play('pop',{volume:.35}); }
-    renderFeed();
+    renderFeed(); pushAll();
   }
   function win(teamId, guesserName){
-    if(G.phase!=='draw') return;
-    stopTimer();
-    const g=teamById(teamId), d=cur(), base=PTS[G.word.d], frac=Math.max(0,G.left)/G.total;
-    const gp=r5(base*(0.5+0.5*frac)), dp=r5(base*0.5);
-    g.score+=gp; g.guessedOk++; d.score+=dp; d.drawnOk++;
-    tally(G.stats.guesses, guesserName); tally(G.stats.drawings, G.drawer.name);
+    if(!G || G.phase!=='draw' || solvedBy(teamId)) return;
+    const g=teamById(teamId), d=cur(); if(!g) return;
+    const base=PTS[G.word.d], frac=Math.max(0,G.left)/G.total, first=!G.solved.length;
+    const gp=r5(base*(0.5+0.5*frac)), dp=r5(base*(first?0.5:0.2));
+    g.score+=gp; g.guessedOk++; d.score+=dp; G.dpTurn+=dp; if(first){ d.drawnOk++; tally(G.stats.drawings, G.drawer.name); }
+    tally(G.stats.guesses, guesserName);
     const secs=G.total-G.left; if(guesserName && (!G.stats.fast || secs<G.stats.fast.s)) G.stats.fast={ name:guesserName, s:secs, w:G.word.w };
-    { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='ok'; l.left=+frac.toFixed(2); l.g=guesserName||null; l.gt=g.id; } }
-    play('correct'); flash('good'); confetti(70,1500);
-    G.result={ ok:true, who:guesserName||g.name, color:g.color, gp, dp, gTeam:g.name, dTeam:d.name, same:g===d };
-    D.feed({ n:guesserName||g.name, c:g.color, x:`خمّن «${G.word.w}»`, a:gp, k:'good' });
-    if(g!==d) D.feed({ n:G.drawer.name||d.name, c:d.color, x:'رسمته انعرفت', a:dp, k:'good' });
-    finishTurn(`<span style="color:var(--mint)">${esc(guesserName||g.name)} خمّنها!</span>`,
-      `+${gp} لـ ${esc(g.name)}${g===d?` و+${dp} للرسم`:` · +${dp} لـ ${esc(d.name)} على الرسمة`}`);
+    const who=guesserName||g.name;
+    G.solved.push({ teamId:g.id, n:who, c:g.color, gp, team:g.name });
+    G.feed.push({ name:who, color:g.color, text:'', ok:true });
+    { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ if(first){ l.left=+frac.toFixed(2); l.g=who; l.gt=g.id; } (l.gs=l.gs||[]).push(who); } }
+    const n=NET(); if(n) n.send(g.id,{t:'notice', msg:`صح! خمّنتها +${gp}`});
+    play('correct'); flash('good'); confetti(first?60:30,1200);
+    renderScore(); renderFeed(); renderSolved();
+    if(guessers().every(t=>solvedBy(t.id))) return endTurn();
+    pushAll();
   }
-  function reveal(){
+  // نهاية الدور: خلص الوقت، أو الكل خمّن، أو المضيف قفله
+  function endTurn(){
     if(G.phase!=='draw') return;
     stopTimer();
-    { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='fail'; l.left=0; } }
-    play('fail',{volume:.6}); flash('bad'); tally(G.stats.missed, G.drawer.name);
-    G.result={ ok:false }; D.feed({ x:`ما أحد عرف «${G.word.w}»`, k:'bad' });
-    finishTurn('ما أحد عرفها', 'ولا نقطة هالمرة');
+    const S2=G.solved, d=cur(), l=G.log.items[G.log.items.length-1];
+    if(!S2.length){
+      if(l && l.r==='?'){ l.r='fail'; l.left=0; }
+      play('fail',{volume:.6}); flash('bad'); tally(G.stats.missed, G.drawer.name);
+      G.result={ ok:false };
+      return finishTurn('ما أحد عرفها', 'ولا نقطة هالمرة');
+    }
+    if(l && l.r==='?') l.r='ok';
+    const all=guessers().every(t=>solvedBy(t.id)), f=S2[0];
+    if(all) confetti(90,1600);
+    G.result={ ok:true, all, who:f.n, color:f.c, gp:f.gp, dp:G.dpTurn, dTeam:d.name, drawer:G.drawer.name||d.name, solvers:S2.map(s=>({ n:s.n, c:s.c, gp:s.gp, team:s.team })), of:guessers().length };
+    finishTurn(`<span style="color:var(--mint)">${all?'الكل خمّنها!':`${S2.length} من ${guessers().length} خمّنوها`}</span>`,
+      `${S2.map(s=>`${esc(s.n)} +${s.gp}`).join(' · ')} · الرسام +${G.dpTurn}`);
   }
+  function reveal(){ endTurn(); }
   function finishTurn(title, sub){
     G.phase='reveal'; setTvDraw(false); G.lastWord=G.word; G.ratings={};
     window.DAHOOM_ITEM = { kind:'w', id:G.word.id, d:G.word.d, tag:G.word.tag, text:G.word.w, answer:'' };
@@ -266,7 +292,6 @@
     if(!G || G.phase!=='claim' || cur().id!==teamId) return;
     const t=cur(); G.drawer={ teamId, cid, pid, name:nameOf(t,pid), tv:false };
     play('game:g_zelda',{volume:.6}); offerChoices();
-    D.feed({ n:G.drawer.name||t.name, c:t.color, x:'بيرسم الحين' });
   }
   function onMsg(c, d){
     if(!G || !c.teamId) return;
@@ -295,7 +320,7 @@
       tables:[{ title:'الأرقام', icon:'podium', head:['#', D.session.mode==='solo'?'اللاعب':'الفريق', 'النقاط', 'خمّن صح', 'رسماته انعرفت'],
         rows:sorted.map((t,i)=>({ rank:i+1, name:t.name, color:t.color, me:t.id===id, cells:[t.score, t.guessedOk, t.drawnOk] })) }],
       lists:[{ title:'كل الكلمات', icon:'pencil', items:G.log.items.filter(x=>x.r==='ok'||x.r==='fail').map(x=>({ b:x.x, ok:x.r==='ok',
-        s:[x.by?'رسمها '+x.by:'', x.r==='ok'?(x.g?'خمّنها '+x.g:'انعرفت'):'ما أحد عرفها', x.rate?x.rate.toFixed(1)+'/5':''].filter(Boolean).join(' · ') })) }] };
+        s:[x.by?'رسمها '+x.by:'', x.r==='ok'?(x.gs&&x.gs.length?'خمّنها '+x.gs.join('، '):x.g?'خمّنها '+x.g:'انعرفت'):'ما أحد عرفها', x.rate?x.rate.toFixed(1)+'/5':''].filter(Boolean).join(' · ') })) }] };
   }
   function phoneState(id, cid, pid){
     const t=G && teamById(id);
@@ -308,7 +333,7 @@
           rows:[['نقاطكم',t.score],['تخمينات صح',t.guessedOk],['رسماتكم اللي انعرفت',t.drawnOk]], all:finalAll(sorted, id) } };
     }
     const mine = !!(G.drawer && !G.drawer.tv && G.drawer.cid===cid);
-    const myTurn = cur().id===id;
+    const myTurn = cur().id===id, mySolve = G.phase==='draw' && !mine ? solvedBy(id) : null;
     return { game:'rasm', round:G.round, team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores, myTurn, hand:[], canPlay:false, buzz:{open:false},
       item: G.lastWord && G.phase!=='draw' && G.phase!=='pick' ? { kind:'w', id:G.lastWord.id, label:'كلمة الرسم: '+G.lastWord.w } : null,
       rasm:{ phase:G.phase, mine, myTurn, drawer: G.drawer ? (G.drawer.name||cur().name) : null, drawerTeam:cur().name,
@@ -317,12 +342,15 @@
         word: mine && G.phase==='draw' ? G.word.w : null,
         hint: G.phase==='draw' ? hintText() : null, letters: G.word ? [...G.word.w].filter(c=>c!==' ').length : 0,
         mirror: !!S.mirror, canRate: G.phase==='reveal' && !mine && !!(B && B.count), myRate: (G.ratings||{})[cid]||0,
-        canGuess: G.phase==='draw' && !mine, reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null,
+        canGuess: G.phase==='draw' && !mine && !mySolve,
+        solved: mySolve ? { n:mySolve.n, gp:mySolve.gp, w:G.word.w } : null,
+        prog: G.phase==='draw' && G.solved ? { n:G.solved.length, of:guessers().length, list:G.solved.map(s=>({ n:s.n, c:s.c })) } : null,
+        reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null,
         timer: G.phase==='draw' && G.deadline ? { ms:Math.max(0,G.deadline-Date.now()), total:G.total*1000 } : null,
         feed: (G.feed||[]).slice(-14).map(f=>({ n:f.name, c:f.color, x:f.close?'':f.text, close:!!f.close, ok:!!f.ok })),
         result: G.phase==='reveal' ? G.result : null, tag: G.word && G.phase!=='pick' ? G.word.tag : null, diff: G.word ? DIFF[G.word.d]+' · '+PTS[G.word.d] : null,
         rating: G.phase==='reveal' ? { avg:rateAvg(), n:Object.keys(G.ratings||{}).length, votes:Object.entries(G.ratings||{}).map(([k,v])=>({ n:((G.rateBy||{})[k]||{}).name||'', c:((G.rateBy||{})[k]||{}).color||'', v })) } : null },
-      phase: G.phase==='claim' ? `دور ${cur().name} يرسم` : G.phase==='pick' ? 'الرسام يختار كلمة' : G.phase==='draw' ? (mine ? 'ارسم! الكل يشوف رسمتك على الشاشة' : 'خمّنوا الرسمة!') : '' };
+      phase: G.phase==='claim' ? `دور ${cur().name} يرسم` : G.phase==='pick' ? 'الرسام يختار كلمة' : G.phase==='draw' ? (mine ? 'ارسم! الكل يشوف رسمتك على الشاشة' : mySolve ? 'خمّنتها صح — انتظر الباقين' : 'خمّنوا الرسمة!') : '' };
   }
 
   // ---------- اللوحة ----------
@@ -403,7 +431,7 @@
       ${aw.length?`<div class="aw-grid">${aw.map(a=>`<div class="aw" style="--c:${a.team?a.team.color:'var(--brand)'}"><span class="aw-ic">${ic(a.icon)}</span><div class="aw-t">${esc(a.title)}</div><div class="aw-team">${esc(a.who)}${a.team&&a.team.name!==a.who?` · ${esc(a.team.name)}`:''}</div><div class="aw-v">${esc(a.value)}</div><div class="aw-d">${esc(a.desc)}</div></div>`).join('')}</div>`:''}
       <section class="ms-card"><h3>الأرقام</h3><div class="viz-table-wrap"><table class="viz-table"><thead><tr><th>${D.session.mode==='solo'?'اللاعب':'الفريق'}</th><th>النقاط</th><th>تخمينات صح</th><th>رسمات انعرفت</th></tr></thead><tbody>
         ${sorted.map(t=>`<tr><td><span class="vt-team"><i style="--c:${t.color}"></i>${esc(t.name)}</span></td><td class="num"><bdi>${t.score}</bdi></td><td class="num"><bdi>${t.guessedOk}</bdi></td><td class="num"><bdi>${t.drawnOk}</bdi></td></tr>`).join('')}</tbody></table></div></section>
-      <section class="ms-card"><h3>كل الكلمات</h3><div class="rs-words">${G.log.items.filter(x=>x.r!=='skip'&&x.r!=='?').map(x=>`<span class="pill ${x.r==='ok'?'':'dim'}">${esc(x.x)}${x.g?` — ${esc(x.g)}`:''}${x.rate?` · <bdi>${x.rate.toFixed(1)}</bdi>/5`:''}</span>`).join('')}</div></section></div>`;
+      <section class="ms-card"><h3>كل الكلمات</h3><div class="rs-words">${G.log.items.filter(x=>x.r!=='skip'&&x.r!=='?').map(x=>`<span class="pill ${x.r==='ok'?'':'dim'}">${esc(x.x)}${x.gs&&x.gs.length?` — ${esc(x.gs.join('، '))}`:x.g?` — ${esc(x.g)}`:''}${x.rate?` · <bdi>${x.rate.toFixed(1)}</bdi>/5`:''}</span>`).join('')}</div></section></div>`;
     try{ const L=LOG(); if(L && !G.logged){ G.logged=true;
       L.match({ game:'rasm', rounds:S.rounds, mins:Math.round((Date.now()-G.log.t0)/60000), mode:D.session.mode, opts:{ time:S.drawTime, hints:!!S.hints, mirror:!!S.mirror },
         teams: sorted.map((t,i)=>({ id:t.id, name:t.name, score:t.score, rank:i+1, win:t===winner, players:t.players.map(p=>({ name:p.name, av:p.avatar||'' })), st:{ guessed:t.guessedOk, drawn:t.drawnOk } })),

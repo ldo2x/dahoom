@@ -493,3 +493,18 @@ body.remote::before{height:10px;background-size:23px 10px}
 @media (max-width:420px){ .r-trx{grid-template-columns:1fr} }
 
 .r-trjump{animation:rwPulse 1.4s ease-in-out infinite;margin-inline-start:auto}
+
+/* ارسم وخمّن: خمّنتها — انتظر الباقين */
+.rg-done{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--ok) 20%,var(--surface-2));border:2px solid var(--ok);animation:rfIn .35s cubic-bezier(.2,1.2,.4,1)}
+.rg-done small{color:var(--ok-ink);font-weight:700}
+.rg-done b{font-size:1.7rem;font-weight:900}
+.rg-done span{color:var(--mute);font-size:.88rem;text-align:center}
+.rg-prog{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
+.rg-prog:empty{display:none}
+.rg-prog-n{font-weight:700;color:var(--mute);font-size:.92rem}
+.rg-prog-n b{font-family:var(--num);color:var(--ok-ink);font-size:1.15em}
+.rg-prog-p{padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--c) 22%,var(--surface-2));border:1.5px solid var(--c);font-size:.85rem;font-weight:700}
+.rp-solvers{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.rp-solvers span{display:inline-flex;gap:6px;align-items:center;padding:3px 10px 3px 4px;border-radius:999px;background:color-mix(in srgb,var(--c) 20%,var(--surface-2));border:1.5px solid var(--c)}
+.rp-solvers i{font-style:normal;font-family:var(--num);font-weight:900;font-size:.75rem;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--c);color:#fff}
+.rp-solvers em{font-style:normal;font-family:var(--num);font-weight:900;color:var(--ok-ink)}

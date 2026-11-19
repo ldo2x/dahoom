@@ -233,6 +233,7 @@
     const hm = S.game==='hawamir' && S.hm && !done;
     tog('#r-hm', hm); tog('#r-hmpl', hm); tog('#r-hmtr', hm); if(hm) renderHM(S.hm); else { tog('#r-ask', false); }
     $('#r-scores').classList.toggle('r-hide', S.game==='hawamir' && !done);
+    { const fb=$('.r-feedbox'); if(fb) fb.classList.toggle('r-hide', S.game==='rasm'); }
   }
 
   // ---------- الجلسة: اللعبة والمضيف واللاعبين ----------
@@ -483,7 +484,7 @@
   let guessLog=[];
   function renderRasm(R){
     const box=$('#r-rasm');
-    const key = R.phase + ':' + (R.mine?'m':'g') + ':' + (R.canClaim?'c':'') + ':' + (R.choices?'p':'') + ':' + (R.word||'') + ':' + (R.reveal||'');
+    const key = R.phase + ':' + (R.mine?'m':'g') + ':' + (R.canClaim?'c':'') + ':' + (R.choices?'p':'') + ':' + (R.word||'') + ':' + (R.reveal||'') + ':' + (R.solved?'s':'');
     if(box.dataset.key===key){ updateRasm(R); return; }
     box.dataset.key=key; if(R.phase!=='draw') mirror=null;
     renderRasmBody(box, R); updateRasm(R);
@@ -491,6 +492,8 @@
   // الأجزاء اللي تتغير بدون ما نعيد بناء اللوحة: التلميح، التخمينات، التقييم
   function updateRasm(R){
     const h=$('#rg-hint'); if(h && R.hint!=null) h.innerHTML=hintHTML(R);
+    const pg=$('#rg-prog'); if(pg){ const P=R.prog;
+      pg.innerHTML = P ? `<span class="rg-prog-n"><b>${P.n}</b> من ${P.of} خمّنوها</span>${P.list.map(s=>`<span class="rg-prog-p" style="--c:${s.c||'var(--line)'}">${esc(s.n)}</span>`).join('')}` : ''; }
     const f=$('#rg-feed'); if(f){ const L=(R.feed||[]).slice().reverse();
       const k=L.map(x=>x.n+x.x+x.close+x.ok).join('|');
       if(f.dataset.k!==k){ const fresh=f.dataset.k!=null && f.dataset.k!==''; f.dataset.k=k;
@@ -525,10 +528,12 @@
     box.innerHTML=`<div class="eyebrow">${ic('eye')} خمّن الرسمة${R.mirror?'':' اللي على الشاشة'}${R.tag?` · <span class="pill">${esc(R.tag)}</span>`:''}${R.diff?` <span class="pill dim">${esc(R.diff)}</span>`:''}</div>
       <div class="muted small">${esc(R.drawer||'')} يرسم</div>
       ${R.mirror?'<canvas class="rp-canvas" id="rg-canvas"></canvas>':''}
-      <div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
-      <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>
+      ${R.solved?`<div class="rg-done"><small>خمّنتها صح</small><b>${esc(R.solved.w)}</b><span>+${R.solved.gp} · انتظر لين الباقين يخمّنون أو يخلص الوقت</span></div>`:`<div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
+      <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>`}
+      <div class="rg-prog" id="rg-prog"></div>
       <div class="lbl">التخمينات</div><div class="rg-feed" id="rg-feed"></div>`;
-    $('#rg-form').onsubmit=e=>{ e.preventDefault(); const inp=$('#rg-in'), v=inp.value.trim(); if(!v) return;
+    if(R.solved) vibe([60,30,120]);
+    const fm=$('#rg-form'); if(fm) fm.onsubmit=e=>{ e.preventDefault(); const inp=$('#rg-in'), v=inp.value.trim(); if(!v) return;
       send({t:'guess', text:v}); vibe(15); inp.value=''; inp.focus(); };
     if(R.mirror) buildMirror(); else mirror=null;
   }
@@ -540,6 +545,7 @@
       <canvas class="rp-canvas" id="rp-canvas"></canvas>
       <div class="dr-tools" id="rp-tools"></div>
       <p class="muted small center">ممنوع حروف وأرقام بالرسمة</p>
+      <div class="rg-prog" id="rg-prog"></div>
       <div class="lbl">تخمينات الباقين</div><div class="rg-feed" id="rg-feed"></div>`;
     const cv=$('#rp-canvas'), dpr=Math.min(2, window.devicePixelRatio||1);
     const W=cv.clientWidth, H=Math.round(W*0.75); cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
@@ -563,11 +569,13 @@
   function buildReveal(box, R){
     const res=R.result||{};
     const myTeam = st.S && st.S.team ? st.S.team.name : '';
-    const won = res.ok && (res.gTeam===myTeam || (res.dTeam===myTeam));
+    const SV = res.solvers || (res.ok ? [{ n:res.who, c:res.color, gp:res.gp, team:res.gTeam }] : []);
+    const won = res.ok && (SV.some(s=>s.team===myTeam) || res.dTeam===myTeam);
     box.innerHTML=`<div class="rp-res ${res.ok?'ok':'fail'} ${won?'mine':''}">
         ${res.ok?`<div class="rp-burst" aria-hidden="true">${Array.from({length:14},(_,i)=>`<i style="--a:${i*26}deg;--d:${(i%3)*60}ms"></i>`).join('')}</div>`:''}
         <small>الكلمة كانت</small><div class="rp-reveal">${esc(R.reveal||'')}</div>
-        <div class="rp-who">${res.ok?`<b style="color:${res.color}">${esc(res.who)}</b> خمّنها! <span class="rp-pts">+${res.gp}</span>${res.same?'':` · الرسام <span class="rp-pts">+${res.dp}</span>`}`:'ما أحد عرفها — ولا نقطة'}</div></div>
+        <div class="rp-who">${res.ok?`${res.all?'الكل خمّنها!':`${SV.length} من ${res.of||SV.length} خمّنوها`} · الرسام <span class="rp-pts">+${res.dp}</span>`:'ما أحد عرفها — ولا نقطة'}</div>
+        ${res.ok?`<div class="rp-solvers">${SV.map((s,i)=>`<span style="--c:${s.c||'var(--line)'}"><i>${i+1}</i><b>${esc(s.n)}</b><em>+${s.gp}</em></span>`).join('')}</div>`:''}</div>
       ${R.canRate?`<div class="lbl center">قيّم الرسمة</div><div class="rs-rate" id="rp-rate">${RATE.map((r,i)=>`<button class="rs-rate-b" data-rv="${i+1}"><b>${i+1}</b><span>${r}</span></button>`).join('')}</div>`:'<div class="lbl center">تقييم الرسمة</div>'}
       <div class="rp-rinfo" id="rp-rinfo"></div>
       <div class="lbl">التخمينات</div><div class="rg-feed" id="rg-feed"></div>`;

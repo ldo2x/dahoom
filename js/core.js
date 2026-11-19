@@ -115,7 +115,7 @@ window.Dahoom = (function(){
     const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
     setTimeout(()=>t.remove(), ms);
     // وسط المباراة: كل تنبيه ينضاف لسجل الأحداث اللي يشوفه اللاعبين بجوالاتهم
-    if(document.querySelector('#game.active, #khaliya.active, #rasm.active')) feed({x:String(msg)});
+    if(document.querySelector('#game.active, #khaliya.active')) feed({x:String(msg)});
   }
   // سجل الأحداث: {x:نص, n:اسم, c:لون, a:مبلغ/نقاط, k:نوع}
   function feed(e){ document.dispatchEvent(new CustomEvent('dahoom:feed',{detail:Object.assign({ts:Date.now()}, e)})); }
