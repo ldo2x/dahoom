@@ -413,6 +413,7 @@ window.Dahoom = (function(){
     $('#card-khaliya').onclick=()=>openGame('khaliya');
     $('#card-rasm').onclick=()=>openGame('rasm');
     { const hm=$('#card-hawamir'); if(hm) hm.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('hawamir'); }; }
+    { const sq=$('#card-sadq'); if(sq) sq.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('sadq'); }; }
     $$('.game-tile').forEach(t=>t.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target===t) t.click(); }));
     $('#btn-add-player').onclick=addPlayer;
     $('#p-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });
@@ -420,7 +421,7 @@ window.Dahoom = (function(){
     $('#btn-auto-teams').onclick=autoTeams;
     $('#opt-phone-teams').onchange=e=>{ session.phoneTeams=e.target.checked; session.save(); if(window.DahoomNet) window.DahoomNet.refresh(); };
     $$('input[name=mode]').forEach(r=>r.onchange=()=>{ session.mode=r.value; session.save(); renderTeams(); });
-    $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : session.game==='rasm' ? 'rasm-settings' : session.game==='hawamir' ? 'hawamir-settings' : 'settings'); };
+    $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : session.game==='rasm' ? 'rasm-settings' : session.game==='hawamir' ? 'hawamir-settings' : session.game==='sadq' ? 'sadq-settings' : 'settings'); };
     $('#btn-reset-used').onclick=async ()=>{
       if(await confirmBox('<h3>تصفير المحتوى المستخدم؟</h3><p class="muted">يرجع كل الأسئلة والعبارات والتحديات اللي انلعبت قبل.</p>','صفّر','إلغاء')){
         store.del('used'); store.del('used_letters'); store.del('used_words'); toast('رجع كل المحتوى جديد'); play('bling'); }

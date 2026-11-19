@@ -100,7 +100,7 @@ window.DahoomNet = (function(){
   const teamList = () => (H ? H.teams() : D.joinable()).map(t=>({ id:t.id, name:t.name, color:t.color,
     players:membersOf(t.id).map(p=>({name:p.name, avatar:p.avatar})), phones:phonesOf(t.id).length }));
   // وسط المباراة: ممنوع تغيير الفريق (قبلها وبعدها عادي)
-  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active, #hawamir.active');
+  const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active, #hawamir.active, #sadq.active');
   const homeTeamOf = pid => pid ? D.session.teams.find(t=>t.members.includes(pid)) : null;
   const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
@@ -123,7 +123,7 @@ window.DahoomNet = (function(){
   function use(handlers){ H=handlers; FEED.length=0; conns.forEach(c=>{ try{ c.send({t:'feedreset'}); }catch(e){} }); pushAll(); refreshUI(); }
 
   // ---------- معلومات الجلسة: اللعبة والمضيف واللاعبين (تنرسل لكل الجوالات) ----------
-  const GAME_AR = { alf:'ألف نقطة', khaliya:'خلية الحروف', rasm:'ارسم وخمّن', hawamir:'هوامير' };
+  const GAME_AR = { alf:'ألف نقطة', khaliya:'خلية الحروف', rasm:'ارسم وخمّن', hawamir:'هوامير', sadq:'ما أصدقك' };
   const hostName = () => { try{ return localStorage.getItem('dahoom_host')||''; }catch(e){ return ''; } };
   function where(){
     const id=(document.querySelector('.screen.active')||{}).id||'';

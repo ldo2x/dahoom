@@ -10,9 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611191237">
-<link rel="stylesheet" href="css/draw.css?v=202611191237">
-<link rel="stylesheet" href="css/hawamir.css?v=202611191237">
+<link rel="stylesheet" href="css/style.css?v=202611191311">
+<link rel="stylesheet" href="css/draw.css?v=202611191311">
+<link rel="stylesheet" href="css/hawamir.css?v=202611191311">
+<link rel="stylesheet" href="css/sadq.css?v=202611191311">
 </head>
 <body>
 
@@ -78,6 +79,16 @@
         <h3>هوامير</h3>
         <p>لوحة عقار وتجارة: اجمع مدن الدولة كلها وابنِ فيها من بيت لين برج، وزايد وسوِّ صفقات. أغنى واحد لما يخلص الوقت يفوز.</p>
         <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">ثلاث خرائط</span><span class="chip">القرارات من الجوال</span></div>
+      </div>
+    </article>
+    <article class="game-tile sq" id="card-sadq" tabindex="0">
+      <div class="gt-art">
+        <div class="sq-logo"><span class="sq-logo-cards"><i style="--rc:#D5489A"></i><i class="b"></i><i style="--rc:#2478C8"></i></span><span class="sq-logo-w">ما أصدقك</span></div>
+      </div>
+      <div class="gt-body">
+        <h3>ما أصدقك</h3>
+        <p>كل واحد معه ورقتين شخصيات سرية. ادّعِ اللي تبيه واكذب لو تقدر، والباقين يقولون «ما أصدقك». آخر واحد يبقى بالمجلس يفوز.</p>
+        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">كل لاعب بجواله</span><span class="chip">كذب وكشف</span></div>
       </div>
     </article>
     <article class="game-tile rs" id="card-rasm" tabindex="0">
@@ -442,6 +453,64 @@
   </div>
 </section>
 
+<!-- ===== لعبة ما أصدقك ===== -->
+<section id="sadq-settings" class="screen">
+  <header class="topbar">
+    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
+  </header>
+  <h1 class="page-title">إعدادات ما أصدقك</h1>
+  <div class="settings-grid" id="sadq-form">
+    <div class="panel stack">
+      <h3>المجلس</h3>
+      <label class="field">ريالات البداية لكل لاعب
+        <select data-k="startCoins"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+      </label>
+      <label class="field">وقت الرد (الكشف والصد والشهادة)
+        <select data-k="speed"><option value="7">سريع — 7 ثواني</option><option value="10">عادي — 10 ثواني</option><option value="15">رايق — 15 ثانية</option></select>
+      </label>
+      <label class="field row"><input type="checkbox" data-k="events"> أحداث المجلس (حدث جديد كل لفة)</label>
+    </div>
+    <div class="panel stack">
+      <h3>اللاعبين</h3>
+      <div id="sadq-preview" class="row"></div>
+      <p class="muted small">الأوراق سرية، فلازم كل لاعب يدخل من جواله (الكود فوق من زر «الجوالات»). الشاشة تعرض الطاولة بس.</p>
+    </div>
+  </div>
+  <h3 class="mt">الشخصيات</h3>
+  <div id="sadq-roles"></div>
+  <div class="row center mt">
+    <button class="btn btn-hype big" id="btn-sadq-start">ابدأ المجلس</button>
+  </div>
+</section>
+
+<section id="sadq" class="screen wide">
+  <div class="roundbar">
+    <div class="brand small"><span class="brand-mark sq">ص</span> ما أصدقك</div>
+    <div class="row">
+      <span class="pill" id="sq-round">اللفة 1</span>
+      <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
+      <button class="btn ghost small" id="sq-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
+      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
+      <button class="btn ghost small" id="sq-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
+    </div>
+  </div>
+  <div class="sq-table-wrap">
+    <div class="sq-main">
+      <div class="sq-seats" id="sq-seats"></div>
+      <div class="sq-center">
+        <div class="sq-stage" id="sq-stage"></div>
+        <div class="sq-wait" id="sq-wait"></div>
+      </div>
+    </div>
+    <aside class="sq-side">
+      <div class="sq-event" id="sq-event"></div>
+      <div class="sq-bank"><div><i class="ic" style="--i:url(../assets/icons/hm-building-bank.svg)"></i><span>صندوق المجلس</span><b id="sq-pot">0</b></div><div><i class="ic" style="--i:url(../assets/icons/cards.svg)"></i><span>الكومة</span><b id="sq-deck">0</b></div></div>
+      <div class="sq-logbox"><div class="sq-logh">وش صار</div><div class="sq-log" id="sq-log"></div></div>
+    </aside>
+  </div>
+</section>
+
 <section id="results" class="screen">
   <div class="results-in">
     <div class="eyebrow">انتهت المباراة</div>
@@ -459,41 +528,43 @@
 <div id="overlay-root"></div>
 <canvas class="confetti-canvas" id="confetti"></canvas>
 
-<script src="data/questions.js?v=202611191237"></script>
-<script src="data/questions-2.js?v=202611191237"></script>
-<script src="data/choices.js?v=202611191237"></script>
-<script src="data/questions-3.js?v=202611191237"></script>
-<script src="data/questions-4.js?v=202611191237"></script>
-<script src="data/questions-5.js?v=202611191237"></script>
-<script src="data/questions-6.js?v=202611191237"></script>
-<script src="data/questions-7.js?v=202611191237"></script>
-<script src="data/questions-8.js?v=202611191237"></script>
-<script src="data/charades.js?v=202611191237"></script>
-<script src="data/charades-2.js?v=202611191237"></script>
-<script src="data/challenges.js?v=202611191237"></script>
-<script src="data/challenges-2.js?v=202611191237"></script>
-<script src="data/cards.js?v=202611191237"></script>
-<script src="data/memes.js?v=202611191237"></script>
-<script src="data/words.js?v=202611191237"></script>
-<script src="data/hawamir.js?v=202611191237"></script>
-<script src="data/letters-1.js?v=202611191237"></script>
-<script src="data/letters-2.js?v=202611191237"></script>
-<script src="data/letters-3.js?v=202611191237"></script>
-<script src="data/letters-4.js?v=202611191237"></script>
-<script src="data/letters-hard-1.js?v=202611191237"></script>
-<script src="data/letters-hard-2.js?v=202611191237"></script>
-<script src="js/vendor/peerjs.min.js?v=202611191237"></script>
-<script src="js/vendor/qrcode.min.js?v=202611191237"></script>
-<script src="js/core.js?v=202611191237"></script>
-<script src="js/config.js?v=202611191237"></script>
-<script src="js/telemetry.js?v=202611191237"></script>
-<script src="js/net.js?v=202611191237"></script>
-<script src="js/stats.js?v=202611191237"></script>
-<script src="js/cardfx.js?v=202611191237"></script>
-<script src="js/alf.js?v=202611191237"></script>
-<script src="js/draw.js?v=202611191237"></script>
-<script src="js/khaliya.js?v=202611191237"></script>
-<script src="js/rasm.js?v=202611191237"></script>
-<script src="js/hawamir.js?v=202611191237"></script>
+<script src="data/questions.js?v=202611191311"></script>
+<script src="data/questions-2.js?v=202611191311"></script>
+<script src="data/choices.js?v=202611191311"></script>
+<script src="data/questions-3.js?v=202611191311"></script>
+<script src="data/questions-4.js?v=202611191311"></script>
+<script src="data/questions-5.js?v=202611191311"></script>
+<script src="data/questions-6.js?v=202611191311"></script>
+<script src="data/questions-7.js?v=202611191311"></script>
+<script src="data/questions-8.js?v=202611191311"></script>
+<script src="data/charades.js?v=202611191311"></script>
+<script src="data/charades-2.js?v=202611191311"></script>
+<script src="data/challenges.js?v=202611191311"></script>
+<script src="data/challenges-2.js?v=202611191311"></script>
+<script src="data/cards.js?v=202611191311"></script>
+<script src="data/memes.js?v=202611191311"></script>
+<script src="data/words.js?v=202611191311"></script>
+<script src="data/hawamir.js?v=202611191311"></script>
+<script src="data/sadq.js?v=202611191311"></script>
+<script src="data/letters-1.js?v=202611191311"></script>
+<script src="data/letters-2.js?v=202611191311"></script>
+<script src="data/letters-3.js?v=202611191311"></script>
+<script src="data/letters-4.js?v=202611191311"></script>
+<script src="data/letters-hard-1.js?v=202611191311"></script>
+<script src="data/letters-hard-2.js?v=202611191311"></script>
+<script src="js/vendor/peerjs.min.js?v=202611191311"></script>
+<script src="js/vendor/qrcode.min.js?v=202611191311"></script>
+<script src="js/core.js?v=202611191311"></script>
+<script src="js/config.js?v=202611191311"></script>
+<script src="js/telemetry.js?v=202611191311"></script>
+<script src="js/net.js?v=202611191311"></script>
+<script src="js/stats.js?v=202611191311"></script>
+<script src="js/cardfx.js?v=202611191311"></script>
+<script src="js/alf.js?v=202611191311"></script>
+<script src="js/draw.js?v=202611191311"></script>
+<script src="js/khaliya.js?v=202611191311"></script>
+<script src="js/rasm.js?v=202611191311"></script>
+<script src="js/hawamir.js?v=202611191311"></script>
+<script src="js/sadq.js?v=202611191311"></script>
 </body>
 </html>

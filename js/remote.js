@@ -102,7 +102,7 @@
     if(d.t==='rs'){ onMirror(d.m); return; }
     if(d.t==='rsfull'){ if(mirror) mirror.load(d.ops); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
-    if(d.t==='close'){ if(st.askId===d.reqId){ closeSheet(); tog('#r-ask', false); $('#r-ask').innerHTML=''; st.askId=null; } if(st.hmAsk && st.hmAsk.reqId===d.reqId){ st.hmAsk=null; renderHMAsk(); } return; }
+    if(d.t==='close'){ if(st.askId===d.reqId){ closeSheet(); tog('#r-ask', false); $('#r-ask').innerHTML=''; st.askId=null; } if(st.hmAsk && st.hmAsk.reqId===d.reqId){ st.hmAsk=null; renderHMAsk(); } if(st.sqAsk && st.sqAsk.reqId===d.reqId){ st.sqAsk=null; renderSQAsk(); } return; }
     if(d.t==='hmbuild'){ if(hm.B) tradeBuilder(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
     if(d.t==='info'){ st.info=d; renderSess(); if(!$('#r-main').classList.contains('hidden')) renderMain(); return; }
@@ -169,7 +169,7 @@
     if(waiting){
       renderWait(); renderMe();
       ['#r-timer','#r-view','#r-hmwrap','#r-hmaskjump'].forEach(q=>tog(q,false)); if(!st.askId) tog('#r-ask', false);
-      $('#r-main').classList.remove('is-hm');
+      $('#r-main').classList.remove('is-hm','is-sq'); $('#r-sq').classList.add('hidden');
       ['#r-final','#r-charade','#r-rasm'].forEach(q=>$(q).classList.add('hidden'));
       $('#r-buzz').style.display='none'; $('#r-hand-wrap').classList.add('hidden'); $('#r-fx').innerHTML=''; $('#r-scores').innerHTML='';
       $('#r-phase').textContent=''; stopTimer(); return; }
@@ -178,7 +178,7 @@
     document.body.style.setProperty('--team', t.color);
     const m=me();
     $('#r-head').innerHTML=`${m&&m.avatar?`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
-      <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':'نقطة'}</small></span>
+      <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>
       ${S.myTurn?`<span class="r-turn">${st.mode==='solo'?'دورك':'دوركم'}</span>`:''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=()=>{ if(S.locked){ status('تعديل الاسم والصورة بعد ما تخلص المباراة'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),2500); return; } openReg(); };
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
@@ -225,9 +225,13 @@
     // ارسم وخمّن: لوحة الرسم للرسام، ومربع التخمين للباقين
     const rs=$('#r-rasm'), isR = S.game==='rasm' && !done && !!S.rasm;
     rs.classList.toggle('hidden', !isR);
-    if(S.game==='rasm' || S.game==='hawamir') b.style.display='none';
+    if(S.game==='rasm' || S.game==='hawamir' || S.game==='sadq') b.style.display='none';
     { const bs=$('#r-buzz-sub'); if(bs) bs.style.display = S.game==='hawamir' ? 'none' : ''; }
     if(isR) renderRasm(S.rasm); else if(rs.dataset.key){ rs.innerHTML=''; rs.dataset.key=''; }
+    // ما أصدقك
+    const isSQ = S.game==='sadq' && !done && !!S.sq;
+    $('#r-sq').classList.toggle('hidden', !isSQ); $('#r-main').classList.toggle('is-sq', isSQ);
+    if(isSQ) renderSQ(S.sq); else if(st.sqAsk && !S.sq){ st.sqAsk=null; }
     // المؤقت (ألف نقطة وارسم وخمّن) + السؤال كما هو على الشاشة + لوحة هوامير
     setTimer(done ? null : (S.timer || (S.rasm && S.rasm.timer) || null));
     renderView(done ? null : S.view);
@@ -235,7 +239,8 @@
     tog('#r-hmwrap', hm); $('#r-main').classList.toggle('is-hm', !!hm);
     if(hm) renderHM(S.hm); else { tog('#r-ask', false); tog('#r-hmaskjump', false); if(st.hmAsk){ st.hmAsk=null; renderHMAsk(); } }
     $('#r-scores').classList.toggle('r-hide', S.game==='hawamir' && !done);
-    { const fb=$('.r-feedbox'); if(fb) fb.classList.toggle('r-hide', S.game==='rasm'); }
+    { const fb=$('.r-feedbox'); if(fb) fb.classList.toggle('r-hide', S.game==='rasm' || S.game==='sadq'); }
+    $('#r-scores').classList.toggle('r-hide', (S.game==='hawamir' || S.game==='sadq') && !done);
   }
 
   // ---------- الجلسة: اللعبة والمضيف واللاعبين ----------
@@ -555,6 +560,79 @@
     return aw + tb + ls;
   }
 
+  // ---------- ما أصدقك: أوراقك السرية والقرارات ----------
+  const sq = { built:false, hide:false, Q:null };
+  function buildSQ(){
+    $('#r-sq').innerHTML=`<div class="sq-r">
+      <div class="sq-rmain">
+        <div class="sq-rtop"><span class="sq-chip" id="sq-rround"></span><span class="sq-chip pot">${ic('hm-building-bank')} الصندوق <b id="sq-rpot"></b></span><span class="sq-chip" id="sq-rdeck"></span></div>
+        <div class="sq-rev" id="sq-rev"></div>
+        <div class="sq-ract" id="sq-ract"></div>
+        <div class="sq-rask" id="sq-rask"></div>
+      </div>
+      <div class="sq-rside">
+        <section class="sq-rhand"><div class="sq-rhh"><b>أوراقك</b><span id="sq-rme"></span><button type="button" class="btn ghost small" id="sq-rhide"></button></div><div class="sq-rcards" id="sq-rcards"></div></section>
+        <section class="sq-rpl" id="sq-rpl"></section>
+        <details class="sq-rref"><summary>${ic('book')} الشخصيات وحركاتها</summary><div id="sq-rref"></div></details>
+        <section class="sq-rlogw"><div class="lbl">وش صار</div><div class="sq-rlog" id="sq-rlog"></div></section>
+      </div></div>`;
+    $('#sq-rhide').onclick=()=>{ vibe(8); sq.hide=!sq.hide; if(sq.Q) renderSQ(sq.Q, true); };
+    sq.built=true;
+  }
+  const sqRole = (Q, k) => (Q.roles||[]).find(r=>r.k===k) || { name:k, icon:'masks', color:'#888' };
+  const sqChip = (Q, k) => { const r=sqRole(Q,k); return `<span class="sq-rchip" style="--rc:${r.color}">${ic(r.icon)}${esc(r.name)}</span>`; };
+  function renderSQ(Q, force){
+    if(!sq.built || !$('#sq-rcards')) buildSQ();
+    sq.Q=Q;
+    $('#sq-rround').textContent='اللفة '+Q.round; $('#sq-rpot').textContent=Q.pot; $('#sq-rdeck').innerHTML=`${ic('cards')} الكومة ${Q.deck}`;
+    const E=Q.event; $('#sq-rev').innerHTML = Q.events ? (E ? `<span class="sq-evi">${ic(E.icon)}</span><span><small>حدث المجلس</small><b>${esc(E.name)}</b> <em>${esc(E.desc)}</em></span>` : `<span class="sq-evi">${ic('star')}</span><span><small>حدث المجلس</small><b>اللفة الأولى</b> <em>الأحداث تبدأ من اللفة الثانية</em></span>`) : '';
+    $('#sq-rev').classList.toggle('r-hide', !Q.events);
+    // الحركة الحالية
+    const A=Q.act, pl=id=>Q.pl.find(x=>x.id===id), turnP=Q.pl.find(x=>x.turn);
+    let act='';
+    if(A){ const st={ ch:'ينتظر: أحد ما يصدقه؟', 'block-ch':'ينتظر: أحد ما يصدق الصد؟', block:`${esc(A.t)} يقرر يصد ولا لا`, blocked:`${esc(A.blk)} صدّها — يقول إنه ${esc(A.blkRole)}`, done:'' }[A.stage]||'';
+      act=`<div class="sq-ra-l"><span class="sq-ra-ic" style="--rc:${A.claimC||'var(--line)'}">${ic(A.icon)}</span><span><b style="color:${A.byC}">${esc(A.by)}</b> ${A.claim?`يقول إنه <b style="color:${A.claimC}">${esc(A.claim)}</b> و`:''}يسوي <b>${esc(A.name)}</b>${A.t?` على <b style="color:${A.tC}">${esc(A.t)}</b>`:''}</span></div>
+        ${A.ch?`<div class="sq-ra-x">${ic('search')} ${esc(A.ch)} قال: ما أصدقك!</div>`:''}${A.reveal?`<div class="sq-ra-x good">${ic('check')} طلع صادق — عنده ${esc(A.reveal)}</div>`:''}${st?`<div class="sq-ra-s">${st}</div>`:''}`; }
+    else act=`<div class="sq-ra-l"><span class="sq-ra-ic">${ic('hourglass')}</span><span>${turnP?`دور <b style="color:${turnP.color}">${esc(turnP.name)}</b>`:'استنوا'}</span></div>`;
+    const ae=$('#sq-ract'); if(ae.dataset.h!==act){ ae.dataset.h=act; ae.innerHTML=act; }
+    // أوراقي
+    $('#sq-rme').innerHTML=`<span class="sq-chip">${ic('coins')} <b>${Q.coins}</b> ريال</span>${Q.loan?`<span class="sq-chip bad">${ic('hm-cash')} عليك سلفة</span>`:''}${Q.coins>=Q.forceAt?`<span class="sq-chip bad">لازم تطرد</span>`:''}`;
+    $('#sq-rhide').textContent = sq.hide ? 'اكشفها' : 'غطّها';
+    const ck=JSON.stringify([Q.cards, sq.hide]);
+    const ce=$('#sq-rcards'); if(force || ce.dataset.k!==ck){ ce.dataset.k=ck;
+      ce.innerHTML = Q.cards.map(c=>{ const r=sqRole(Q,c.r);
+        if(sq.hide && !c.up) return `<div class="sq-hc back"><i></i><span>مغطاة</span></div>`;
+        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}"><div class="sq-hc-h">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
+          <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
+    // اللاعبين
+    $('#sq-rpl').innerHTML=Q.pl.map(x=>`<div class="sq-rp ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" style="--c:${x.color}">
+      ${x.av?`<img src="${avSrc(x.av)}" alt="">`:'<i class="sq-rp-av"></i>'}<span class="sq-rp-n"><b>${esc(x.name)}${x.id===Q.me?' <i>(انت)</i>':''}</b><small>${x.out?`${ic('skull')} طلع`:`${ic('coins')} ${x.coins}${x.loan?` · ${ic('hm-cash')} سلفة`:''}`}</small></span>
+      <span class="sq-rp-c">${Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('')}${x.up.map(k=>{ const r=sqRole(Q,k); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('')}</span></div>`).join('');
+    if(!$('#sq-rref').innerHTML) $('#sq-rref').innerHTML=`<div class="sq-ref">${(Q.roles||[]).map(r=>`<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small><div class="sq-rl"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}</div>`).join('')}</div>`;
+    const lg=(Q.log||[]).slice().reverse(), lk=lg.length+(lg[0]?lg[0].ts:'');
+    const le=$('#sq-rlog'); if(le.dataset.k!==String(lk)){ le.dataset.k=lk; le.innerHTML=lg.map(e=>`<div class="sq-lg ${e.k}" style="--c:${e.c||'var(--line)'}">${e.ic?`<i>${ic(e.ic)}</i>`:''}<span>${e.n?`<b>${esc(e.n)}</b> `:''}${esc(e.x)}</span></div>`).join(''); }
+    renderSQAsk();
+  }
+  // القرار: مكانه ثابت فوق الأوراق (ما يدف شي). لو ما فيه قرار يطلع وش ننتظر
+  function renderSQAsk(){
+    const box=$('#sq-rask'); if(!box) return;
+    const A=st.sqAsk, Q=sq.Q;
+    if(!A){ const W=Q&&Q.wait; const k='w:'+(W?W.label:'');
+      if(box.dataset.k!==k){ box.dataset.k=k; box.className='sq-rask idle';
+        box.innerHTML = W ? `<div class="sq-qw">${ic('hourglass')}<span>${esc(W.label)}</span></div><div class="sq-qbar"><i style="--ms:${W.left}ms;--from:${(W.left/W.ms).toFixed(3)}"></i></div>` : `<div class="sq-qw">${ic('hourglass')}<span>${Q&&Q.out?'طلعت — تابع اللي باقين':'استنى… القرار يطلع لك هنا'}</span></div>`; }
+      return; }
+    const k='a:'+A.reqId; if(box.dataset.k===k) return; box.dataset.k=k;
+    const { reqId, spec }=A; box.className='sq-rask on';
+    const opt=(o,i)=>{ const role=o.role && Q ? sqRole(Q,o.role) : null;
+      return spec.grid
+        ? `<button class="sq-qa ${o.dis?'dis':''}" data-o="${i}" ${o.dis?'disabled':''} style="--rc:${o.color||'var(--line)'}"><span class="sq-qa-ic">${ic(o.icon||'star')}</span><span class="sq-qa-t"><b>${esc(o.label)}</b>${role?`<em>${esc(role.name)}</em>`:'<em class="any">أي أحد</em>'}</span><small>${esc(o.sub||'')}</small></button>`
+        : `<button class="btn ${o.cls||'btn-hype'} ${o.color?'sq-qc':''}" data-o="${i}" ${o.dis?'disabled':''} ${o.color?`style="--rc:${o.color}"`:''}>${o.icon?ic(o.icon):''}<span>${esc(o.label)}</span>${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`; };
+    box.innerHTML=`<div class="sq-qh"><b>${esc(spec.title)}</b>${spec.text?`<p>${esc(spec.text)}</p>`:''}</div>
+      ${spec.ms?`<div class="sq-qbar"><i style="--ms:${spec.ms}ms;--from:1"></i></div>`:''}
+      <div class="${spec.grid?'sq-qgrid':'sq-qopts'}">${spec.options.map(opt).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div>`;
+    $$('#sq-rask [data-o]').forEach(b=>b.onclick=()=>{ vibe(25); send({t:'answer', reqId, value:+b.dataset.o}); st.askId=null; st.sqAsk=null; box.dataset.k=''; renderSQAsk(); });
+  }
+
   // ---------- ارسم وخمّن ----------
   const RCOL = ['#111111','#E53935','#1E88E5','#43A047','#FDD835','#FB8C00','#8E24AA','#8D6E63'];
   const RSIZE = [0.007, 0.015, 0.032];
@@ -715,6 +793,7 @@
   // ---------- أسئلة الشاشة ----------
   function openAsk(reqId, spec){
     st.askId=reqId; vibe([80,40,80]);
+    if(spec.sq){ st.sqAsk={ reqId, spec }; renderSQAsk(); return; }
     const isHM = spec.hm || (st.S && st.S.game==='hawamir');
     if(isHM && !spec.options.some(o=>o.card)){ st.hmAsk={ reqId, spec }; renderHMAsk(); return; }
     const cards = spec.options.some(o=>o.card);
