@@ -100,7 +100,7 @@
 
   // ---------- الدور ----------
   function startTurn(){
-    stopTimer(); G.phase='claim'; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[];
+    stopTimer(); G.phase='claim'; G.result=null; G.rateBy={}; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[];
     clearBoard(); setTvDraw(false); renderScore(); turnIntro();
   }
   function turnIntro(){
@@ -153,7 +153,7 @@
     panel(`<div class="row center"><span class="pill">${esc(w.tag)}</span><span class="pill dim">${DIFF[w.d]} · ${PTS[w.d]}</span><span class="pill team" style="--c:${t.color}">${esc(G.drawer.name||t.name)} يرسم</span></div>
       ${G.drawer.tv?`<div class="covered rs-secret" id="rs-sec"><div class="qtext">${esc(w.w)}</div><div class="cover"><span>${ic('eye')} الكلمة (للرسام بس)</span></div></div>`:''}
       <div class="rs-hint" id="rs-hint" aria-label="عدد حروف الكلمة">${hintPattern()}</div>
-      <div class="timer" id="rs-timer"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="num">${S.drawTime}</div></div>
+      <div class="timer smooth" id="rs-timer"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="num">${S.drawTime}</div></div>
       <div class="rs-feed" id="rs-feed"></div>
       <div class="lbl">خمّنوها بصوت؟ اضغط الفريق:</div>
       <div class="row center">${G.teams.map(x=>`<button class="btn team small" style="--c:${x.color}" data-g="${x.id}">${esc(x.name)}</button>`).join('')}</div>
@@ -169,13 +169,23 @@
   }
 
   // ---------- المؤقت + التلميحات ----------
+  // العرض ناعم (كل فريم) ويطلع أجزاء الثانية بآخر 10 ثواني — والمنطق (التلميحات والنهاية) كل ثانية
+  let rafH=0;
+  function smooth(){
+    cancelAnimationFrame(rafH);
+    const f=()=>{ if(!G || G.phase!=='draw' || !G.deadline) return;
+      const el=$('#rs-timer'); if(el){ const ms=Math.max(0, G.deadline-Date.now()), sec=ms/1000, frac=Math.min(1, ms/(G.total*1000));
+        el.querySelector('.num').textContent = sec<=10 ? sec.toFixed(1) : Math.ceil(sec);
+        el.querySelector('.fg').style.strokeDashoffset=(326.7*(1-frac)).toFixed(1);
+        el.style.setProperty('--hue', Math.round(frac*140));
+        el.classList.toggle('warn', sec<=G.total*.4 && sec>10); el.classList.toggle('danger', sec<=10); el.classList.toggle('crit', sec<=5); }
+      rafH=requestAnimationFrame(f); };
+    rafH=requestAnimationFrame(f);
+  }
   function startTimer(sec){
-    stopTimer(); G.total=sec; G.left=sec;
+    stopTimer(); G.total=sec; G.left=sec; G.deadline=Date.now()+sec*1000; smooth(); pushAll();
     const tick=()=>{
       const el=$('#rs-timer'); if(!el){ timerH=setTimeout(tick,1000); return; }
-      el.querySelector('.num').textContent=G.left;
-      el.querySelector('.fg').style.strokeDashoffset=(326.7*(1-G.left/G.total)).toFixed(1);
-      el.classList.toggle('warn', G.left<=G.total*.4 && G.left>10); el.classList.toggle('danger', G.left<=10);
       // تلميح: حرف عند نص الوقت وحرف ثاني عند الربع الأخير (للكلمات الطويلة)
       if(S.hints && G.word){ const n=[...G.word.w].filter(c=>c!==' ').length;
         if(G.left===Math.floor(G.total/2) && n>=3) revealLetter();
@@ -186,7 +196,7 @@
     };
     tick();
   }
-  function stopTimer(){ clearTimeout(timerH); timerH=null; }
+  function stopTimer(){ clearTimeout(timerH); timerH=null; cancelAnimationFrame(rafH); if(G) G.deadline=0; }
   function revealLetter(){
     const idx=[...G.word.w].map((c,i)=>c!==' '&&!G.revealed.has(i)?i:-1).filter(i=>i>=0);
     if(!idx.length) return; G.revealed.add(rnd(idx));
@@ -201,7 +211,7 @@
     text=String(text||'').trim().slice(0,40); if(!text) return;
     const t=teamById(teamId); if(!t) return;
     const name=nameOf(t,pid)||t.name, res=check(G.word, text);
-    if(res===2) return win(teamId, name);
+    if(res===2){ G.feed.push({name, color:t.color, text, ok:true}); return win(teamId, name); }
     if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('tick',{volume:.7}); }
     else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; tally(G.stats.wrongBy, name); play('pop',{volume:.35}); }
     renderFeed();
@@ -216,6 +226,9 @@
     const secs=G.total-G.left; if(guesserName && (!G.stats.fast || secs<G.stats.fast.s)) G.stats.fast={ name:guesserName, s:secs, w:G.word.w };
     { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='ok'; l.left=+frac.toFixed(2); l.g=guesserName||null; l.gt=g.id; } }
     play('correct'); flash('good'); confetti(70,1500);
+    G.result={ ok:true, who:guesserName||g.name, color:g.color, gp, dp, gTeam:g.name, dTeam:d.name, same:g===d };
+    D.feed({ n:guesserName||g.name, c:g.color, x:`خمّن «${G.word.w}»`, a:gp, k:'good' });
+    if(g!==d) D.feed({ n:G.drawer.name||d.name, c:d.color, x:'رسمته انعرفت', a:dp, k:'good' });
     finishTurn(`<span style="color:var(--mint)">${esc(guesserName||g.name)} خمّنها!</span>`,
       `+${gp} لـ ${esc(g.name)}${g===d?` و+${dp} للرسم`:` · +${dp} لـ ${esc(d.name)} على الرسمة`}`);
   }
@@ -224,6 +237,7 @@
     stopTimer();
     { const l=G.log.items[G.log.items.length-1]; if(l && l.r==='?'){ l.r='fail'; l.left=0; } }
     play('fail',{volume:.6}); flash('bad'); tally(G.stats.missed, G.drawer.name);
+    G.result={ ok:false }; D.feed({ x:`ما أحد عرف «${G.word.w}»`, k:'bad' });
     finishTurn('ما أحد عرفها', 'ولا نقطة هالمرة');
   }
   function finishTurn(title, sub){
@@ -252,13 +266,14 @@
     if(!G || G.phase!=='claim' || cur().id!==teamId) return;
     const t=cur(); G.drawer={ teamId, cid, pid, name:nameOf(t,pid), tv:false };
     play('game:g_zelda',{volume:.6}); offerChoices();
+    D.feed({ n:G.drawer.name||t.name, c:t.color, x:'بيرسم الحين' });
   }
   function onMsg(c, d){
     if(!G || !c.teamId) return;
     const isDrawer = G.drawer && !G.drawer.tv && G.drawer.cid===c.cid;
     if(d.t==='rpick' && isDrawer) return choose(+d.i);
     if(d.t==='guess') return onGuess(c.teamId, c.cid, c.pid, d.text);
-    if(d.t==='rate') return onRate(c.cid, d.v);
+    if(d.t==='rate'){ const tm=teamById(c.teamId); G.rateBy=G.rateBy||{}; G.rateBy[c.cid]={ name:nameOf(tm,c.pid)||(tm&&tm.name)||'', color:tm?tm.color:'' }; return onRate(c.cid, d.v); }
     if(d.t==='rsync'){ if(S.mirror && B){ try{ c.send({ t:'rsfull', ops:B.ops }); }catch(e){} } return; }
     if(!isDrawer || G.phase!=='draw') return;
     if(d.t==='stroke') addStroke(d);
@@ -291,7 +306,11 @@
         word: mine && G.phase==='draw' ? G.word.w : null,
         hint: G.phase==='draw' ? hintText() : null, letters: G.word ? [...G.word.w].filter(c=>c!==' ').length : 0,
         mirror: !!S.mirror, canRate: G.phase==='reveal' && !mine && !!(B && B.count), myRate: (G.ratings||{})[cid]||0,
-        canGuess: G.phase==='draw' && !mine, reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null },
+        canGuess: G.phase==='draw' && !mine, reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null,
+        timer: G.phase==='draw' && G.deadline ? { ms:Math.max(0,G.deadline-Date.now()), total:G.total*1000 } : null,
+        feed: (G.feed||[]).slice(-14).map(f=>({ n:f.name, c:f.color, x:f.close?'':f.text, close:!!f.close, ok:!!f.ok })),
+        result: G.phase==='reveal' ? G.result : null, tag: G.word && G.phase!=='pick' ? G.word.tag : null, diff: G.word ? DIFF[G.word.d]+' · '+PTS[G.word.d] : null,
+        rating: G.phase==='reveal' ? { avg:rateAvg(), n:Object.keys(G.ratings||{}).length, votes:Object.entries(G.ratings||{}).map(([k,v])=>({ n:((G.rateBy||{})[k]||{}).name||'', c:((G.rateBy||{})[k]||{}).color||'', v })) } : null },
       phase: G.phase==='claim' ? `دور ${cur().name} يرسم` : G.phase==='pick' ? 'الرسام يختار كلمة' : G.phase==='draw' ? (mine ? 'ارسم! الكل يشوف رسمتك على الشاشة' : 'خمّنوا الرسمة!') : '' };
   }
 
@@ -319,6 +338,7 @@
     v=Math.round(+v); if(!G || G.phase!=='reveal' || !(v>=1 && v<=5)) return;
     if(G.drawer && G.drawer.cid && G.drawer.cid===cid) return;
     G.ratings[cid]=v; drawRating(); pushAll();
+    if(cid==='tv'){ G.rateBy=G.rateBy||{}; G.rateBy.tv={ name:'المضيف', color:'' }; }
   }
   function drawRating(){
     const el=$('#rs-rating'); if(!el) return;

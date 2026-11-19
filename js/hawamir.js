@@ -37,6 +37,20 @@ window.DahoomHawamir = (function(){
   const kindOf = t => t.t==='air' ? 'مطار' : t.t==='co' ? 'شركة' : t.country;
   const tileFlag = t => t.t==='air' ? `<span class="hm-flag air">${ic('hm-plane')}</span>` : t.t==='co' ? `<span class="hm-flag air">${ic('hm-building-factory-2')}</span>` : flagOf(t.flag, t.country, t.color);
 
+  // ---------- سجل الأحداث (مثل الشات): كل فلوس دخلت أو طلعت وكل حركة ----------
+  // a: المبلغ (+ دخل، − طلع) · k: good / bad / roll / info
+  function logE(p, x, a, k){
+    if(!G) return;
+    const e={ n:p?p.name:'', c:p?p.color:'', av:p?p.avatar:'', x, a:a||0, k:k||(a>0?'good':a<0?'bad':''), r:G.round, ts:Date.now() };
+    G.feed.push(e); if(G.feed.length>120) G.feed.shift();
+    D.feed(e); renderLog(); pushAll();
+  }
+  const amtHTML = a => a ? `<span class="hm-amt ${a>0?'up':'dn'}">${a>0?'+':'−'}${money(Math.abs(a))}</span>` : '';
+  function renderLog(){
+    const el=$('#hm-log'); if(!el||!G) return;
+    el.innerHTML = G.feed.length ? G.feed.slice(-30).reverse().map(e=>`<div class="hm-lg ${e.k}" style="--c:${e.c||'transparent'}">${e.n?`<b>${esc(e.n)}</b> `:''}<span>${esc(e.x)}</span>${amtHTML(e.a)}</div>`).join('') : '<div class="hm-lg info"><span>هنا يطلع كل شي يصير: إيجارات، شراء، مزادات، حظك…</span></div>';
+  }
+
   // ---------- حسابات ----------
   const ownerOf = i => G.owner[i] ? byId(G.owner[i]) : null;
   const owned = p => T.map((_,i)=>i).filter(i=>G.owner[i]===p.id);
@@ -68,8 +82,8 @@ window.DahoomHawamir = (function(){
       const [r,c]=cell(i), sd=sideOf(i), pos=`grid-row:${r};grid-column:${c};`;
       if(t.price) return `<div class="hm-tile ${t.t} s-${sd}" data-i="${i}" style="${pos}--g:${t.color}">
         <span class="hm-band">${tileFlag(t)}<em>${esc(kindOf(t))}</em></span>
-        <span class="hm-body"><b class="hm-name">${esc(t.name.replace(/^(مطار|شركة) /,''))}</b><span class="hm-sub"></span></span>
-        <span class="hm-bld"></span><i class="hm-own"></i></div>`;
+        <span class="hm-body"><b class="hm-name">${esc(t.name.replace(/^(مطار|شركة) /,'').replace(/ الدولي$/,''))}</b><span class="hm-sub"></span></span>
+        <span class="hm-bld"></span><i class="hm-own"></i><span class="hm-ownav"></span></div>`;
       return `<div class="hm-tile sp ${t.t} s-${sd}" data-i="${i}" style="${pos}"><span class="hm-spic">${ic(DATA.icons[t.t])}</span><b class="hm-name">${esc(t.name)}</b><span class="hm-sub"></span></div>`;
     }).join(''));
     const tl=$('#hm-toks'); if(tl) tl.innerHTML=G.players.map(p=>`<span class="hm-tok" data-p="${p.id}" style="--c:${p.color}">${tokInner(p)}</span>`).join('');
@@ -81,10 +95,10 @@ window.DahoomHawamir = (function(){
       el.classList.toggle('focus', G.focus===i);
       if(t.price){
         el.classList.toggle('owned', !!o); el.style.setProperty('--own', o?o.color:'transparent');
-        sub.innerHTML = !o ? money(t.price) : t.t==='co' ? `<small>النرد ×</small> ${money(coMult(o))}` : `<small>إيجار</small> ${money(rentOf(i))}`;
+        sub.innerHTML = tileSub(i);
+        const oa=el.querySelector('.hm-ownav'); if(oa){ const k=o?o.id:''; if(oa.dataset.k!==k){ oa.dataset.k=k; oa.innerHTML=o?tokInner(o):''; oa.title=o?'ملك '+o.name:''; } }
         const lv=G.level[i]||0, bl=el.querySelector('.hm-bld'); bl.innerHTML = lv ? ic(LV[lv-1].icon)+(lv<4?`<b>${lv}</b>`:'') : ''; bl.className='hm-bld'+(lv?' on l'+lv:'');
-      } else if(t.t==='pot') sub.textContent=money(G.pot);
-      else if(t.t==='start') sub.textContent=plus(S.salary);
+      } else if(t.t==='pot' || t.t==='start') sub.innerHTML=tileSub(i);
     });
     placeTokens();
     const pe=$('#hm-pot'); if(pe) pe.textContent=money(G.pot);
@@ -117,8 +131,13 @@ window.DahoomHawamir = (function(){
         <span class="hm-dots">${pr.map(i=>`<i class="${G.level[i]?'b':''}" style="--g:${T[i].color}" title="${esc(T[i].name)}"></i>`).join('')}</span></div>`;
     }).join('');
   }
-  function renderAll(){ renderBoard(); renderSide(); pushAll(); }
-  const stage = html => { const s=$('#hm-stage'); if(s) s.innerHTML=html; };
+  function tileSub(i){
+    const t=T[i];
+    if(t.price){ const o=ownerOf(i); return !o ? money(t.price) : t.t==='co' ? `<small>النرد ×</small> ${money(coMult(o))}` : `<small>إيجار</small> ${money(rentOf(i))}`; }
+    return t.t==='pot' ? money(G.pot) : t.t==='start' ? plus(S.salary) : '';
+  }
+  function renderAll(){ renderBoard(); renderSide(); renderLog(); pushAll(); }
+  const stage = html => { const s=$('#hm-stage'); if(s) s.innerHTML=html; if(G) G.stageHtml=html; pushAll(); };
   const PIPS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
   const die = n => `<span class="hm-die">${[1,2,3,4,5,6,7,8,9].map(k=>`<i class="${(PIPS[n]||[]).includes(k)?'on':''}"></i>`).join('')}</span>`;
   const diceHTML = (a,b,cls='') => `<span class="hm-dice ${cls}">${die(a)}${b!=null?die(b):''}</span>`;
@@ -132,7 +151,7 @@ window.DahoomHawamir = (function(){
     const el=$('#hm-clock'); if(!el||!G) return;
     const left=Math.max(0, G.endAt-Date.now()), m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
     el.textContent = G.lastRound ? 'اللفة الأخيرة' : `${m}:${String(s).padStart(2,'0')}`;
-    if(left<=0 && !G.timeUp){ G.timeUp=true; toast('خلص الوقت — نكمل هاللفة وبعدها نحسب الثروات', 4000); play('buzzer',{volume:.6}); }
+    if(left<=0 && !G.timeUp){ G.timeUp=true; toast('خلص الوقت — نكمل هاللفة وبعدها نحسب الثروات', 4000); play('buzzer',{volume:.6}); logE(null, 'خلص الوقت — نكمل هاللفة وبعدها نحسب الثروات', 0, 'info'); }
   }
   // صك العقار: السعر وجدول الإيجار
   function deed(i){
@@ -159,7 +178,7 @@ window.DahoomHawamir = (function(){
         <div class="hm-opts ${spec.options.length>4?'many':''}">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'} ${spec.big?'big':''}" data-o="${i}">${esc(o.label)}</button>`).join('')}</div>
         ${spec.cancel?`<button class="btn ghost small" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div>`;
       $$('[data-o]',box).forEach(b=>b.onclick=()=>{ const i=+b.dataset.o; finish(i<0?null:spec.options[i].v); });
-      if(phoneOf(p)) rid=NET().ask(p.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
+      if(phoneOf(p)) rid=NET().ask(p.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, deed: spec.deed!=null ? spec.deed : null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
         i=>finish(i==null||i<0?null:spec.options[i].v));
       if(spec.timeout) tm=setTimeout(()=>finish(spec.def===undefined?null:spec.def), spec.timeout);
     });
@@ -180,8 +199,8 @@ window.DahoomHawamir = (function(){
       break;
     }
     const paid=Math.min(n, Math.max(0,p.cash)); p.cash-=paid; if(to) to.cash+=paid;
-    if(sold.length) toast(`${p.name} باع للبنك بنص السعر: ${sold.join('، ')}`, 4200);
-    if(paid<n){ p.out=true; p.cash=0; play('fail',{volume:.7}); G.log.push(`${p.name} أفلس`); renderAll(); await ok(p, `${esc(p.name)} أفلس وطلع من اللعبة`, why||''); }
+    if(sold.length){ toast(`${p.name} باع للبنك بنص السعر: ${sold.join('، ')}`, 4200); logE(p, `باع للبنك بنص السعر: ${sold.join('، ')}`, 0, 'bad'); }
+    if(paid<n){ p.out=true; p.cash=0; play('fail',{volume:.7}); logE(p, 'أفلس وطلع من اللعبة', 0, 'bad'); renderAll(); await ok(p, `${esc(p.name)} أفلس وطلع من اللعبة`, why||''); }
     return paid;
   }
   // غرامة تروح للصندوق
@@ -197,8 +216,8 @@ window.DahoomHawamir = (function(){
       const active = () => alive().filter(p=>!outs.has(p.id));
       const clearAsks = () => { const n=NET(); if(n) rids.forEach(r=>n.cancel(r)); rids=[]; };
       const end = () => { if(done) return; done=true; clearInterval(tm); clearAsks(); box.innerHTML=''; G.focus=null; G.endAuction=null;
-        if(high){ high.cash-=price; G.owner[i]=high.id; high.stats.auctions++; play('game:g_mariocoin',{volume:.6}); toast(`${high.name} فاز بمزاد ${t.name} بـ ${money(price)}`, 3200); G.log.push(`${high.name} فاز بمزاد ${t.name} بـ ${money(price)}`); }
-        else toast(`ما أحد زايد على ${t.name}`, 2400);
+        if(high){ high.cash-=price; G.owner[i]=high.id; high.stats.auctions++; play('game:g_mariocoin',{volume:.6}); toast(`${high.name} فاز بمزاد ${t.name} بـ ${money(price)}`, 3200); logE(high, `فاز بمزاد ${t.name}`, -price); }
+        else { toast(`ما أحد زايد على ${t.name}`, 2400); logE(null, `ما أحد زايد على ${t.name}`, 0, 'info'); }
         renderAll(); res(high); };
       G.endAuction=end;
       const bid = (p, inc) => { if(done || p===high || outs.has(p.id)) return; const np = high ? price+inc : startPrice+(inc>STEP1?inc-STEP1:0);
@@ -229,7 +248,7 @@ window.DahoomHawamir = (function(){
         options:list.map(k=>({ v:k, label:`${T[k].name}: ${LV[G.level[k]||0].name} بـ ${money(upCost(k))}`, cls:'' })) });
       if(i==null) return;
       p.cash-=upCost(i); G.level[i]=(G.level[i]||0)+1; p.stats.built++; play('game:g_powerup',{volume:.5,max:1200});
-      G.log.push(`${p.name} بنى ${LV[G.level[i]-1].name} في ${T[i].name}`); renderAll();
+      logE(p, `بنى ${LV[G.level[i]-1].name} في ${T[i].name}`, -upCost(i)); renderAll();
     }
   }
   async function tradeMenu(p){
@@ -250,18 +269,19 @@ window.DahoomHawamir = (function(){
     const yes=await decide(x, { deed:i, title: mode==='buy' ? `${esc(p.name)} يبي يشتري منك "${esc(T[i].name)}" بـ ${money(price)}` : `${esc(p.name)} يعرض عليك "${esc(T[i].name)}" بـ ${money(price)}`,
       options:[{v:true,label:'موافق',cls:'btn-mint big'},{v:false,label:'لا',cls:'btn-bad big'}], timeout:30000, def:false });
     G.focus=null;
-    if(yes && buyer.cash>=price && G.owner[i]===seller.id){ buyer.cash-=price; seller.cash+=price; G.owner[i]=buyer.id; p.stats.trades++; x.stats.trades++; play('meme:cash',{volume:.6}); toast(`تمت الصفقة: ${T[i].name} صار لـ ${buyer.name} بـ ${money(price)}`, 3600); G.log.push(`صفقة: ${T[i].name} لـ ${buyer.name} بـ ${money(price)}`); }
-    else { play('fx_deny',{volume:.5}); toast(`${x.name} رفض الصفقة`); }
+    if(yes && buyer.cash>=price && G.owner[i]===seller.id){ buyer.cash-=price; seller.cash+=price; G.owner[i]=buyer.id; p.stats.trades++; x.stats.trades++; play('meme:cash',{volume:.6}); toast(`تمت الصفقة: ${T[i].name} صار لـ ${buyer.name} بـ ${money(price)}`, 3600);
+      logE(buyer, `اشترى ${T[i].name} من ${seller.name} (صفقة)`, -price); logE(seller, `باع ${T[i].name} لـ ${buyer.name}`, price); }
+    else { play('fx_deny',{volume:.5}); toast(`${x.name} رفض الصفقة`); logE(x, `رفض صفقة ${p.name} على ${T[i].name}`, 0, 'info'); }
     renderAll();
   }
 
   // ---------- الحركة والخانات ----------
-  function passStart(p){ give(p,S.salary); toast(`${p.name} مر على البداية: ${plus(S.salary)}`); play('coin',{volume:.5}); }
+  function passStart(p){ give(p,S.salary); toast(`${p.name} مر على البداية: ${plus(S.salary)}`); play('coin',{volume:.5}); logE(p, 'مر على البداية وأخذ راتبه', S.salary); }
   async function moveTo(p, steps){
     for(let k=0;k<steps;k++){
       p.pos=(p.pos+1)%N; play('tick',{volume:.35});
       if(p.pos===0) passStart(p);
-      placeTokens(); await sleep(190);
+      placeTokens(); pushAll(); await sleep(190);
     }
     renderAll();
   }
@@ -271,8 +291,8 @@ window.DahoomHawamir = (function(){
     G.focus=i; renderBoard();
     const v=await decide(p, { deed:i, title:`${esc(t.name)} بدون مالك`, text:p.discount?`خصمك شغال: ${money(price)} بدل ${money(t.price)}`:(p.cash<price?'ما معك سعرها — تروح للمزاد':'تشتريها ولا تروح للمزاد؟'), options:opts, timeout:45000, def:'auc' });
     G.focus=null;
-    if(v==='buy'){ p.cash-=price; G.owner[i]=p.id; p.discount=false; p.stats.bought++; play('bonus',{volume:.6}); toast(`${p.name} اشترى ${t.name}`); G.log.push(`${p.name} اشترى ${t.name}`);
-      if(t.t==='city' && groupFull(p,t.g)){ toast(`${p.name} كمّل ${t.country} — يقدر يبني فيها`, 3600); play('levelup',{volume:.6}); }
+    if(v==='buy'){ p.cash-=price; G.owner[i]=p.id; p.discount=false; p.stats.bought++; play('bonus',{volume:.6}); toast(`${p.name} اشترى ${t.name}`); logE(p, `اشترى ${t.name}`+(price<t.price?' بالخصم':''), -price);
+      if(t.t==='city' && groupFull(p,t.g)){ toast(`${p.name} كمّل ${t.country} — يقدر يبني فيها`, 3600); play('levelup',{volume:.6}); logE(p, `كمّل ${t.country} كاملة — يقدر يبني فيها`, 0, 'good'); }
       renderAll(); }
     else await auction(i, Math.round(t.price/2/1000)*1000, 'مزاد');
   }
@@ -286,18 +306,19 @@ window.DahoomHawamir = (function(){
       stage(`<div class="hm-msg bad">${esc(p.name)} يدفع إيجار <b class="hm-num">${money(r)}</b> لـ <b style="color:${o.color}">${esc(o.name)}</b> على ${esc(t.name)}</div>`);
       play('wrong',{volume:.5});
       const paid=await charge(p, r, o, `ما قدر يدفع إيجار ${t.name}`); p.stats.rentOut+=paid; o.stats.rentIn+=paid;
+      logE(p, `دفع إيجار ${t.name} لـ ${o.name}`, -paid);
       renderAll(); await sleep(1500);
       await takeover(p, o, i);
       G.focus=null; return;
     }
     if(t.t==='start'){ stage(`<div class="hm-msg">${esc(p.name)} وقف على البداية</div>`); await sleep(600); return; }
-    if(t.t==='saher'){ stage(`<div class="hm-msg bad">ساهر صادك! مخالفة <b class="hm-num">${money(10000)}</b> تروح للصندوق</div>`); play('meme:fbi',{volume:.5,max:1800}); await fine(p,10000,'ما قدر يدفع المخالفة'); renderAll(); await sleep(1500); return; }
-    if(t.t==='pot'){ const v=G.pot>0?G.pot:5000; G.pot=0; give(p,v); p.stats.pot+=v; stage(`<div class="hm-msg">${esc(p.name)} فتح الصندوق: <b class="hm-num">${plus(v)}</b></div>`); play('meme:chest',{volume:.6,max:2500}); if(v>=30000) confetti(80,1500); renderAll(); await sleep(1700); return; }
+    if(t.t==='saher'){ stage(`<div class="hm-msg bad">ساهر صادك! مخالفة <b class="hm-num">${money(10000)}</b> تروح للصندوق</div>`); play('meme:fbi',{volume:.5,max:1800}); const fp=await fine(p,10000,'ما قدر يدفع المخالفة'); logE(p, 'صاده ساهر — المخالفة راحت للصندوق', -fp); renderAll(); await sleep(1500); return; }
+    if(t.t==='pot'){ const v=G.pot>0?G.pot:5000; G.pot=0; give(p,v); p.stats.pot+=v; logE(p, 'فتح الصندوق وأخذ كل اللي فيه', v); stage(`<div class="hm-msg">${esc(p.name)} فتح الصندوق: <b class="hm-num">${plus(v)}</b></div>`); play('meme:chest',{volume:.6,max:2500}); if(v>=30000) confetti(80,1500); renderAll(); await sleep(1700); return; }
     if(t.t==='jet') return jet(p);
     if(t.t==='stocks') return stocks(p);
     if(t.t==='auction'){ const free=T.map((x,k)=>x.price&&!G.owner[k]?k:-1).filter(k=>k>=0);
-      if(!free.length){ give(p,10000); stage(`<div class="hm-msg">ما بقى عقار للمزاد: ${plus(10000)}</div>`); renderAll(); await sleep(1300); return; }
-      const k=rnd(free); return auction(k, Math.round(T[k].price/2/1000)*1000, 'مزاد علني'); }
+      if(!free.length){ give(p,10000); logE(p, 'ما بقى عقار للمزاد — أخذ تعويض', 10000); stage(`<div class="hm-msg">ما بقى عقار للمزاد: ${plus(10000)}</div>`); renderAll(); await sleep(1300); return; }
+      const k=rnd(free); logE(p, `وقف على المزاد: ${T[k].name} للكل`, 0, 'info'); return auction(k, Math.round(T[k].price/2/1000)*1000, 'مزاد علني'); }
     if(t.t==='luck') return luck(p);
   }
   // استحواذ: وقفت على عقار غيرك ما فيه بناء وعندك من نفس الدولة (أو مطار)؟ تقدر تاخذه منه بسعر مضاعف
@@ -314,7 +335,7 @@ window.DahoomHawamir = (function(){
       options:[{v:true,label:`استحوذ بـ ${money(price)}`,cls:'btn-hype big'},{v:false,label:'لا',cls:'big'}], timeout:25000, def:false });
     if(!yes || !canTake(p,o,i)) return;
     p.cash-=price; o.cash+=price; G.owner[i]=p.id; p.stats.takes++; play('meme:yoink',{volume:.6});
-    toast(`${p.name} استحوذ على ${t.name} من ${o.name} بـ ${money(price)}`, 3800); G.log.push(`${p.name} استحوذ على ${t.name} من ${o.name}`);
+    toast(`${p.name} استحوذ على ${t.name} من ${o.name} بـ ${money(price)}`, 3800); logE(p, `استحوذ على ${t.name} من ${o.name}`, -price); logE(o, `انسحب منه ${t.name} بالقوة`, price);
     if(t.t==='city' && groupFull(p,t.g)){ toast(`${p.name} كمّل ${t.country} — يقدر يبني فيها`, 3600); play('levelup',{volume:.6}); }
     renderAll(); await sleep(900);
   }
@@ -323,7 +344,7 @@ window.DahoomHawamir = (function(){
     const k=await decide(p, { title:'رحلة مجانية — وين تطير؟', text:'تنزل على الخانة وتسوي اللي فيها. البداية تعطيك راتبك.', cancel:'ما أبي أطير',
       options:dest.map(d=>({v:d,label:T[d].name,cls:''})), timeout:30000 });
     if(k==null) return;
-    play('game:g_swoosh',{volume:.6}); p.pos=k; if(k===0) passStart(p); renderAll(); await sleep(600);
+    play('game:g_swoosh',{volume:.6}); logE(p, `طار لـ ${T[k].name}`, 0, 'info'); p.pos=k; if(k===0) passStart(p); renderAll(); await sleep(600);
     return land(p);
   }
   async function stocks(p){
@@ -333,7 +354,7 @@ window.DahoomHawamir = (function(){
     if(!a) return;
     p.cash-=a; renderSide();
     const [d]=await rollDice(false), back = d<=2?0 : d<=4?a : d===5?a*2 : a*3;
-    give(p,back); p.stats.stocks+=back-a; play(back>a?'bonus':back===a?'pop':'fail',{volume:.7});
+    give(p,back); p.stats.stocks+=back-a; logE(p, `استثمر ${money(a)} بالأسهم والنرد طلع ${d}`, back-a, back>a?'good':back===a?'info':'bad'); play(back>a?'bonus':back===a?'pop':'fail',{volume:.7});
     stage(`<div class="hm-msg ${back<a?'bad':''}">${diceHTML(d)} ${back===0?`السهم طاح: خسرت ${money(a)}`: back===a?'رجعت فلوسك': `ربحت ${money(back-a)}`}</div>`);
     renderAll(); await sleep(1700);
   }
@@ -342,20 +363,22 @@ window.DahoomHawamir = (function(){
     const c=G.deck.pop(); play('card',{volume:.7});
     stage(`<div class="hm-luck"><small>${ic('hm-clover')} حظك</small><div class="hm-luck-t">${esc(c.text)}</div></div>`);
     await sleep(2000);
-    const others=alive().filter(x=>x!==p);
+    const others=alive().filter(x=>x!==p), c0=p.cash;
     if(c.k==='cash'){ if(c.v>0) give(p,c.v); else await fine(p,-c.v,'ما قدر يدفع'); }
     else if(c.k==='each'){ for(const x of others){ await charge(x,c.v,p); } }
     else if(c.k==='payeach'){ for(const x of others){ await charge(p,c.v,x); } }
     else if(c.k==='all'){ alive().forEach(x=>give(x,c.v)); }
-    else if(c.k==='tostart'){ p.pos=0; passStart(p); }
+    else if(c.k==='tostart'){ logE(p, `حظك: «${c.text}»`, 0, 'info'); p.pos=0; passStart(p); }
     else if(c.k==='repair'){ const lv=owned(p).reduce((a,i)=>a+(G.level[i]||0),0); if(lv) await fine(p,lv*c.v,'ما قدر يدفع الصيانة'); else toast('ما عندك بناء — سلمت'); }
     else if(c.k==='dice'){ const [d]=await rollDice(false); give(p,d*c.v); stage(`<div class="hm-msg">${diceHTML(d)} <b class="hm-num">${plus(d*c.v)}</b></div>`); await sleep(1300); }
     else if(c.k==='discount'){ p.discount=true; }
-    else if(c.k==='rich'){ const r=[...alive()].sort((a,b)=>worth(b)-worth(a))[0]; if(r) await fine(r,c.v,''); }
+    else if(c.k==='rich'){ const r=[...alive()].sort((a,b)=>worth(b)-worth(a))[0]; if(r){ const fp=await fine(r,c.v,''); if(r!==p) logE(r, 'أغنى لاعب — دفع للصندوق', -fp); } }
     else if(c.k==='freeprop'){ const free=T.map((x,k)=>x.t==='city'&&!G.owner[k]?k:-1).filter(k=>k>=0).sort((a,b)=>T[a].price-T[b].price)[0];
-      if(free!=null){ G.owner[free]=p.id; toast(`${p.name} ورث ${T[free].name}`, 3200); G.log.push(`${p.name} ورث ${T[free].name}`); } else { give(p,10000); toast('كل المدن مملوكة: '+plus(10000)); } }
-    else if(c.k==='airport'){ let k=p.pos; do{ k=(k+1)%N; if(k===0) passStart(p); }while(T[k].t!=='air'); p.pos=k; renderAll(); await sleep(600); await land(p); }
-    play(c.v<0?'wrong':'coin',{volume:.4}); renderAll();
+      if(free!=null){ G.owner[free]=p.id; toast(`${p.name} ورث ${T[free].name}`, 3200); } else { give(p,10000); toast('كل المدن مملوكة: '+plus(10000)); } }
+    else if(c.k==='airport'){ logE(p, `حظك: «${c.text}»`, 0, 'info'); let k=p.pos; do{ k=(k+1)%N; if(k===0) passStart(p); }while(T[k].t!=='air'); p.pos=k; renderAll(); await sleep(600); await land(p); }
+    play(c.v<0?'wrong':'coin',{volume:.4});
+    if(c.k!=='airport' && c.k!=='tostart'){ const d=p.cash-c0; logE(p, `حظك: «${c.text}»`, d, d>0?'good':d<0?'bad':'info'); }
+    renderAll();
   }
 
   // ---------- الدور ----------
@@ -376,6 +399,7 @@ window.DahoomHawamir = (function(){
         if(!G || G.over) return;
       }
       const [a,b]=await rollDice(true); G.lastRoll=a+b;
+      logE(p, `رمى النرد: ${a} و ${b} (${a+b})${a===b?' — دبل':''}`, 0, 'roll');
       stage(`<div class="hm-msg">${diceHTML(a,b)} <b class="hm-num">${a+b}</b>${a===b&&!rolls?'<span class="hm-tag">دبل</span>':''}</div>`);
       await sleep(350);
       await moveTo(p, a+b);
@@ -405,13 +429,13 @@ window.DahoomHawamir = (function(){
     MAP = DATA.maps.find(m=>m.id===S.map) || DATA.maps[0]; T = buildTiles(MAP);
     G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], cash:S.startCash, pos:0, out:false, discount:false,
           stats:{ rentIn:0, rentOut:0, bought:0, auctions:0, trades:0, built:0, pot:0, stocks:0, takes:0 } }))),
-        turn:0, round:1, owner:{}, level:{}, deck:[], log:[], pot:20000, lastRoll:7, endAt:Date.now()+S.minutes*60000, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
+        turn:0, round:1, owner:{}, level:{}, deck:[], feed:[], sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, endAt:Date.now()+S.minutes*60000, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
     G.players.forEach((p,k)=>{ p.cash+=k*(DATA.seatBonus||0); });      // اللي يلعب متأخر ياخذ زيادة بسيطة تعوّضه
-    const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{} });
+    const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{}, hmDeed:i=>T[i]&&T[i].price?deed(i):'' });
     go('hawamir'); $('#hm-round').textContent='اللفة 1'; $('#hm-ask').innerHTML='';
     const bd=$('#hm-board'); if(bd) bd.style.setProperty('--felt', MAP.felt);
     const mn=$('#hm-mapname'); if(mn) mn.textContent=MAP.name;
-    buildBoard();
+    buildBoard(); renderLog();
     clearInterval(clock); clock=setInterval(tick,1000); tick();
     play('game:g_mkcount',{volume:.5,max:2500});
     turn();
@@ -451,14 +475,27 @@ window.DahoomHawamir = (function(){
   }
 
   // ---------- حالة الجوال ----------
-  function hmState(id){
+  // الجزء الثابت (الخانات والصكوك) ينرسل مرة وحدة لكل جهاز
+  function hmStatic(){
+    return { map:MAP.id, name:MAP.name, felt:MAP.felt, levels:LV, salary:S.salary,
+      tiles:T.map((t,i)=>({ t:t.t, n:t.name.replace(/^(مطار|شركة) /,'').replace(/ الدولي$/,''), full:t.name, k:t.price?kindOf(t):'', c:t.color||'', fl:t.price?tileFlag(t):'', p:t.price||0, ic:t.price?'':(DATA.icons[t.t]||''), deed:t.price?deed(i):'' })) };
+  }
+  function hmBoard(p, cid){
+    const fresh = cid && !G.sent.has(cid); if(cid) G.sent.add(cid);
+    return { st: fresh ? hmStatic() : null, key:MAP.id, me:p.id,
+      own:T.map((_,i)=>G.owner[i]||null), lv:T.map((_,i)=>G.level[i]||0), sub:T.map((_,i)=>tileSub(i)), focus:G.focus,
+      pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', pos:x.pos, cash:x.cash, worth:worth(x), out:x.out, props:owned(x).length, turn:!G.over && x===cur(), phone:phoneOf(x) })),
+      pot:G.pot, round:G.round, endsIn:Math.max(0,G.endAt-Date.now()), lastRound:!!G.lastRound, timeUp:!!G.timeUp, stage:G.stageHtml||'',
+      canBuild: !G.over && cur()===p ? canBuild(p).length : 0 };
+  }
+  function hmState(id, cid){
     if(!G) return { waiting:true };
     const p=byId(id); if(!p) return { waiting:true };
     const rank=[...G.players].sort((a,b)=>worth(b)-worth(a));
     const st={ game:'hawamir', team:{ id:p.id, name:p.name, color:p.color, score:money(p.cash) }, myTurn: !G.over && cur()===p,
       phase: G.over ? '' : p.out ? 'أفلست — تابع من الشاشة' : cur()===p ? 'دورك — القرارات تجيك هنا' : `دور ${cur().name}`,
       fx: owned(p).map(i=>({ n:T[i].name+(G.level[i]?` · ${LV[G.level[i]-1].name}`:''), bad:false })),
-      scores: rank.map(x=>({ id:x.id, name:x.name, color:x.color, score:money(worth(x)), turn:!G.over && x===cur() })) };
+      scores: rank.map(x=>({ id:x.id, name:x.name, color:x.color, score:money(worth(x)), turn:!G.over && x===cur() })), hm: hmBoard(p, cid) };
     if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, awards:[], rows:[['الثروة',money(worth(p))],['الكاش',money(p.cash)],['العقارات',String(owned(p).length)],['إيجار دخل',money(p.stats.rentIn)],['إيجار دفعته',money(p.stats.rentOut)]] }; }
     return st;
   }

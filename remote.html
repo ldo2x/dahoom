@@ -10,9 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611180842">
-<link rel="stylesheet" href="css/remote.css?v=202611180842">
-<link rel="stylesheet" href="css/draw.css?v=202611180842">
+<link rel="stylesheet" href="css/style.css?v=202611190659">
+<link rel="stylesheet" href="css/remote.css?v=202611190659">
+<link rel="stylesheet" href="css/hawamir.css?v=202611190659">
+<link rel="stylesheet" href="css/draw.css?v=202611190659">
 </head>
 <body class="remote">
 
@@ -34,6 +35,7 @@
 <!-- اختيار الفريق -->
 <section id="r-pick" class="r-screen hidden">
   <div class="r-brand">الغرفة <span id="r-room-lbl" class="r-room"></span></div>
+  <div class="r-sess-mini" id="r-sess-mini"></div>
   <h1>وش فريقك؟</h1>
   <div class="r-teams" id="r-teams"></div>
   <form class="r-newteam hidden" id="r-newteam"><input type="text" id="r-newteam-name" maxlength="18" placeholder="اسم فريق جديد" autocomplete="off"><button class="btn btn-mint" type="submit">أنشئ فريق</button></form>
@@ -47,33 +49,51 @@
   <div class="lbl">اختر شكلك</div>
   <div class="r-avatars" id="r-avatars"></div>
   <button class="btn btn-hype big" id="r-reg-go">يلا</button>
+  <button class="btn ghost hidden" id="r-reg-back">رجوع بدون تغيير</button>
   <p class="r-err" id="r-reg-err"></p>
 </section>
 
-<!-- الشاشة الرئيسية -->
+<!-- الشاشة الرئيسية: عمود اللعب + عمود الجلسة (بالكمبيوتر جنب بعض، بالجوال تحت بعض) -->
 <section id="r-main" class="r-screen hidden">
-  <header class="r-head" id="r-head"></header>
-  <div class="r-phase" id="r-phase"></div>
-  <div class="r-final hidden" id="r-final"></div>
-  <div class="r-charade hidden" id="r-charade"></div>
-  <div class="r-rasm hidden" id="r-rasm"></div>
-  <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">BUZZ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
-  <div class="fx-tags" id="r-fx"></div>
-  <div class="r-hand-wrap" id="r-hand-wrap">
-    <div class="r-hand-lbl" id="r-hand-lbl"></div>
-    <div class="r-hand" id="r-hand"></div>
+  <div class="r-layout">
+    <div class="r-col">
+      <header class="r-head" id="r-head"></header>
+      <div class="r-wait r-hide" id="r-wait"></div>
+      <div class="r-timer r-hide" id="r-timer" aria-live="off">
+        <div class="rt-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><b class="rt-num" id="rt-num">0</b></div>
+        <div class="rt-side"><span class="rt-lbl" id="rt-lbl">الوقت</span><div class="rt-bar"><i id="rt-bar"></i></div></div>
+      </div>
+      <div class="r-phase" id="r-phase"></div>
+      <div class="r-view r-hide" id="r-view"></div>
+      <div class="r-hm r-hide" id="r-hm"></div>
+      <div class="r-ask r-hide" id="r-ask"></div>
+      <div class="r-hmpl r-hide" id="r-hmpl"></div>
+      <div class="r-final hidden" id="r-final"></div>
+      <div class="r-charade hidden" id="r-charade"></div>
+      <div class="r-rasm hidden" id="r-rasm"></div>
+      <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">BUZZ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
+      <div class="fx-tags" id="r-fx"></div>
+      <div class="r-hand-wrap" id="r-hand-wrap">
+        <div class="r-hand-lbl" id="r-hand-lbl"></div>
+        <div class="r-hand" id="r-hand"></div>
+      </div>
+    </div>
+    <aside class="r-side">
+      <details class="r-card r-sess" id="r-sess" open><summary id="r-sess-sum"></summary><div id="r-sess-body"></div></details>
+      <div class="r-scores" id="r-scores"></div>
+      <section class="r-card r-feedbox"><h4>وش صار <small id="r-feed-n"></small></h4><div class="r-feed" id="r-feed"><p class="muted small">هنا يطلع كل شي يصير باللعبة أول بأول</p></div></section>
+      <div class="r-foot"><button class="btn ghost small" id="r-report">بلّغ عن مشكلة</button><button class="btn ghost small r-switch" id="r-switch">تغيير الفريق</button></div>
+    </aside>
   </div>
-  <div class="r-scores" id="r-scores"></div>
-  <div class="r-foot"><button class="btn ghost small" id="r-report">بلّغ عن مشكلة</button><button class="btn ghost small r-switch" id="r-switch">تغيير الفريق</button></div>
 </section>
 
 <div class="r-status hidden" id="r-status"></div>
 <div class="r-sheet hidden" id="r-sheet"><div class="r-sheet-in" id="r-sheet-in"></div></div>
 
-<script src="js/vendor/peerjs.min.js?v=202611180842"></script>
-<script src="data/cards.js?v=202611180842"></script>
-<script src="js/telemetry.js?v=202611180842"></script>
-<script src="js/draw.js?v=202611180842"></script>
-<script src="js/remote.js?v=202611180842"></script>
+<script src="js/vendor/peerjs.min.js?v=202611190659"></script>
+<script src="data/cards.js?v=202611190659"></script>
+<script src="js/telemetry.js?v=202611190659"></script>
+<script src="js/draw.js?v=202611190659"></script>
+<script src="js/remote.js?v=202611190659"></script>
 </body>
 </html>

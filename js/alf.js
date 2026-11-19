@@ -126,7 +126,18 @@
       item: G.item ? { kind:G.item.kind, id:G.item.id, label: G.item.kind==='c' ? (G.charade ? 'عبارة التمثيل الحالية' : 'آخر عبارة تمثيل: '+G.item.text) : G.item.text } : null,
       lastCard: G.lastCard ? G.lastCard.id : null,
       charade: G.charade && G.charade.team===id ? { taken:!!G.charade.actor, mine:G.charade.actor===cid, acting:!!G.charade.acting, text: G.charade.actor===cid ? G.charade.text : null } : null,
-      phase: strip(($('#stage .big')||{}).innerText||'').slice(0,90) };
+      phase: strip(($('#stage .big')||{}).innerText||'').slice(0,90),
+      view: phoneView(),
+      timer: timerH && timerEnds ? { ms:Math.max(0,timerEnds-Date.now()), total:timerTotal*1000 } : null };
+  }
+  document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('#btn-reveal,#btn-reveal2')) setTimeout(()=>{ if(G) pushAll(); },30); });
+  // اللي على الشاشة بالضبط: نوع السؤال وصعوبته ونصه وصورته والخيارات — عشان اللاعب ما يحتاج يطالع شاشة المضيف
+  function phoneView(){
+    const it=G.item, st=$('#stage'); if(!it || !st || it.kind==='c') return null;
+    const q=st.querySelector('.qtext'); if(!q) return null;
+    const img=st.querySelector('.qimg'), ans=st.querySelector('#answer');
+    return { kind:it.kind, tag:it.tag||'', d:it.d||0, text:strip(q.innerText||q.textContent||'').slice(0,400), img: img ? img.getAttribute('src') : null,
+      opts: $$('#stage .mc-opt').map(o=>strip(o.innerText||o.textContent||'').trim()), answer: ans && !ans.classList.contains('hidden') ? strip(ans.textContent||'') : null };
   }
   async function onPhonePlay(id, idx){
     const t=cur(); if(!G || !G.canPlayNow || !t || t.id!==id || !canPlayCard(t) || !t.hand[idx]) return;
@@ -298,9 +309,10 @@
   function startTimer(sec, onEnd){
     clearTimer();
     const el=$('#timer'); if(!el) return; const num=el.querySelector('.num'), fg=el.querySelector('.fg');
-    timerLeft=sec; timerTotal=sec;
+    timerLeft=sec; timerTotal=sec; timerEnds=Date.now()+sec*1000; pushAll();
     play('clockloop',{volume:.3,loop:true});
     const step=()=>{
+      timerEnds=Date.now()+timerLeft*1000;
       num.textContent=timerLeft; fg.style.strokeDashoffset = 326.7*(1-timerLeft/timerTotal);
       el.classList.toggle('warn', timerLeft<=Math.ceil(timerTotal/2) && timerLeft>3); el.classList.toggle('danger', timerLeft<=3 && timerLeft>0);
       if(timerLeft<=3 && timerLeft>0) play('tick',{volume:.9});
@@ -309,7 +321,8 @@
     };
     step();
   }
-  function clearTimer(){ clearTimeout(timerH); timerH=null; stop('clockloop'); }
+  let timerEnds=0;
+  function clearTimer(){ const was=!!timerH; clearTimeout(timerH); timerH=null; timerEnds=0; stop('clockloop'); if(was) pushAll(); }
   function restartTimer(sec, onEnd){ const el=$('#timer'); if(!el) return; el.classList.remove('done'); const b=$('#timeup'); if(b) b.classList.add('hidden'); startTimer(sec,onEnd); }
   const timeupHTML = `<div class="banner hidden" id="timeup">خلص الوقت — المضيف يحكم</div>`;
   const fracLeft = () => timerTotal ? (timerLeft+1)/timerTotal : 0;

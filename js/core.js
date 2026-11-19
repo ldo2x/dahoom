@@ -104,6 +104,7 @@ window.Dahoom = (function(){
     $$('.screen').forEach(s=>s.classList.remove('active'));
     $('#'+id).classList.add('active');
     window.scrollTo({top:0,behavior:'smooth'});
+    document.dispatchEvent(new CustomEvent('dahoom:screen',{detail:id}));
     play('pop',{volume:.4});
   }
   document.addEventListener('click', e => { const t = e.target.closest('[data-go]'); if(t) go(t.dataset.go); });
@@ -113,7 +114,11 @@ window.Dahoom = (function(){
     $$('.toast').forEach(t=>t.remove());
     const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
     setTimeout(()=>t.remove(), ms);
+    // وسط المباراة: كل تنبيه ينضاف لسجل الأحداث اللي يشوفه اللاعبين بجوالاتهم
+    if(document.querySelector('#game.active, #khaliya.active, #rasm.active')) feed({x:String(msg)});
   }
+  // سجل الأحداث: {x:نص, n:اسم, c:لون, a:مبلغ/نقاط, k:نوع}
+  function feed(e){ document.dispatchEvent(new CustomEvent('dahoom:feed',{detail:Object.assign({ts:Date.now()}, e)})); }
   function modal(html, {onMount, closable=true}={}){
     const m=document.createElement('div'); m.className='modal';
     m.innerHTML=`<div class="panel">${html}</div>`;
@@ -218,7 +223,7 @@ window.Dahoom = (function(){
     mode: store.get('mode','teams'),
     phoneTeams: store.get('phoneTeams', false),   // اللاعبين ينشئون فرق من جوالاتهم؟ (المضيف يفعّلها)
     game: 'alf',
-    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); store.set('phoneTeams',!!this.phoneTeams); }
+    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); store.set('phoneTeams',!!this.phoneTeams); document.dispatchEvent(new CustomEvent('dahoom:session')); }
   };
   let pick = { color: COLORS[0], avatar: AVATARS[0] };
   let selectedPlayer = null;
@@ -423,7 +428,7 @@ window.Dahoom = (function(){
   }
   document.addEventListener('DOMContentLoaded', init);
 
-  return { joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
+  return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, feed, joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
     session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();

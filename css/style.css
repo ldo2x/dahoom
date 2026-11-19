@@ -829,3 +829,11 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .mc-opt{display:flex;align-items:center;gap:12px;text-align:start;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-m);padding:10px 16px;font-size:clamp(1.05rem,1.7vw,1.5rem);font-weight:700;line-height:1.35}
 .mc-opt b{flex:none;width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--info);color:var(--ink);font-family:var(--display);font-weight:400}
 @media (max-width:640px){ .mc-opts{grid-template-columns:1fr} }
+
+/* مؤقت ناعم: لونه يتدرج من الأخضر للأحمر، وبآخر 10 ثواني يطلع أجزاء الثانية */
+.timer.smooth .fg{transition:none;stroke:hsl(var(--hue,140) 78% 48%)}
+.timer.smooth.danger .num{font-size:2.3rem}
+.timer.smooth.crit{animation:shake .12s infinite}
+.net-host{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.net-host input{font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--text)}
+.net-renew{margin-top:12px;display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
