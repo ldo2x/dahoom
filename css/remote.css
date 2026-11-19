@@ -702,3 +702,24 @@ body.remote::before{height:10px;background-size:23px 10px}
 .r-hmboard.pt .rq.with-deed .rq-eb,.r-hmboard.pt .rq.with-deed h3,.r-hmboard.pt .rq.with-deed p{grid-column:2;text-align:start;justify-self:start}
 .r-hmboard.pt .rq.with-deed h3{font-size:4.6cqw}
 .r-hmboard.pt .rq.with-deed .rq-form,.r-hmboard.pt .rq.with-deed .rq-inv,.r-hmboard.pt .rq.with-deed .rq-chips,.r-hmboard.pt .rq.with-deed .rq-opts{grid-column:1/-1;justify-self:stretch;text-align:center}
+
+/* ---------- أيقونات وترتيب: القرارات والسجل واللاعبين ---------- */
+.rq-opts .btn{display:inline-flex;align-items:center;justify-content:center;gap:.6em}
+.rq-opts .btn .ic{width:1.2em;height:1.2em;flex:none}
+.rq-opts .btn:disabled{opacity:.4;cursor:not-allowed}
+.rq-opts.many{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+.rq-opts.many .btn.ghost{grid-column:1/-1}
+.r-hmboard.pt .rq-opts.many .btn{font-size:3.4cqw;padding:2cqw 1.6cqw}
+.rf-ic{font-style:normal;display:inline-grid;vertical-align:-.2em;margin-inline-end:4px;color:var(--c);opacity:.9}
+.rf-ic .ic{width:1.05em;height:1.05em}
+.rh-n small{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.rh-n small .ic{width:13px;height:13px}
+.rh-dbt{font-style:normal;color:var(--bad-ink);font-weight:800;display:inline-flex;align-items:center;gap:3px}
+.mp-mort{display:inline-flex;align-items:center;gap:3px;color:var(--bad-ink);font-weight:700}
+.mp-mort .ic{width:12px;height:12px}
+.mp-c.mort{background:repeating-linear-gradient(-45deg,var(--surface-2) 0 6px,color-mix(in srgb,var(--text) 6%,var(--surface-2)) 6px 12px)}
+.mp-hint{display:flex;align-items:center;justify-content:center;gap:5px}
+.mp-hint .ic{width:14px;height:14px}
+.r-hmboard .hm-tile.mort .hm-sub small{font-size:1.05cqw}
+.r-hmboard.pt .hm-tile.mort .hm-sub small{display:inline;font-size:2.2cqw}
+.r-hmboard.pt .hm-tile.mort::after{background:repeating-linear-gradient(-45deg,transparent 0 1.2cqw,rgba(27,25,21,.18) 1.2cqw 2.4cqw)}

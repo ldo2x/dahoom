@@ -285,7 +285,7 @@
   function renderFeed(fresh){
     const L=st.feed.slice(-40).reverse();
     $('#r-feed-n').textContent = L.length ? `(${st.feed.length})` : '';
-    const html = L.length ? L.map((f,i)=>`<div class="rf-e ${f.k||''} ${fresh&&i===0?'new':''}" style="--c:${f.c||'var(--line)'}">${f.av?`<img src="${avSrc(f.av)}" alt="">`:'<i></i>'}<span>${f.n?`<b>${esc(f.n)}</b> `:''}${esc(f.x)}</span>${f.a?`<em class="${f.a>0?'up':'dn'}">${f.a>0?'+':'−'}${money(Math.abs(f.a))}</em>`:''}</div>`).join('')
+    const html = L.length ? L.map((f,i)=>`<div class="rf-e ${f.k||''} ${fresh&&i===0?'new':''}" style="--c:${f.c||'var(--line)'}">${f.av?`<img src="${avSrc(f.av)}" alt="">`:'<i></i>'}<span>${f.ic?`<i class="rf-ic">${ic(f.ic)}</i>`:''}${f.n?`<b>${esc(f.n)}</b> `:''}${esc(f.x)}</span>${f.a?`<em class="${f.a>0?'up':'dn'}">${f.a>0?'+':'−'}${money(Math.abs(f.a))}</em>`:''}</div>`).join('')
       : '<p class="muted small">هنا يطلع كل شي يصير باللعبة أول بأول</p>';
     // نفس السجل بتبويب «وش صار» تحت لوحة هوامير
     ['#r-feed','#r-hmlog'].forEach(q=>{ const box=$(q); if(box) box.innerHTML=html; });
@@ -369,7 +369,7 @@
     $$('#r-hmtiles [data-i]').forEach(el=>{ const i=+el.dataset.i, t=hm.S.tiles[i], o=H.own[i]?byId(H.own[i]):null;
       el.classList.toggle('focus', H.focus===i);
       el.querySelector('.hm-sub').innerHTML=H.sub[i]||'';
-      if(t.p){ el.classList.toggle('owned', !!o); el.classList.toggle('mine', !!o && o.id===H.me); el.style.setProperty('--own', o?o.color:'transparent');
+      if(t.p){ el.classList.toggle('owned', !!o); el.classList.toggle('mine', !!o && o.id===H.me); el.classList.toggle('mort', !!(H.mort&&H.mort[i])); el.style.setProperty('--own', o?o.color:'transparent');
         const lv=H.lv[i]||0, bl=el.querySelector('.hm-bld'), L=hm.S.levels; bl.innerHTML = lv ? ic(L[lv-1].icon)+(lv<4?`<b>${lv}</b>`:'') : ''; bl.className='hm-bld'+(lv?' on l'+lv:'');
         const oa=el.querySelector('.hm-ownav'), k=o?o.id:''; if(oa.dataset.k!==k){ oa.dataset.k=k; oa.innerHTML=o?tokIn(o):''; }
         el.setAttribute('aria-label', `${t.full}${o?' — ملك '+o.name:' — بدون مالك'}`); } });
@@ -392,14 +392,14 @@
   // عقاراتي: مرتبة حسب النوع — الدول (وكم ناقصك منها)، المطارات، الشركات
   function renderMine(H){
     const box=$('#r-hmmine'); if(!box) return;
-    const sig=JSON.stringify([H.own, H.lv, H.sub, H.me]); if(box.dataset.sig===sig) return; box.dataset.sig=sig;
+    const sig=JSON.stringify([H.own, H.lv, H.sub, H.me, H.mort]); if(box.dataset.sig===sig) return; box.dataset.sig=sig;
     const T=hm.S.tiles, me=H.me, pl=id=>H.pl.find(p=>p.id===id);
     const mine=T.map((t,i)=>H.own[i]===me?i:-1).filter(i=>i>=0);
     if(!mine.length){ box.innerHTML=`<div class="mp-empty"><b>ما عندك عقارات للحين</b><span>لما توقف على مدينة أو مطار أو شركة بدون مالك تقدر تشتريها، أو اعرض صفقة على لاعب.</span></div>`; return; }
     const value=mine.reduce((a,i)=>a+T[i].p,0);
     const cell = i => { const t=T[i], o=H.own[i]?pl(H.own[i]):null, lv=H.lv[i]||0, me2=o&&o.id===me;
-      return `<button type="button" class="mp-c ${me2?'me':o?'oth':'free'}" data-i="${i}" style="--o:${o?o.color:'transparent'}"><b>${esc(t.n)}</b>
-        <small>${me2 ? `${lv?`<span class="mp-lv">${ic(hm.S.levels[lv-1].icon)}${esc(hm.S.levels[lv-1].name)}</span>`:''}<span class="mp-rent">${H.sub[i]||''}</span>` : o ? `ملك ${esc(o.name)}` : `بدون مالك · ${money(t.p)}`}</small></button>`; };
+      return `<button type="button" class="mp-c ${me2?'me':o?'oth':'free'} ${H.mort&&H.mort[i]?'mort':''}" data-i="${i}" style="--o:${o?o.color:'transparent'}"><b>${esc(t.n)}</b>
+        <small>${me2 ? (H.mort&&H.mort[i] ? `<span class="mp-mort">${ic('hm-lock')} مرهون · فكّه بـ ${money(H.mort[i])}</span>` : `${lv?`<span class="mp-lv">${ic(hm.S.levels[lv-1].icon)}${esc(hm.S.levels[lv-1].name)}</span>`:''}<span class="mp-rent">${H.sub[i]||''}</span>`) : o ? `ملك ${esc(o.name)}` : `بدون مالك · ${money(t.p)}`}</small></button>`; };
     // الدول
     const groups=[]; T.forEach((t,i)=>{ if(t.t!=='city') return; let g=groups.find(x=>x.k===t.k); if(!g){ g={ k:t.k, c:t.c, fl:t.fl, tiles:[] }; groups.push(g); } g.tiles.push(i); });
     const myG=groups.filter(g=>g.tiles.some(i=>H.own[i]===me));
@@ -415,7 +415,7 @@
     const co = kind('co', 'الشركات', 'hm-building-factory-2', n=>n>1?'عندك الشركتين: الإيجار النرد × أكبر رقم':'لو أخذت الشركة الثانية يتضاعف إيجارها');
     box.innerHTML=`<div class="mp-sum"><div><b>${mine.length}</b><small>عقار</small></div><div><b>${money(value)}</b><small>قيمتها</small></div><div><b>${myG.filter(g=>g.tiles.every(i=>H.own[i]===me)).length}</b><small>دول كاملة</small></div></div>
       ${myG.length?`<div class="mp-sec">${ic('hm-map-pin')} الدول</div>${gHTML}`:''}${air||co?`<div class="mp-sec">${ic('hm-plane')} مطارات وشركات</div>${air}${co}`:''}
-      <p class="muted small mp-hint">اضغط أي عقار تشوف صكه وإيجاره</p>`;
+      <p class="muted small mp-hint">${ic('hm-briefcase')} الهدم والرهن والبيع للبنك من زر «أملاكي» بدورك · اضغط أي عقار تشوف صكه</p>`;
     $$('#r-hmmine [data-i]').forEach(b=>b.onclick=()=>{ vibe(8); tileSheet(+b.dataset.i); });
   }
   function renderPlayers(H){
@@ -423,7 +423,7 @@
     const rank=[...H.pl].sort((a,b)=>(a.out-b.out)||b.worth-a.worth);
     box.innerHTML=rank.map(p=>{ const props=hm.S.tiles.map((t,i)=>H.own[i]===p.id?i:-1).filter(i=>i>=0);
       return `<div class="r-hmp ${p.turn?'turn':''} ${p.out?'out':''} ${p.id===H.me?'me':''}" style="--c:${p.color}"><span class="hm-tok ${p.jail?'jail':''}" style="--c:${p.color}">${tokIn(p)}</span>
-      <span class="rh-n"><b>${esc(p.name)}${p.id===H.me?' <i>(انت)</i>':''}</b><small>${p.out?'أفلس':p.jail?'بالسجن':`${p.props} عقار · الثروة ${money(p.worth)}`}</small></span><span class="rh-c"><b>${money(p.cash)}</b><small>كاش</small></span><span class="rh-r">${rank.indexOf(p)+1}</span>
+      <span class="rh-n"><b>${esc(p.name)}${p.id===H.me?' <i>(انت)</i>':''}</b><small>${p.out?`${ic('skull')} أفلس`:H.debt&&H.debt.id===p.id?`<em class="rh-dbt">${ic('hm-receipt-tax')} عليه ${money(H.debt.n)} — يدبّرها</em>`:p.jail?`${ic('hm-jail')} بالسجن`:`${ic('hm-home')} ${p.props} عقار · ${ic('hm-wallet')} ${money(p.worth)}`}</small></span><span class="rh-c"><b>${money(p.cash)}</b><small>كاش</small></span><span class="rh-r">${rank.indexOf(p)+1}</span>
       ${props.length?`<span class="rh-dots">${props.map(i=>`<i style="--g:${hm.S.tiles[i].c}" title="${esc(hm.S.tiles[i].full)}"></i>`).join('')}</span>`:''}</div>`; }).join('');
   }
   // القرار يطلع وسط اللوحة نفسها — ما يدف شي ولا يحرك الصفحة
@@ -437,7 +437,7 @@
     box.innerHTML=`<div class="rq ${d?'with-deed':''}">${d?`<div class="r-deed rq-deed">${d}</div>`:''}<div class="rq-in"><div class="rq-eb">دورك تقرر</div><h3>${esc(spec.title)}</h3>${spec.text?`<p>${esc(spec.text)}</p>`:''}
       ${spec.input?`<form class="rq-form" id="ra-in" novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>
         <div class="rq-inv" id="ra-inv">${money(spec.input.def)}</div><div class="rq-chips">${(spec.input.chips||[]).map(v=>`<button type="button" class="btn small" data-chip="${v}">${money(v)}</button>`).join('')}</div>`:''}
-      <div class="rq-opts">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'}" data-o="${i}">${esc(o.label)}</button>`).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div></div>`;
+      <div class="rq-opts ${spec.options.length>3?'many':''}">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'}" data-o="${i}" ${o.dis?'disabled':''}>${o.icon?ic(o.icon):''}<span>${esc(o.label)}</span></button>`).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div></div>`;
     const done = v => { vibe(25); send({t:'answer', reqId, value:v}); st.askId=null; st.hmAsk=null; renderHMAsk(); };
     if(spec.input){ const I=spec.input, inp=$('#ra-in input'), lbl=$('#ra-inv');
       const num=v=>{ const n=Math.round(Number(String(v).replace(/[^\d.]/g,''))); return n>=I.min && n<=I.max ? n : null; };
@@ -452,7 +452,7 @@
   const plOf = id => (hm.B && hm.B.pl.find(p=>p.id===id)) || { name:'?', color:'var(--line)' };
   const tileOf = i => hm.S.tiles[i];
   const trSide = s => `${s.props.map(i=>`<span class="r-tp" style="--g:${tileOf(i).c}">${esc(tileOf(i).full)}</span>`).join('')}${s.cash?`<span class="r-tp cash">${money(s.cash)}</span>`:''}${!s.props.length&&!s.cash?'<span class="r-tp none">ولا شي</span>':''}`;
-  const tradableOf = pid => { const H=hm.B; return H.own.map((o,i)=>o===pid && !H.lv[i] && tileOf(i).p ? i : -1).filter(i=>i>=0); };
+  const tradableOf = pid => { const H=hm.B; return H.own.map((o,i)=>o===pid && !H.lv[i] && !(H.mort&&H.mort[i]) && tileOf(i).p ? i : -1).filter(i=>i>=0); };
   let trSeen=new Set();
   function renderTrades(H){
     const box=$('#r-hmtr'); const L=H.trades||[], me=H.me;
@@ -489,7 +489,7 @@
     const draw=()=>{
       const col=(p,k)=>{ const list=tradableOf(p.id);
         return `<div class="r-tbc"><div class="lbl">${k==='give'?'تعطي':'تاخذ من '+esc(p.name)} <small>معه ${money(p.cash)}</small></div>
-          <div class="r-tbps">${list.map(i=>`<button type="button" class="r-tbp ${sel[k].has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${tileOf(i).c}"><b>${esc(tileOf(i).full)}</b><small>${money(tileOf(i).p)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى — المبني ما يدخل بالصفقات</p>'}</div>
+          <div class="r-tbps">${list.map(i=>`<button type="button" class="r-tbp ${sel[k].has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${tileOf(i).c}"><b>${esc(tileOf(i).full)}</b><small>${money(tileOf(i).p)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى — المبني والمرهون ما يدخلون بالصفقات. تقدر تحط كاش بس.</p>'}</div>
           <label class="r-tbcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" step="any" value="${cash[k]||''}" placeholder="0" data-c="${k}"></label></div>`; };
       sheet(`<div class="eyebrow">${pre&&pre.counter?'رد بعرض ثاني':'صفقة جديدة'}</div><h3>مع مين؟</h3>
         <div class="r-tbto">${others.map(p=>`<button class="btn small ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${esc(p.name)}</button>`).join('')}</div>
@@ -503,7 +503,7 @@
       $('#r-sheet [data-x]').onclick=closeSheet;
       $('#r-sheet [data-send]').onclick=()=>{
         const err=$('#r-tberr'), give={ props:[...sel.give], cash:cash.give }, get={ props:[...sel.get], cash:cash.get };
-        if(!give.props.length && !get.props.length){ err.textContent='اختار عقار واحد على الأقل'; vibe([40,30,40]); return; }
+        if(!give.props.length && !get.props.length && !give.cash && !get.cash){ err.textContent='حط شي بالعرض: عقار أو كاش'; vibe([40,30,40]); return; }
         if(give.cash>meP.cash){ err.textContent=`ما معك ${money(give.cash)}`; return; }
         if(get.cash>to.cash){ err.textContent=`${to.name} ما معه ${money(get.cash)}`; return; }
         vibe(30); send({ t:'hmtrade', op:'new', to:to.id, give, get, counter:(pre&&pre.counter)||null }); closeSheet(); };

@@ -261,3 +261,19 @@
 /* اللاعب المسجون: قضبان فوق صورته */
 .hm-toks .hm-tok.jail::after,.hm-pl .hm-tok.jail::after,.r-hmp .hm-tok.jail::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-linear-gradient(90deg,rgba(12,12,12,.82) 0 16%,transparent 16% 34%)}
 .hm-pl .hm-tok.jail,.r-hmp .hm-tok.jail{position:relative}
+
+/* ---------- الرهن: العقار يبهت وعليه خطوط ---------- */
+.hm-tile.mort::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(-45deg,transparent 0 .55cqw,rgba(27,25,21,.16) .55cqw 1.1cqw)}
+.hm-tile.mort .hm-band,.hm-tile.mort .hm-name{filter:grayscale(.75);opacity:.8}
+.hm-tile.mort .hm-sub small{font-size:.95cqw;font-weight:800;color:#9B2C1F}
+.hm-dots i.m{opacity:.35;outline:.1cqw dashed var(--hm-ink)}
+/* أيقونات بالسجل والأزرار ولوحات اللاعبين */
+.hm-lgi{flex:none;font-style:normal;line-height:0;color:var(--c,rgba(246,238,220,.8));opacity:.9}
+.hm-lgi .ic{width:1.05cqw;height:1.05cqw}
+.hm-lg.info .hm-lgi,.hm-lg.roll .hm-lgi{color:rgba(246,238,220,.7)}
+#hm-ask .btn .ic{width:1.15em;height:1.15em}
+#hm-ask .btn{display:inline-flex;align-items:center;gap:.5cqw}
+#hm-ask .btn:disabled{opacity:.4;cursor:not-allowed}
+.hm-pn small{display:inline-flex;align-items:center;gap:.3cqw}
+.hm-pn small .ic{width:.95cqw;height:.95cqw}
+.hm-dbt{font-style:normal;color:#C0392B;font-weight:800;display:inline-flex;align-items:center;gap:.3cqw;animation:rwPulse 1.4s ease-in-out infinite}
