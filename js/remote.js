@@ -374,7 +374,7 @@
         const oa=el.querySelector('.hm-ownav'), k=o?o.id:''; if(oa.dataset.k!==k){ oa.dataset.k=k; oa.innerHTML=o?tokIn(o):''; }
         el.setAttribute('aria-label', `${t.full}${o?' — ملك '+o.name:' — بدون مالك'}`); } });
     $('#r-hmround').textContent='اللفة '+H.round; $('#r-hmpot').textContent=money(H.pot);
-    hm.endAt=Date.now()+H.endsIn; hm.lastRound=H.lastRound; hmClock();
+    hm.endAt=Date.now()+H.endsIn; hm.lastRound=H.lastRound; hm.open=!!H.open; hm.t0=Date.now()-(H.up||0); hmClock();
     const sg=$('#hm-stage'); if(sg.dataset.h!==H.stage){ sg.dataset.h=H.stage; sg.innerHTML=H.stage; }
     // القطع
     const tl=$('#r-hmtoks'); const ids=H.pl.map(p=>p.id).join(',');
@@ -522,7 +522,9 @@
       el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; el.style.zIndex=String(5+k);
       el.classList.toggle('me', p.turn); el.classList.toggle('mine', p.id===H.me); el.classList.toggle('jail', !!p.jail); });
   }
-  function hmClock(){ const el=$('#r-hmclock'); if(!el||!hm.endAt) return;
+  function hmClock(){ const el=$('#r-hmclock'); if(!el) return;
+    if(hm.open){ const up=Date.now()-hm.t0, m=Math.floor(up/60000), s2=Math.floor(up%60000/1000); el.textContent=`بدون وقت · ${m}:${String(s2).padStart(2,'0')}`; return; }
+    if(!hm.endAt) return;
     const left=Math.max(0, hm.endAt-Date.now()), m=Math.floor(left/60000), s2=Math.floor(left%60000/1000);
     el.textContent = hm.lastRound ? 'اللفة الأخيرة' : `${m}:${String(s2).padStart(2,'0')}`; }
   setInterval(()=>{ if(hm.B && !$('#r-hmwrap').classList.contains('r-hide')) hmClock(); }, 1000);

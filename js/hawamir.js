@@ -167,6 +167,7 @@ window.DahoomHawamir = (function(){
   }
   function tick(){
     const el=$('#hm-clock'); if(!el||!G) return;
+    if(G.open){ const up=Date.now()-G.t0, m=Math.floor(up/60000), s=Math.floor(up%60000/1000); el.textContent=`بدون وقت · ${m}:${String(s).padStart(2,'0')}`; return; }
     const left=Math.max(0, G.endAt-Date.now()), m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
     el.textContent = G.lastRound ? 'اللفة الأخيرة' : `${m}:${String(s).padStart(2,'0')}`;
     if(left<=0 && !G.timeUp){ G.timeUp=true; toast('خلص الوقت — نكمل هاللفة وبعدها نحسب الثروات', 4000); play('buzzer',{volume:.6}); logE(null, 'خلص الوقت — نكمل هاللفة وبعدها نحسب الثروات', 0, 'info'); }
@@ -649,7 +650,7 @@ window.DahoomHawamir = (function(){
     MAP = DATA.maps.find(m=>m.id===S.map) || DATA.maps[0]; T = buildTiles(MAP);
     G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], cash:S.startCash, pos:0, out:false, discount:false,
           jail:0, stats:{ rentIn:0, rentOut:0, bought:0, auctions:0, trades:0, built:0, pot:0, stocks:0, takes:0, jailed:0 } }))),
-        turn:0, round:1, owner:{}, level:{}, mort:{}, debt:null, deck:[], feed:[], trades:[], trSeq:0, sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, endAt:Date.now()+S.minutes*60000, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
+        turn:0, round:1, owner:{}, level:{}, mort:{}, debt:null, deck:[], feed:[], trades:[], trSeq:0, sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, open:!S.minutes, endAt:S.minutes ? Date.now()+S.minutes*60000 : 0, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
     G.players.forEach((p,k)=>{ p.cash+=k*(DATA.seatBonus||0); });      // اللي يلعب متأخر ياخذ زيادة بسيطة تعوّضه
     const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{}, trade:(id,d)=>onPhoneTrade(id,d), hmDeed:i=>T[i]&&T[i].price?deed(i):'' });
     go('hawamir'); $('#hm-round').textContent='اللفة 1'; $('#hm-ask').innerHTML='';
@@ -716,7 +717,7 @@ window.DahoomHawamir = (function(){
     return { st: fresh ? hmStatic() : null, key:MAP.id, me:p.id,
       own:T.map((_,i)=>G.owner[i]||null), lv:T.map((_,i)=>G.level[i]||0), mort:T.map((_,i)=>G.mort[i]?unmortCost(i):0), debt:G.debt?{ id:G.debt.id, n:G.debt.n }:null, sub:T.map((_,i)=>tileSub(i)), focus:G.focus,
       pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', pos:x.pos, cash:x.cash, worth:worth(x), out:x.out, jail:x.jail||0, props:owned(x).length, turn:!G.over && x===cur(), phone:phoneOf(x) })),
-      pot:G.pot, round:G.round, endsIn:Math.max(0,G.endAt-Date.now()), lastRound:!!G.lastRound, timeUp:!!G.timeUp, stage:G.stageHtml||'',
+      pot:G.pot, round:G.round, endsIn:G.open ? 0 : Math.max(0,G.endAt-Date.now()), open:!!G.open, up:Date.now()-G.t0, lastRound:!!G.lastRound, timeUp:!!G.timeUp, stage:G.stageHtml||'',
       canBuild: !G.over && cur()===p ? canBuild(p).length : 0,
       trades: G.trades.filter(t=>t.st==='pending' || Date.now()-(t.done||0)<120000).slice(-20).map(t=>({ id:t.id, from:t.from, to:t.to, give:t.give, get:t.get, st:t.st, ts:t.ts, counter:t.counter })) };
   }
@@ -746,7 +747,7 @@ window.DahoomHawamir = (function(){
   }
   function helpModal(){
     modal(`<h3>قوانين هوامير</h3><div class="help-list mt-s">
-      <p><b>الهدف:</b> تكون أغنى لاعب لما يخلص الوقت (${S.minutes} دقيقة). الثروة = الكاش + سعر عقاراتك + اللي بنيته.</p>
+      <p><b>الهدف:</b> ${S.minutes ? `تكون أغنى لاعب لما يخلص الوقت (${S.minutes} دقيقة).` : 'بدون وقت: اللعب يكمل لين يبقى لاعب واحد ما أفلس، أو المضيف ينهيها من «إنهاء» وتنحسب الثروات.'} الثروة = الكاش + سعر عقاراتك + اللي بنيته.</p>
       <p><b>الدور:</b> ترمي النرد وتمشي. كل ما تمر على البداية تاخذ ${money(S.salary)}. لو طلع لك دبل ترمي مرة ثانية.</p>
       <p><b>مدينة بدون مالك:</b> تشتريها بسعرها، أو تروح للمزاد والكل يزايد (يبدأ من نص السعر).</p>
       <p><b>مدينة لها مالك:</b> تدفع له الإيجار. لو يملك الدولة كاملة الإيجار دبل.</p>
