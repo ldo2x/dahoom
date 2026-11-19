@@ -127,7 +127,7 @@ window.DahoomNet = (function(){
   function where(){
     const id=(document.querySelector('.screen.active')||{}).id||'';
     if(isLocked()) return { k:'play', x:'المباراة شغالة' };
-    if(id==='results') return { k:'done', x:'المباراة خلصت — النتائج على الشاشة' };
+    if(id==='results') return { k:'done', x:'المباراة خلصت' };
     if(id==='lobby') return { k:'lobby', x:'المضيف يرتّب اللاعبين' + (D.session.mode==='solo'?'':' والفرق') };
     if(/settings/.test(id)) return { k:'settings', x:'المضيف يضبط إعدادات اللعبة — قربت تبدأ' };
     return { k:'home', x:'المضيف يختار اللعبة' };

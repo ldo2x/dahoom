@@ -188,9 +188,9 @@
       const f=S.final;
       if(!st.finalShown){ st.finalShown=true; vibe(f.rank===1?[120,60,120,60,240]:[80]); }
       fin.innerHTML=`<div class="rf-rank ${f.rank===1?'win':''}"><small>انتهت المباراة</small><b>#${f.rank}</b><span>من ${f.of} ${f.rank===1?'— فزتوا!':''}</span></div>
-        ${f.awards.length?`<div class="rf-aw">${f.awards.map(a=>`<span class="rf-badge"><b>${esc(a.title)}</b>${esc(a.value)}</span>`).join('')}</div>`:''}
+        ${f.awards.length&&!f.all?`<div class="rf-aw">${f.awards.map(a=>`<span class="rf-badge"><b>${esc(a.title)}</b>${esc(a.value)}</span>`).join('')}</div>`:''}
         <div class="rf-rows">${f.rows.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
-        <p class="muted small center">${S.game==='alf'?'الإحصائيات الكاملة والمنحنى على الشاشة':'الإحصائيات الكاملة على الشاشة'}</p>`;
+        ${f.all ? finalAllHTML(f.all) : `<p class="muted small center">${S.game==='alf'?'الإحصائيات الكاملة والمنحنى على الشاشة':'الإحصائيات الكاملة على الشاشة'}</p>`}`;
       $('#r-phase').textContent='';
     } else st.finalShown=false;
     // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
@@ -397,6 +397,18 @@
       <div class="r-actions"><button class="btn ghost" data-x>إغلاق</button></div>`);
     $('#r-sheet [data-x]').onclick=closeSheet;
   }
+  // التتويجات (للكل) + جدول النتائج + كل الكلمات
+  function finalAllHTML(A){
+    const who = A.solo ? 'اللاعب' : 'الفريق';
+    return `${A.awards.length?`<section class="rf-sec"><h4>${ic('trophy')} التتويجات</h4><div class="rf-awards">${A.awards.map((a,i)=>`<div class="rf-award ${a.mine?'mine':''}" style="--c:${a.color||'var(--brand)'};--i:${i}">
+        <span class="rfa-ic">${ic(a.icon||'star')}</span><div class="rfa-t">${esc(a.title)}</div>
+        <div class="rfa-who">${a.av?`<img src="${avSrc(a.av)}" alt="">`:''}<b>${esc(a.who)}</b>${a.team?`<small>${esc(a.team)}</small>`:''}</div>
+        <div class="rfa-v">${esc(a.value)}</div><div class="rfa-d">${esc(a.desc)}</div>${a.mine?'<span class="rfa-me">لك</span>':''}</div>`).join('')}</div></section>`:''}
+      <section class="rf-sec"><h4>${ic('podium')} الأرقام</h4><div class="rf-table"><div class="rf-tr rf-th"><span>#</span><span>${who}</span><span>النقاط</span><span>خمّن صح</span><span>رسماته انعرفت</span></div>
+        ${A.table.map(t=>`<div class="rf-tr ${t.me?'me':''}" style="--c:${t.color}"><span>${t.rank}</span><span class="rf-tn"><i></i>${esc(t.name)}</span><b>${t.score}</b><span>${t.guessed}</span><span>${t.drawn}</span></div>`).join('')}</div></section>
+      ${A.words.length?`<section class="rf-sec"><h4>${ic('pencil')} كل الكلمات (${A.words.length})</h4><div class="rf-words">${A.words.map(w=>`<div class="rf-w ${w.ok?'ok':'no'}"><b>${esc(w.w)}</b><small>${w.by?`رسمها ${esc(w.by)} · `:''}${w.ok?(w.g?`خمّنها ${esc(w.g)}`:'انعرفت'):'ما أحد عرفها'}${w.rate?` · ${w.rate.toFixed(1)}/5`:''}</small></div>`).join('')}</div></section>`:''}`;
+  }
+
   // ---------- ارسم وخمّن ----------
   const RCOL = ['#111111','#E53935','#1E88E5','#43A047','#FDD835','#FB8C00','#8E24AA','#8D6E63'];
   const RSIZE = [0.007, 0.015, 0.032];

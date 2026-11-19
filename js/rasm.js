@@ -286,6 +286,16 @@
     if(!L || !t || d.what!=='item' || !it || !(L.REASONS.w||[]).includes(d.reason)) return false;
     L.report(it, d.reason, d.note, `${nameOf(t,pid)||'جوال'} (${t.name})`); return true;
   }
+  // نهاية المباراة: كل التتويجات والأرقام والكلمات — نفس اللي على شاشة المضيف، لكل لاعب
+  function finalAll(sorted, id){
+    const players=G.teams.flatMap(t=>t.players);
+    const avOf = n => { const p=players.find(x=>x.name===n); return p ? p.avatar : ''; };
+    return {
+      awards:(G.awards||[]).map(a=>({ title:a.title, desc:a.desc, icon:a.icon, who:a.who, team:a.team&&a.team.name!==a.who?a.team.name:'', color:a.team?a.team.color:'', value:a.value, av:avOf(a.who), mine:!!(a.team&&a.team.id===id) })),
+      table:sorted.map((t,i)=>({ rank:i+1, name:t.name, color:t.color, score:t.score, guessed:t.guessedOk, drawn:t.drawnOk, me:t.id===id })),
+      words:G.log.items.filter(x=>x.r==='ok'||x.r==='fail').map(x=>({ w:x.x, ok:x.r==='ok', g:x.g||'', by:x.by||'', rate:x.rate||0 })),
+      solo: D.session.mode==='solo' };
+  }
   function phoneState(id, cid, pid){
     const t=G && teamById(id);
     if(!t) return { game:'rasm', waiting:true };
@@ -294,7 +304,7 @@
       const sorted=[...G.teams].sort((a,b)=>b.score-a.score);
       return { game:'rasm', team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores,
         final:{ rank:sorted.indexOf(t)+1, of:sorted.length, awards:(G.awards||[]).filter(a=>a.team&&a.team.id===id).map(a=>({title:a.title,value:a.value})),
-          rows:[['نقاطكم',t.score],['تخمينات صح',t.guessedOk],['رسماتكم اللي انعرفت',t.drawnOk]] } };
+          rows:[['نقاطكم',t.score],['تخمينات صح',t.guessedOk],['رسماتكم اللي انعرفت',t.drawnOk]], all:finalAll(sorted, id) } };
     }
     const mine = !!(G.drawer && !G.drawer.tv && G.drawer.cid===cid);
     const myTurn = cur().id===id;
