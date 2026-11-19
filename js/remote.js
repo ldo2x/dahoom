@@ -102,7 +102,7 @@
     if(d.t==='rs'){ onMirror(d.m); return; }
     if(d.t==='rsfull'){ if(mirror) mirror.load(d.ops); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
-    if(d.t==='close'){ if(st.askId===d.reqId){ closeSheet(); tog('#r-ask', false); $('#r-ask').innerHTML=''; st.askId=null; } return; }
+    if(d.t==='close'){ if(st.askId===d.reqId){ closeSheet(); tog('#r-ask', false); $('#r-ask').innerHTML=''; st.askId=null; } if(st.hmAsk && st.hmAsk.reqId===d.reqId){ st.hmAsk=null; renderHMAsk(); } return; }
     if(d.t==='hmbuild'){ if(hm.B) tradeBuilder(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
     if(d.t==='info'){ st.info=d; renderSess(); if(!$('#r-main').classList.contains('hidden')) renderMain(); return; }
@@ -168,7 +168,8 @@
     tog('#r-wait', waiting);
     if(waiting){
       renderWait(); renderMe();
-      ['#r-timer','#r-view','#r-hm','#r-hmpl','#r-hmtr'].forEach(q=>tog(q,false)); if(!st.askId) tog('#r-ask', false);
+      ['#r-timer','#r-view','#r-hmwrap','#r-hmaskjump'].forEach(q=>tog(q,false)); if(!st.askId) tog('#r-ask', false);
+      $('#r-main').classList.remove('is-hm');
       ['#r-final','#r-charade','#r-rasm'].forEach(q=>$(q).classList.add('hidden'));
       $('#r-buzz').style.display='none'; $('#r-hand-wrap').classList.add('hidden'); $('#r-fx').innerHTML=''; $('#r-scores').innerHTML='';
       $('#r-phase').textContent=''; stopTimer(); return; }
@@ -231,7 +232,8 @@
     setTimer(done ? null : (S.timer || (S.rasm && S.rasm.timer) || null));
     renderView(done ? null : S.view);
     const hm = S.game==='hawamir' && S.hm && !done;
-    tog('#r-hm', hm); tog('#r-hmpl', hm); tog('#r-hmtr', hm); if(hm) renderHM(S.hm); else { tog('#r-ask', false); }
+    tog('#r-hmwrap', hm); $('#r-main').classList.toggle('is-hm', !!hm);
+    if(hm) renderHM(S.hm); else { tog('#r-ask', false); tog('#r-hmaskjump', false); if(st.hmAsk){ st.hmAsk=null; renderHMAsk(); } }
     $('#r-scores').classList.toggle('r-hide', S.game==='hawamir' && !done);
     { const fb=$('.r-feedbox'); if(fb) fb.classList.toggle('r-hide', S.game==='rasm'); }
   }
@@ -259,7 +261,7 @@
     $('#r-sess-body [data-leave]').onclick=()=>{ if(!confirm('تطلع من الغرفة؟')) return; try{ send({t:'leave'}); }catch(err){} st.room=null; try{ st.peer && st.peer.destroy(); }catch(err){} localStorage.removeItem('dahoom_last_room'); localStorage.removeItem(teamKey()); history.replaceState(null,'','remote.html'); show('r-join'); };
     // وسط المباراة بالجوال نطوي القائمة عشان اللعب ياخذ الشاشة (إلا لو اللاعب فتحها بنفسه)
     const det=$('#r-sess'), wide=matchMedia('(min-width:900px)').matches;
-    if(!st.sessTouched) det.open = wide || !I.locked;
+    if(!st.sessTouched) det.open = (wide && !(st.S && st.S.game==='hawamir')) || !I.locked;   // بهوامير اللوحة أهم
     const mini=$('#r-sess-mini'); if(mini) mini.innerHTML=`<span>${esc(I.gameName||'')}</span><span>المضيف: <b>${esc(host)}</b></span><span>${n} ${n===1?'لاعب':'لاعبين'}</span>`;
   }
   $('#r-sess').addEventListener('toggle', ()=>{ if(st.info) st.sessTouched=true; });
@@ -281,11 +283,12 @@
   // ---------- سجل الأحداث ----------
   const money = n => Math.round(n).toLocaleString('en-US');
   function renderFeed(fresh){
-    const box=$('#r-feed'); if(!box) return;
     const L=st.feed.slice(-40).reverse();
     $('#r-feed-n').textContent = L.length ? `(${st.feed.length})` : '';
-    box.innerHTML = L.length ? L.map((f,i)=>`<div class="rf-e ${f.k||''} ${fresh&&i===0?'new':''}" style="--c:${f.c||'var(--line)'}">${f.av?`<img src="${avSrc(f.av)}" alt="">`:'<i></i>'}<span>${f.n?`<b>${esc(f.n)}</b> `:''}${esc(f.x)}</span>${f.a?`<em class="${f.a>0?'up':'dn'}">${f.a>0?'+':'−'}${money(Math.abs(f.a))}</em>`:''}</div>`).join('')
+    const html = L.length ? L.map((f,i)=>`<div class="rf-e ${f.k||''} ${fresh&&i===0?'new':''}" style="--c:${f.c||'var(--line)'}">${f.av?`<img src="${avSrc(f.av)}" alt="">`:'<i></i>'}<span>${f.n?`<b>${esc(f.n)}</b> `:''}${esc(f.x)}</span>${f.a?`<em class="${f.a>0?'up':'dn'}">${f.a>0?'+':'−'}${money(Math.abs(f.a))}</em>`:''}</div>`).join('')
       : '<p class="muted small">هنا يطلع كل شي يصير باللعبة أول بأول</p>';
+    // نفس السجل بتبويب «وش صار» تحت لوحة هوامير
+    ['#r-feed','#r-hmlog'].forEach(q=>{ const box=$(q); if(box) box.innerHTML=html; });
   }
 
   // ---------- المؤقت: لونه يتغير، وبآخر 10 ثواني يطلع أجزاء الثانية ----------
@@ -328,33 +331,45 @@
   }
 
   // ---------- هوامير: اللوحة كاملة بجهاز كل لاعب ----------
-  const hm = { S:null, key:null, built:false, B:null, zoom:false };
+  const hm = { S:null, key:null, built:false, B:null, tab:'mine', pt:false };
+  // بالجوال الطولي اللوحة تنقلب طولية (8 × 12) عشان تعبّي الشاشة؛ وبالكمبيوتر عرضية مثل الشاشة
+  const hmPT = matchMedia('(max-width:760px) and (orientation:portrait)');
+  const onPT = () => { if(hm.S && hm.B && hm.pt!==hmPT.matches){ hm.built=false; renderHM(hm.B); } };
+  if(hmPT.addEventListener) hmPT.addEventListener('change', onPT); else if(hmPT.addListener) hmPT.addListener(onPT);
   function buildHM(){
-    const S=hm.S, box=$('#r-hm');
-    box.innerHTML=`<div class="r-hmbar"><span class="muted small">اضغط أي خانة تشوف تفاصيلها ومالكها</span><button class="btn small btn-hype r-trjump r-hide" id="r-trjump"></button><button class="btn ghost small" id="r-hmzoom">${hm.zoom?'صغّر اللوحة':'كبّر اللوحة'}</button></div>
-      <div class="r-hmscroll ${hm.zoom?'zoom':''}" id="r-hmscroll"><div class="hm-board r-hmboard" style="--felt:${S.felt}"><div class="hm-tiles" id="r-hmtiles">
-        ${S.tiles.map((t,i)=>{ const [r,c]=hmCell(i), sd=hmSide(i), pos=`grid-row:${r};grid-column:${c};`;
+    const S=hm.S, box=$('#r-hm'), pt=hmPT.matches; hm.pt=pt;
+    box.innerHTML=`<div class="hm-board r-hmboard ${pt?'pt':''}" style="--felt:${S.felt}"><div class="hm-tiles" id="r-hmtiles">
+        ${S.tiles.map((t,i)=>{ const [r,c]=hmCell(i,pt), sd=hmSide(i,pt), pos=`grid-row:${r};grid-column:${c};`;
           return t.p ? `<button class="hm-tile ${t.t} s-${sd}" data-i="${i}" style="${pos}--g:${t.c}"><span class="hm-band">${t.fl}<em>${esc(t.k)}</em></span><span class="hm-body"><b class="hm-name">${esc(t.n)}</b><span class="hm-sub"></span></span><span class="hm-bld"></span><i class="hm-own"></i><span class="hm-ownav"></span></button>`
             : `<button class="hm-tile sp ${t.t} s-${sd}" data-i="${i}" style="${pos}"><span class="hm-spic">${ic(t.ic)}</span><b class="hm-name">${esc(t.n)}</b><span class="hm-sub"></span></button>`; }).join('')}
-        <div class="hm-center"><div class="hm-mid"><div class="hm-head"><span class="hm-word">هوامير</span><span class="hm-mapname">${esc(S.name)}</span><span class="hm-chip" id="r-hmround"></span><span class="hm-chip clock" id="r-hmclock"></span><span class="hm-chip pot">${ic('hm-building-bank')} <b id="r-hmpot"></b></span></div><div id="hm-stage"></div></div></div>
-      </div><div class="hm-toks" id="r-hmtoks"></div></div></div>`;
+        <div class="hm-center"><div class="hm-mid"><div class="hm-head"><span class="hm-word">هوامير</span><span class="hm-mapname">${esc(S.name)}</span><span class="hm-chip" id="r-hmround"></span><span class="hm-chip clock" id="r-hmclock"></span><span class="hm-chip pot">${ic('hm-building-bank')} <b id="r-hmpot"></b></span></div>
+          <div id="hm-stage"></div><div class="r-hmask" id="r-hmask"></div></div></div>
+      </div><div class="hm-toks" id="r-hmtoks"></div></div>`;
     $$('#r-hmtiles [data-i]').forEach(b=>b.onclick=()=>{ vibe(8); tileSheet(+b.dataset.i); });
-    $('#r-hmzoom').onclick=()=>{ hm.zoom=!hm.zoom; $('#r-hmscroll').classList.toggle('zoom', hm.zoom); $('#r-hmzoom').textContent=hm.zoom?'صغّر اللوحة':'كبّر اللوحة'; requestAnimationFrame(hmTokens); };
     hm.built=true;
+    // لو القرار نزل والواحد نازل تحت يشوف عقاراته: زر صغير يرجّعه للوحة
+    if(hm.io) hm.io.disconnect();
+    if('IntersectionObserver' in window){ hm.io=new IntersectionObserver(es=>{ hm.askSeen=es[0].isIntersecting; jumpBtn(); }, { threshold:.35 }); hm.io.observe($('#r-hmask')); }
+    renderHMAsk();
   }
-  const hmCell = i => i<12 ? [1,12-i] : i<18 ? [i-10,1] : i<30 ? [8,i-17] : [8-(i-29),12];
-  const hmSide = i => (i===0||i===11||i===18||i===29) ? 'corner' : i<12 ? 'top' : i<18 ? 'left' : i<30 ? 'bottom' : 'right';
+  function jumpBtn(){ tog('#r-hmaskjump', !!st.hmAsk && hm.askSeen===false); }
+  $('#r-hmaskjump').onclick=()=>{ vibe(10); const a=$('#r-hmask'); if(a) a.scrollIntoView({behavior:'smooth', block:'center'}); };
+  // [صف, عمود] — الطريق يبدأ من الزاوية اليمين فوق
+  const hmCell = (i, pt) => pt
+    ? (i<12 ? [i+1,8] : i<18 ? [12,19-i] : i<30 ? [30-i,1] : [1,i-28])
+    : (i<12 ? [1,12-i] : i<18 ? [i-10,1] : i<30 ? [8,i-17] : [8-(i-29),12]);
+  const hmSide = (i, pt) => (i===0||i===11||i===18||i===29) ? 'corner' : pt ? (i<12?'right':i<18?'bottom':i<30?'left':'top') : (i<12?'top':i<18?'left':i<30?'bottom':'right');
   const tokIn = p => p.av ? `<img src="${avSrc(p.av)}" alt="">` : `<b>${esc((p.name||'')[0]||'')}</b>`;
   function renderHM(H){
     if(H.st){ hm.S=H.st; hm.key=H.key; hm.built=false; }
     if(!hm.S || hm.key!==H.key){ $('#r-hm').innerHTML='<p class="muted center">نجهّز اللوحة…</p>'; return; }
-    if(!hm.built) buildHM();
     hm.B=H;
+    if(!hm.built || hm.pt!==hmPT.matches) buildHM();
     const byId=id=>H.pl.find(p=>p.id===id);
     $$('#r-hmtiles [data-i]').forEach(el=>{ const i=+el.dataset.i, t=hm.S.tiles[i], o=H.own[i]?byId(H.own[i]):null;
       el.classList.toggle('focus', H.focus===i);
       el.querySelector('.hm-sub').innerHTML=H.sub[i]||'';
-      if(t.p){ el.classList.toggle('owned', !!o); el.style.setProperty('--own', o?o.color:'transparent');
+      if(t.p){ el.classList.toggle('owned', !!o); el.classList.toggle('mine', !!o && o.id===H.me); el.style.setProperty('--own', o?o.color:'transparent');
         const lv=H.lv[i]||0, bl=el.querySelector('.hm-bld'), L=hm.S.levels; bl.innerHTML = lv ? ic(L[lv-1].icon)+(lv<4?`<b>${lv}</b>`:'') : ''; bl.className='hm-bld'+(lv?' on l'+lv:'');
         const oa=el.querySelector('.hm-ownav'), k=o?o.id:''; if(oa.dataset.k!==k){ oa.dataset.k=k; oa.innerHTML=o?tokIn(o):''; }
         el.setAttribute('aria-label', `${t.full}${o?' — ملك '+o.name:' — بدون مالك'}`); } });
@@ -365,11 +380,71 @@
     const tl=$('#r-hmtoks'); const ids=H.pl.map(p=>p.id).join(',');
     if(tl.dataset.ids!==ids){ tl.dataset.ids=ids; tl.innerHTML=H.pl.map(p=>`<span class="hm-tok" data-p="${p.id}" style="--c:${p.color}">${tokIn(p)}</span>`).join(''); }
     hmTokens();
-    // اللاعبين تحت اللوحة
+    renderMine(H); renderPlayers(H); renderTrades(H);
+  }
+  // ---------- تبويبات تحت/جنب اللوحة ----------
+  function setHmTab(k){
+    hm.tab=k;
+    $$('#r-hmtabs [data-tab]').forEach(b=>{ const on=b.dataset.tab===k; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+    $$('.r-hmpane').forEach(p=>p.classList.toggle('on', p.dataset.pane===k));
+  }
+  $$('#r-hmtabs [data-tab]').forEach(b=>b.onclick=()=>{ vibe(8); setHmTab(b.dataset.tab); });
+  // عقاراتي: مرتبة حسب النوع — الدول (وكم ناقصك منها)، المطارات، الشركات
+  function renderMine(H){
+    const box=$('#r-hmmine'); if(!box) return;
+    const sig=JSON.stringify([H.own, H.lv, H.sub, H.me]); if(box.dataset.sig===sig) return; box.dataset.sig=sig;
+    const T=hm.S.tiles, me=H.me, pl=id=>H.pl.find(p=>p.id===id);
+    const mine=T.map((t,i)=>H.own[i]===me?i:-1).filter(i=>i>=0);
+    if(!mine.length){ box.innerHTML=`<div class="mp-empty"><b>ما عندك عقارات للحين</b><span>لما توقف على مدينة أو مطار أو شركة بدون مالك تقدر تشتريها، أو اعرض صفقة على لاعب.</span></div>`; return; }
+    const value=mine.reduce((a,i)=>a+T[i].p,0);
+    const cell = i => { const t=T[i], o=H.own[i]?pl(H.own[i]):null, lv=H.lv[i]||0, me2=o&&o.id===me;
+      return `<button type="button" class="mp-c ${me2?'me':o?'oth':'free'}" data-i="${i}" style="--o:${o?o.color:'transparent'}"><b>${esc(t.n)}</b>
+        <small>${me2 ? `${lv?`<span class="mp-lv">${ic(hm.S.levels[lv-1].icon)}${esc(hm.S.levels[lv-1].name)}</span>`:''}<span class="mp-rent">${H.sub[i]||''}</span>` : o ? `ملك ${esc(o.name)}` : `بدون مالك · ${money(t.p)}`}</small></button>`; };
+    // الدول
+    const groups=[]; T.forEach((t,i)=>{ if(t.t!=='city') return; let g=groups.find(x=>x.k===t.k); if(!g){ g={ k:t.k, c:t.c, fl:t.fl, tiles:[] }; groups.push(g); } g.tiles.push(i); });
+    const myG=groups.filter(g=>g.tiles.some(i=>H.own[i]===me));
+    const gHTML = myG.map(g=>{ const n=g.tiles.filter(i=>H.own[i]===me).length, full=n===g.tiles.length;
+      const miss=g.tiles.filter(i=>H.own[i]!==me).map(i=>{ const o=H.own[i]?pl(H.own[i]):null; return `${esc(T[i].n)} (${o?'عند '+esc(o.name):'بدون مالك'})`; });
+      return `<div class="mp-g ${full?'full':''}" style="--g:${g.c}"><div class="mp-gh">${g.fl}<b>${esc(g.k)}</b><span class="mp-n">${n} من ${g.tiles.length}</span>${full?'<span class="mp-ok">كاملة — تقدر تبني</span>':''}</div>
+        <div class="mp-cs">${g.tiles.map(cell).join('')}</div>${!full?`<div class="mp-miss">ناقصك: ${miss.join('، ')}</div>`:''}</div>`; }).join('');
+    // المطارات والشركات
+    const kind = (t, title, icon, note) => { const all=T.map((x,i)=>x.t===t?i:-1).filter(i=>i>=0), n=all.filter(i=>H.own[i]===me).length; if(!n) return '';
+      return `<div class="mp-g ${t}" style="--g:${T[all[0]].c}"><div class="mp-gh"><span class="hm-flag air">${ic(icon)}</span><b>${title}</b><span class="mp-n">${n} من ${all.length}</span></div>
+        <div class="mp-cs">${all.map(cell).join('')}</div><div class="mp-miss">${note(n)}</div></div>`; };
+    const air = kind('air', 'المطارات', 'hm-plane', n=>`إيجار المطار يكبر كل ما زادت مطاراتك (عندك ${n})`);
+    const co = kind('co', 'الشركات', 'hm-building-factory-2', n=>n>1?'عندك الشركتين: الإيجار النرد × أكبر رقم':'لو أخذت الشركة الثانية يتضاعف إيجارها');
+    box.innerHTML=`<div class="mp-sum"><div><b>${mine.length}</b><small>عقار</small></div><div><b>${money(value)}</b><small>قيمتها</small></div><div><b>${myG.filter(g=>g.tiles.every(i=>H.own[i]===me)).length}</b><small>دول كاملة</small></div></div>
+      ${myG.length?`<div class="mp-sec">${ic('hm-map-pin')} الدول</div>${gHTML}`:''}${air||co?`<div class="mp-sec">${ic('hm-plane')} مطارات وشركات</div>${air}${co}`:''}
+      <p class="muted small mp-hint">اضغط أي عقار تشوف صكه وإيجاره</p>`;
+    $$('#r-hmmine [data-i]').forEach(b=>b.onclick=()=>{ vibe(8); tileSheet(+b.dataset.i); });
+  }
+  function renderPlayers(H){
+    const box=$('#r-hmpl'); if(!box) return;
     const rank=[...H.pl].sort((a,b)=>(a.out-b.out)||b.worth-a.worth);
-    $('#r-hmpl').innerHTML=H.pl.map(p=>`<div class="r-hmp ${p.turn?'turn':''} ${p.out?'out':''} ${p.id===H.me?'me':''}" style="--c:${p.color}"><span class="hm-tok" style="--c:${p.color}">${tokIn(p)}</span>
-      <span class="rh-n"><b>${esc(p.name)}${p.id===H.me?' <i>(انت)</i>':''}</b><small>${p.out?'أفلس':`${p.props} عقار · الثروة ${money(p.worth)}`}</small></span><span class="rh-c"><b>${money(p.cash)}</b><small>كاش</small></span><span class="rh-r">${rank.indexOf(p)+1}</span></div>`).join('');
-    renderTrades(H);
+    box.innerHTML=rank.map(p=>{ const props=hm.S.tiles.map((t,i)=>H.own[i]===p.id?i:-1).filter(i=>i>=0);
+      return `<div class="r-hmp ${p.turn?'turn':''} ${p.out?'out':''} ${p.id===H.me?'me':''}" style="--c:${p.color}"><span class="hm-tok ${p.jail?'jail':''}" style="--c:${p.color}">${tokIn(p)}</span>
+      <span class="rh-n"><b>${esc(p.name)}${p.id===H.me?' <i>(انت)</i>':''}</b><small>${p.out?'أفلس':p.jail?'بالسجن':`${p.props} عقار · الثروة ${money(p.worth)}`}</small></span><span class="rh-c"><b>${money(p.cash)}</b><small>كاش</small></span><span class="rh-r">${rank.indexOf(p)+1}</span>
+      ${props.length?`<span class="rh-dots">${props.map(i=>`<i style="--g:${hm.S.tiles[i].c}" title="${esc(hm.S.tiles[i].full)}"></i>`).join('')}</span>`:''}</div>`; }).join('');
+  }
+  // القرار يطلع وسط اللوحة نفسها — ما يدف شي ولا يحرك الصفحة
+  function renderHMAsk(){
+    const box=$('#r-hmask'); jumpBtn();
+    if(!box) return;
+    const A=st.hmAsk; box.classList.toggle('on', !!A); $('#r-hm').classList.toggle('asking', !!A);
+    if(!A){ box.innerHTML=''; box.dataset.id=''; return; }
+    if(box.dataset.id===String(A.reqId)) return; box.dataset.id=String(A.reqId);
+    const { reqId, spec }=A, d = spec.deed!=null && hm.S && hm.S.tiles[spec.deed] ? hm.S.tiles[spec.deed].deed : '';
+    box.innerHTML=`<div class="rq ${d?'with-deed':''}">${d?`<div class="r-deed rq-deed">${d}</div>`:''}<div class="rq-in"><div class="rq-eb">دورك تقرر</div><h3>${esc(spec.title)}</h3>${spec.text?`<p>${esc(spec.text)}</p>`:''}
+      ${spec.input?`<form class="rq-form" id="ra-in" novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>
+        <div class="rq-inv" id="ra-inv">${money(spec.input.def)}</div><div class="rq-chips">${(spec.input.chips||[]).map(v=>`<button type="button" class="btn small" data-chip="${v}">${money(v)}</button>`).join('')}</div>`:''}
+      <div class="rq-opts">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'}" data-o="${i}">${esc(o.label)}</button>`).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div></div>`;
+    const done = v => { vibe(25); send({t:'answer', reqId, value:v}); st.askId=null; st.hmAsk=null; renderHMAsk(); };
+    if(spec.input){ const I=spec.input, inp=$('#ra-in input'), lbl=$('#ra-inv');
+      const num=v=>{ const n=Math.round(Number(String(v).replace(/[^\d.]/g,''))); return n>=I.min && n<=I.max ? n : null; };
+      inp.oninput=()=>{ const n=num(inp.value); lbl.textContent = n!=null ? money(n) : `من ${money(I.min)} إلى ${money(I.max)}`; lbl.classList.toggle('bad', n==null); };
+      $$('#r-hmask [data-chip]').forEach(b=>b.onclick=()=>{ vibe(8); inp.value=b.dataset.chip; inp.oninput(); });
+      $('#ra-in').onsubmit=e=>{ e.preventDefault(); const n=num(inp.value); if(n==null){ inp.oninput(); vibe([40,30,40]); return; } done({num:n}); }; }
+    $$('#r-hmask [data-o]').forEach(b=>b.onclick=()=>done(+b.dataset.o));
   }
 
   // ---------- هوامير: الصفقات (عروض معلّقة يشوفها الكل) ----------
@@ -385,7 +460,7 @@
     const mine=pend.filter(t=>t.to===me), sent=pend.filter(t=>t.from===me), others=pend.filter(t=>t.to!==me && t.from!==me), done=L.filter(t=>t.st!=='pending').slice(-4).reverse();
     // صفقة جديدة وصلتك: اهتزاز
     mine.forEach(t=>{ if(!trSeen.has(t.id)){ trSeen.add(t.id); vibe([60,40,60]); } });
-    const jb=$('#r-trjump'); if(jb){ jb.classList.toggle('r-hide', !mine.length); jb.textContent=`عندك ${mine.length===1?'صفقة معلّقة':mine.length+' صفقات معلّقة'}`; jb.onclick=()=>{ vibe(10); box.scrollIntoView({behavior:'smooth', block:'start'}); }; }
+    const tn=$('#r-hmtrn'); if(tn){ tn.textContent = mine.length ? String(mine.length) : pend.length ? String(pend.length) : ''; tn.classList.toggle('hot', !!mine.length); }
     const card = (t, acts) => { const A=plOf(t.from), B=plOf(t.to);
       return `<div class="r-trc ${t.st}"><div class="r-trw"><b style="color:${A.color}">${esc(A.name)}</b> <span>${t.counter?'رد بعرض على':'يعرض على'}</span> <b style="color:${B.color}">${esc(B.name)}</b>${t.st!=='pending'?`<em class="r-trs ${t.st}">${TR_ST[t.st]}</em>`:''}</div>
         <div class="r-trx"><div><small>${esc(A.name)} يعطي</small><div class="r-tps">${trSide(t.give)}</div></div><div><small>${esc(B.name)} يعطي</small><div class="r-tps">${trSide(t.get)}</div></div></div>
@@ -445,12 +520,12 @@
       const spread=Math.min(w*0.7, (tile.offsetWidth-w)/Math.max(1,n-1));
       const x=tile.offsetLeft+tile.offsetWidth/2-w/2+(k-(n-1)/2)*spread, y=tile.offsetTop+tile.offsetHeight-w*0.84;
       el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; el.style.zIndex=String(5+k);
-      el.classList.toggle('me', p.turn); el.classList.toggle('mine', p.id===H.me); });
+      el.classList.toggle('me', p.turn); el.classList.toggle('mine', p.id===H.me); el.classList.toggle('jail', !!p.jail); });
   }
   function hmClock(){ const el=$('#r-hmclock'); if(!el||!hm.endAt) return;
     const left=Math.max(0, hm.endAt-Date.now()), m=Math.floor(left/60000), s2=Math.floor(left%60000/1000);
     el.textContent = hm.lastRound ? 'اللفة الأخيرة' : `${m}:${String(s2).padStart(2,'0')}`; }
-  setInterval(()=>{ if(hm.B && !$('#r-hm').classList.contains('r-hide')) hmClock(); }, 1000);
+  setInterval(()=>{ if(hm.B && !$('#r-hmwrap').classList.contains('r-hide')) hmClock(); }, 1000);
   window.addEventListener('resize', ()=>requestAnimationFrame(hmTokens));
   function tileSheet(i){
     const t=hm.S.tiles[i], H=hm.B; if(!t) return;
@@ -639,24 +714,7 @@
   function openAsk(reqId, spec){
     st.askId=reqId; vibe([80,40,80]);
     const isHM = spec.hm || (st.S && st.S.game==='hawamir');
-    if(isHM && !spec.options.some(o=>o.card)){
-      const box=$('#r-ask'), d = spec.deed!=null && hm.S && hm.S.tiles[spec.deed] ? hm.S.tiles[spec.deed].deed : '';
-      box.innerHTML=`<div class="ra-in ${d?'with-deed':''}">${d?`<div class="r-deed">${d}</div>`:''}<div class="ra-q"><div class="eyebrow">دورك تقرر</div><h3>${esc(spec.title)}</h3>${spec.text?`<p class="muted">${esc(spec.text)}</p>`:''}
-        ${spec.input?`<form class="ra-in" id="ra-in" novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>
-          <div class="ra-inv" id="ra-inv">${money(spec.input.def)}</div><div class="ra-chips">${(spec.input.chips||[]).map(v=>`<button type="button" class="btn small" data-chip="${v}">${money(v)}</button>`).join('')}</div>
-          <p class="muted small">أي رقم من ${money(spec.input.min)} إلى ${money(spec.input.max)}</p>`:''}
-        <div class="ra-opts">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'}" data-o="${i}">${esc(o.label)}</button>`).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div></div>`;
-      tog('#r-ask', true);
-      if(spec.input){ const I=spec.input, inp=$('#ra-in input'), lbl=$('#ra-inv');
-        const num=v=>{ const n=Math.round(Number(String(v).replace(/[^\d.]/g,''))); return n>=I.min && n<=I.max ? n : null; };
-        inp.oninput=()=>{ const n=num(inp.value); lbl.textContent = n!=null ? money(n) : 'الرقم برا الحدود'; lbl.classList.toggle('bad', n==null); };
-        $$('#r-ask [data-chip]').forEach(b=>b.onclick=()=>{ vibe(8); inp.value=b.dataset.chip; inp.oninput(); });
-        $('#ra-in').onsubmit=e=>{ e.preventDefault(); const n=num(inp.value); if(n==null){ lbl.textContent=`اكتب رقم من ${money(I.min)} إلى ${money(I.max)}`; lbl.classList.add('bad'); vibe([40,30,40]); return; }
-          vibe(25); send({t:'answer', reqId, value:{num:n}}); st.askId=null; tog('#r-ask', false); box.innerHTML=''; }; }
-      $$('#r-ask [data-o]').forEach(b=>b.onclick=()=>{ vibe(25); send({t:'answer', reqId, value:+b.dataset.o}); st.askId=null; tog('#r-ask', false); box.innerHTML=''; });
-      if(!st.askSeen || st.askSeen!==spec.title){ st.askSeen=spec.title; try{ box.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){} }
-      return;
-    }
+    if(isHM && !spec.options.some(o=>o.card)){ st.hmAsk={ reqId, spec }; renderHMAsk(); return; }
     const cards = spec.options.some(o=>o.card);
     sheet(`<div class="eyebrow">مطلوب منكم</div><h3>${esc(spec.title)}</h3>${spec.text?`<p class="muted">${esc(spec.text)}</p>`:''}
       <div class="${cards?'r-opts-cards':'r-opts'}">${spec.options.map((o,i)=> o.card

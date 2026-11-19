@@ -3,17 +3,17 @@
 // كذا الموازنة وحدة مهما كانت الخريطة.
 window.DAHOOM_DATA = window.DAHOOM_DATA || {};
 window.DAHOOM_DATA.hawamir = {
-  // t: start / city (g رقم الدولة، k رقم المدينة فيها) / air مطار / co شركة / luck / saher / jet / stocks / pot / auction
+  // t: start / city (g رقم الدولة، k رقم المدينة فيها) / air مطار / co شركة / luck / saher / jet / stocks / pot / jail السجن / patrol الدورية (توديك السجن)
   layout: [
     { t:'start' },
     { t:'city', g:0, k:0 }, { t:'luck' }, { t:'city', g:0, k:1 }, { t:'city', g:0, k:2 }, { t:'air', k:0 },
     { t:'city', g:1, k:0 }, { t:'saher' }, { t:'city', g:1, k:1 }, { t:'city', g:1, k:2 }, { t:'co', k:0 },
-    { t:'stocks' },
+    { t:'jail' },
     { t:'city', g:2, k:0 }, { t:'city', g:2, k:1 }, { t:'air', k:1 }, { t:'city', g:3, k:0 }, { t:'city', g:3, k:1 }, { t:'city', g:3, k:2 },
     { t:'pot' },
-    { t:'city', g:4, k:0 }, { t:'luck' }, { t:'city', g:4, k:1 }, { t:'city', g:4, k:2 }, { t:'air', k:2 },
+    { t:'city', g:4, k:0 }, { t:'patrol' }, { t:'city', g:4, k:1 }, { t:'city', g:4, k:2 }, { t:'air', k:2 },
     { t:'city', g:5, k:0 }, { t:'jet' }, { t:'city', g:5, k:1 }, { t:'city', g:5, k:2 }, { t:'co', k:1 },
-    { t:'auction' },
+    { t:'stocks' },
     { t:'city', g:6, k:0 }, { t:'city', g:6, k:1 }, { t:'air', k:3 }, { t:'city', g:7, k:0 }, { t:'city', g:7, k:1 }, { t:'city', g:7, k:2 },
   ],
   // سعر كل مدينة حسب ترتيب الدولة على اللوحة (من الأرخص للأغلى)
@@ -30,11 +30,13 @@ window.DAHOOM_DATA.hawamir = {
   upMult: [5, 10, 16, 24],                        // مضاعف الإيجار لكل مستوى بناء
   takeMult: 2,                                    // سعر الاستحواذ على عقار غيرك (مضاعف السعر)
   upCostPct: 0.5,                                 // تكلفة كل مستوى من سعر المدينة
+  bail: 10000,                                    // كفالة السجن (تروح للصندوق)
+  jailTries: 2,                                   // كم دور تحاول تطلع بدبل قبل ما تنجبر تدفع الكفالة
   levels: [ { name:'بيت', icon:'hm-home' }, { name:'عمارة', icon:'hm-building' }, { name:'فندق', icon:'hm-building-community' }, { name:'برج', icon:'hm-building-skyscraper' } ],
-  names: { start:'البداية', luck:'حظك', saher:'ساهر', tax:'الضريبة', jet:'رحلة مجانية', stocks:'سوق الأسهم', pot:'الصندوق', auction:'المزاد' },
-  icons: { start:'star', luck:'hm-clover', saher:'hm-camera', tax:'hm-receipt-tax', jet:'hm-plane-departure', stocks:'hm-trending-up', pot:'hm-building-bank', auction:'hm-gavel', air:'hm-plane', co:'hm-building-factory-2' },
+  names: { start:'البداية', luck:'حظك', saher:'ساهر', tax:'الضريبة', jet:'رحلة مجانية', stocks:'سوق الأسهم', pot:'الصندوق', auction:'المزاد', jail:'السجن', patrol:'الدورية' },
+  icons: { start:'star', luck:'hm-clover', saher:'hm-camera', tax:'hm-receipt-tax', jet:'hm-plane-departure', stocks:'hm-trending-up', pot:'hm-building-bank', auction:'hm-gavel', jail:'hm-jail', patrol:'hm-siren', air:'hm-plane', co:'hm-building-factory-2' },
 
-  // المطارات: أسماء مطارات حقيقية، كل مطار في دولة/منطقة من نفس الخريطة وقريب من مكانه على اللوحة
+  // المطارات: أسماء مطارات حقيقية ومعروفة، وما تتشابه مع أي مدينة على نفس اللوحة
   maps: [
     { id:'arab', name:'جولة العرب', desc:'من الإسكندرية لين الرياض: ثمان دول عربية.', felt:'#0E3B2E',
       groups: [
@@ -47,7 +49,7 @@ window.DAHOOM_DATA.hawamir = {
         { name:'الكويت',   flag:'kw', cities:['السالمية','مدينة الكويت'] },
         { name:'السعودية', flag:'sa', cities:['الخبر','جدة','الرياض'] },
       ],
-      airports: ['مطار القاهرة الدولي','مطار مسقط الدولي','مطار حمد الدولي','مطار الملك خالد الدولي'], companies: ['شركة النفط','شركة الطيران'] },
+      airports: ['مطار محمد الخامس','مطار حمد','مطار زايد','مطار الملك خالد'], companies: ['شركة النفط','شركة الطيران'] },
     { id:'world', name:'حول العالم', desc:'من بانكوك لين نيويورك: ثمان دول من كل القارات.', felt:'#12324F',
       groups: [
         { name:'تايلاند',  flag:'th', cities:['شيانغ ماي','بوكيت','بانكوك'] },
@@ -59,7 +61,7 @@ window.DAHOOM_DATA.hawamir = {
         { name:'بريطانيا', flag:'gb', cities:['مانشستر','لندن'] },
         { name:'أمريكا',   flag:'us', cities:['ميامي','لوس أنجلوس','نيويورك'] },
       ],
-      airports: ['مطار سوفارنابومي','مطار باراخاس','مطار هانيدا','مطار هيثرو'], companies: ['شركة التقنية','شركة السيارات'] },
+      airports: ['مطار صبيحة','مطار هيثرو','مطار شارل ديغول','مطار جون كينيدي'], companies: ['شركة التقنية','شركة السيارات'] },
     { id:'ksa', name:'ديرتنا', desc:'مناطق السعودية من جازان لين مشاريع الرؤية.', felt:'#3A2415',
       groups: [
         { name:'جازان',        flag:null, cities:['أبو عريش','فرسان','جيزان'] },
@@ -71,7 +73,7 @@ window.DAHOOM_DATA.hawamir = {
         { name:'الرياض',       flag:null, cities:['الدرعية','الرياض'] },
         { name:'الرؤية',       flag:null, cities:['البحر الأحمر','القدية','نيوم'] },
       ],
-      airports: ['مطار الملك عبدالله','مطار الأمير نايف','مطار الملك فهد الدولي','مطار الملك خالد الدولي'], companies: ['شركة البترول','شركة الاتصالات'] },
+      airports: ['مطار الملك عبدالله','مطار الأمير نايف','مطار الملك فهد','مطار الملك خالد'], companies: ['شركة البترول','شركة الاتصالات'] },
   ],
 
   // بطاقات الحظ — k: نوع التأثير. الغرامات تروح للصندوق.
@@ -87,6 +89,7 @@ window.DAHOOM_DATA.hawamir = {
     { text:'عيدية: كل لاعب يعطيك 3,000',              k:'each', v:3000 },
     { text:'عزمت الشباب عشا: تعطي كل لاعب 3,000',     k:'payeach', v:3000 },
     { text:'رحلة مفاجئة: تروح أقرب مطار',             k:'airport' },
+    { text:'تفحيط بالحارة: الدورية تاخذك للسجن',       k:'jail' },
     { text:'ارجع البداية وخذ راتبك',                  k:'tostart' },
     { text:'صيانة: تدفع 4,000 عن كل مستوى بناء عندك',  k:'repair', v:4000 },
     { text:'ضربة حظ: ارمِ نرد وخذ الرقم × 3,000',     k:'dice', v:3000 },

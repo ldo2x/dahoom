@@ -253,3 +253,11 @@
 @media (max-width:640px){ .hm-bcols,.hm-trd{grid-template-columns:1fr} }
 
 @keyframes rwPulse{50%{opacity:.45;transform:scale(.88)}}
+
+/* ---------- السجن والدورية ---------- */
+.hm-tile.patrol{background:#C3D5F3}
+.hm-tile.patrol .hm-spic{color:#1F4FA0}
+.hm-tile.jail .hm-sub small{color:var(--hm-gold-2);opacity:.8}
+/* اللاعب المسجون: قضبان فوق صورته */
+.hm-toks .hm-tok.jail::after,.hm-pl .hm-tok.jail::after,.r-hmp .hm-tok.jail::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-linear-gradient(90deg,rgba(12,12,12,.82) 0 16%,transparent 16% 34%)}
+.hm-pl .hm-tok.jail,.r-hmp .hm-tok.jail{position:relative}

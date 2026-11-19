@@ -10,10 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611191026">
-<link rel="stylesheet" href="css/remote.css?v=202611191026">
-<link rel="stylesheet" href="css/hawamir.css?v=202611191026">
-<link rel="stylesheet" href="css/draw.css?v=202611191026">
+<link rel="stylesheet" href="css/style.css?v=202611191116">
+<link rel="stylesheet" href="css/remote.css?v=202611191116">
+<link rel="stylesheet" href="css/hawamir.css?v=202611191116">
+<link rel="stylesheet" href="css/draw.css?v=202611191116">
 </head>
 <body class="remote">
 
@@ -65,10 +65,25 @@
       </div>
       <div class="r-phase" id="r-phase"></div>
       <div class="r-view r-hide" id="r-view"></div>
-      <div class="r-hm r-hide" id="r-hm"></div>
       <div class="r-ask r-hide" id="r-ask"></div>
-      <div class="r-hmpl r-hide" id="r-hmpl"></div>
-      <section class="r-card r-hmtr r-hide" id="r-hmtr"></section>
+      <div class="r-hmwrap r-hide" id="r-hmwrap">
+        <div class="r-hm" id="r-hm"></div>
+        <div class="r-hmside" id="r-hmside"><div class="r-hmside-in">
+          <div class="r-hmtabs" id="r-hmtabs" role="tablist">
+            <button type="button" role="tab" data-tab="mine" class="on" aria-selected="true">عقاراتي</button>
+            <button type="button" role="tab" data-tab="players">اللاعبين</button>
+            <button type="button" role="tab" data-tab="trades">الصفقات<b class="r-hmtabn" id="r-hmtrn"></b></button>
+            <button type="button" role="tab" data-tab="log">وش صار</button>
+          </div>
+          <div class="r-hmpanes">
+            <div class="r-hmpane on" data-pane="mine" id="r-hmmine"></div>
+            <div class="r-hmpane r-hmpl" data-pane="players" id="r-hmpl"></div>
+            <section class="r-hmpane r-hmtr" data-pane="trades" id="r-hmtr"></section>
+            <div class="r-hmpane" data-pane="log"><div class="r-feed r-hmlog" id="r-hmlog"></div></div>
+          </div>
+        </div></div>
+      </div>
+      <button class="r-hmaskjump r-hide" id="r-hmaskjump" type="button">دورك تقرر — ارجع للوحة</button>
       <div class="r-final hidden" id="r-final"></div>
       <div class="r-charade hidden" id="r-charade"></div>
       <div class="r-rasm hidden" id="r-rasm"></div>
@@ -91,10 +106,10 @@
 <div class="r-status hidden" id="r-status"></div>
 <div class="r-sheet hidden" id="r-sheet"><div class="r-sheet-in" id="r-sheet-in"></div></div>
 
-<script src="js/vendor/peerjs.min.js?v=202611191026"></script>
-<script src="data/cards.js?v=202611191026"></script>
-<script src="js/telemetry.js?v=202611191026"></script>
-<script src="js/draw.js?v=202611191026"></script>
-<script src="js/remote.js?v=202611191026"></script>
+<script src="js/vendor/peerjs.min.js?v=202611191116"></script>
+<script src="data/cards.js?v=202611191116"></script>
+<script src="js/telemetry.js?v=202611191116"></script>
+<script src="js/draw.js?v=202611191116"></script>
+<script src="js/remote.js?v=202611191116"></script>
 </body>
 </html>
