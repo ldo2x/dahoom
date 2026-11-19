@@ -90,6 +90,7 @@ window.DahoomNet = (function(){
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
     if(H.msg && (d.t==='guess' || d.t==='stroke' || d.t==='fill' || d.t==='undo' || d.t==='clear' || d.t==='rpick' || d.t==='rate' || d.t==='rsync')) H.msg(c, d);
+    if(d.t==='hmtrade' && H.trade) H.trade(c.teamId, d);
     if(d.t==='report'){ const ok = H.report ? H.report(c.teamId, c.pid, d) : false; try{ c.send({t:'notice', msg: ok ? 'وصل البلاغ — شكراً' : 'ما قدرنا نرسل البلاغ'}); }catch(e){} }
   }
   // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)

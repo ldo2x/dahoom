@@ -136,7 +136,7 @@ window.DahoomHawamir = (function(){
     if(t.price){ const o=ownerOf(i); return !o ? money(t.price) : t.t==='co' ? `<small>النرد ×</small> ${money(coMult(o))}` : `<small>إيجار</small> ${money(rentOf(i))}`; }
     return t.t==='pot' ? money(G.pot) : t.t==='start' ? plus(S.salary) : '';
   }
-  function renderAll(){ renderBoard(); renderSide(); renderLog(); pushAll(); }
+  function renderAll(){ renderBoard(); renderSide(); renderLog(); renderTrades(); pushAll(); }
   const stage = html => { const s=$('#hm-stage'); if(s) s.innerHTML=html; if(G) G.stageHtml=html; pushAll(); };
   const PIPS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
   const die = n => `<span class="hm-die">${[1,2,3,4,5,6,7,8,9].map(k=>`<i class="${(PIPS[n]||[]).includes(k)?'on':''}"></i>`).join('')}</span>`;
@@ -187,7 +187,7 @@ window.DahoomHawamir = (function(){
         inp.oninput=()=>{ const n=num(inp.value); lbl.textContent = n!=null ? money(n) : 'الرقم برا الحدود'; lbl.classList.toggle('bad', n==null); };
         form.onsubmit=e=>{ e.preventDefault(); const n=num(inp.value); if(n==null){ toast(`اكتب رقم من ${money(spec.input.min)} إلى ${money(spec.input.max)}`); return; } finish(n); };
         $$('[data-chip]',box).forEach(b=>b.onclick=()=>{ inp.value=b.dataset.chip; inp.oninput(); inp.focus(); }); }
-      if(phoneOf(p)) rid=NET().ask(p.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, deed: spec.deed!=null ? spec.deed : null, input: spec.input||null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
+      if(phoneOf(p)) rid=NET().ask(p.id, { hm:true, title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, deed: spec.deed!=null ? spec.deed : null, input: spec.input||null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
         i=>{ if(i && typeof i==='object'){ const n=num(i.num); if(n!=null) finish(n); return; } finish(i==null||i<0?null:spec.options[i].v); });
       if(spec.timeout) tm=setTimeout(()=>finish(spec.def===undefined?null:spec.def), spec.timeout);
     });
@@ -233,7 +233,7 @@ window.DahoomHawamir = (function(){
         if(p.cash<np){ toast(`${p.name} ما معه ${money(np)}`); return; } price=np; high=p; left=8; play('pop',{volume:.6}); if(active().every(x=>x===high)) return end(); draw(); askPhones(); };
       const quit = p => { if(done || p===high) return; outs.add(p.id); draw(); if(active().length===0 || (high && active().every(x=>x===high))) end(); };
       const askPhones = () => { clearAsks(); const n=NET(); if(!n) return;
-        active().filter(p=>p!==high && phoneOf(p)).forEach(p=>{ rids.push(n.ask(p.id, { title:`مزاد: ${t.name}`, text:high?`السعر الحالي ${money(price)} — الأعلى ${high.name}`:`يبدأ من ${money(price)}`,
+        active().filter(p=>p!==high && phoneOf(p)).forEach(p=>{ rids.push(n.ask(p.id, { hm:true, title:`مزاد: ${t.name}`, text:high?`السعر الحالي ${money(price)} — الأعلى ${high.name}`:`يبدأ من ${money(price)}`,
           options:[{label:high?`زايد +${money(STEP1)} (${money(price+STEP1)})`:`ادخل بـ ${money(price)}`,cls:'btn-mint big'},{label:`زايد +${money(STEP2)}`,cls:'btn-hype big'},{label:'انسحب',cls:'btn-bad'}] },
           v=>{ if(v===0) bid(p,STEP1); else if(v===1) bid(p,STEP2); else quit(p); })); }); };
       const draw = () => { if(done) return;
@@ -260,30 +260,117 @@ window.DahoomHawamir = (function(){
       logE(p, `بنى ${LV[G.level[i]-1].name} في ${T[i].name}`, -upCost(i)); renderAll();
     }
   }
-  async function tradeMenu(p){
-    const others=alive().filter(x=>x!==p);
-    const mode=await decide(p, { title:'صفقة', cancel:'تراجع', options:[{v:'buy',label:'أشتري عقار من لاعب'},{v:'sell',label:'أبيع عقار للاعب',cls:''}] });
-    if(!mode) return;
-    const who=await decide(p, { title: mode==='buy'?'تشتري من مين؟':'تبيع لمين؟', cancel:'تراجع', options:others.map(x=>({v:x.id,label:`${x.name} · ${money(x.cash)}`,cls:''})) });
-    if(!who) return; const x=byId(who), seller= mode==='buy'?x:p, buyer= mode==='buy'?p:x;
-    const list=owned(seller).filter(i=>!(G.level[i]>0));
-    if(!list.length){ toast(`${seller.name} ما عنده عقار ينباع (العقار المبني ما ينباع)`); return; }
-    const i=await decide(p, { title:'أي عقار؟', cancel:'تراجع', options:list.map(k=>({v:k,label:`${T[k].name} (${money(T[k].price)})`,cls:''})) });
-    if(i==null) return;
-    const base=T[i].price, maxP=Math.floor(buyer.cash/100)*100;
-    if(maxP<100){ toast(`${buyer.name} ما معه كاش يكفي`); return; }
-    const chips=[0.5,0.75,1,1.5,2,3].map(m=>Math.round(base*m/1000)*1000).filter((v,k,a)=>v>=100 && v<=maxP && a.indexOf(v)===k);
-    const price=await decide(p, { title:`بكم؟ (${esc(T[i].name)})`, text:`حط السعر اللي تبيه. سعرها الأصلي ${money(base)}، و${esc(buyer.name)} معه ${money(buyer.cash)}`, deed:i, cancel:'تراجع', options:[],
-      input:{ min:100, max:maxP, def:Math.min(base, maxP), chips, ok:'اعرض السعر' } });
-    if(price==null) return;
-    G.focus=i; renderBoard();
-    const yes=await decide(x, { deed:i, title: mode==='buy' ? `${esc(p.name)} يبي يشتري منك "${esc(T[i].name)}" بـ ${money(price)}` : `${esc(p.name)} يعرض عليك "${esc(T[i].name)}" بـ ${money(price)}`,
-      options:[{v:true,label:'موافق',cls:'btn-mint big'},{v:false,label:'لا',cls:'btn-bad big'}], timeout:30000, def:false });
-    G.focus=null;
-    if(yes && buyer.cash>=price && G.owner[i]===seller.id){ buyer.cash-=price; seller.cash+=price; G.owner[i]=buyer.id; p.stats.trades++; x.stats.trades++; play('meme:cash',{volume:.6}); toast(`تمت الصفقة: ${T[i].name} صار لـ ${buyer.name} بـ ${money(price)}`, 3600);
-      logE(buyer, `اشترى ${T[i].name} من ${seller.name} (صفقة)`, -price); logE(seller, `باع ${T[i].name} لـ ${buyer.name}`, price); }
-    else { play('fx_deny',{volume:.5}); toast(`${x.name} رفض الصفقة`); logE(x, `رفض صفقة ${p.name} على ${T[i].name}`, 0, 'info'); }
-    renderAll();
+  // ---------- الصفقات: عروض معلّقة يشوفها الكل ----------
+  // العرض: from يعطي give (عقارات + كاش) ويبي get من to. ينرسل ويبقى معلّق لين to يوافق أو يرفض أو from يسحبه.
+  // أي وقت بالمباراة (مو لازم دورك). عند الموافقة نتأكد إن كل شي لسا موجود — لو تغيّر الوضع العرض يفشل.
+  const tradable = p => owned(p).filter(i=>!(G.level[i]>0));
+  const TR_AR = { pending:'معلّقة', accepted:'تمت', rejected:'انرفضت', cancelled:'انسحبت', failed:'ما زبطت', countered:'رد بعرض ثاني' };
+  const sideTxt = s => [...s.props.map(i=>T[i].name), s.cash?money(s.cash):''].filter(Boolean).join('، ') || 'ولا شي';
+  function cleanSide(o, p){
+    const props=[...new Set((o&&o.props||[]).map(Number))].filter(i=>T[i] && T[i].price && G.owner[i]===p.id && !(G.level[i]>0));
+    const cash=Math.max(0, Math.round(Number(o&&o.cash)||0));
+    return { props, cash };
+  }
+  function offerTrade(from, to, give, get, counterOf){
+    if(!G || G.over || !from || !to || from===to || from.out || to.out) return 'العرض مو صالح';
+    give=cleanSide(give, from); get=cleanSide(get, to);
+    if(!give.props.length && !give.cash && !get.props.length && !get.cash) return 'العرض فاضي';
+    if(!give.props.length && !get.props.length) return 'لازم يكون فيه عقار واحد على الأقل';
+    if(give.cash>from.cash) return `${from.name} ما معه ${money(give.cash)}`;
+    if(get.cash>to.cash) return `${to.name} ما معه ${money(get.cash)}`;
+    if(G.trades.filter(t=>t.st==='pending' && t.from===from.id).length>=4) return 'عندك 4 عروض معلّقة — اسحب وحدة أول';
+    if(counterOf){ const o=G.trades.find(t=>t.id===counterOf && t.st==='pending' && t.to===from.id); if(o){ o.st='countered'; o.done=Date.now(); } }
+    const tr={ id:'tr'+(++G.trSeq), from:from.id, to:to.id, give, get, st:'pending', ts:Date.now(), counter:!!counterOf };
+    G.trades.push(tr);
+    play('game:g_mariocoin',{volume:.4});
+    logE(from, `${counterOf?'رد بعرض ثاني على':'أرسل صفقة لـ'} ${to.name}: يعطي ${sideTxt(give)} مقابل ${sideTxt(get)}`, 0, 'info');
+    const n=NET(); if(n) n.send(to.id, { t:'notice', msg:`عندك صفقة جديدة من ${from.name}` });
+    renderTrades(); pushAll(); return tr;
+  }
+  function settleTrade(id, how, by){
+    const tr=G && G.trades.find(t=>t.id===id); if(!tr || tr.st!=='pending') return 'العرض خلص';
+    const A=byId(tr.from), B=byId(tr.to);
+    if(how==='cancel'){ tr.st='cancelled'; tr.done=Date.now(); logE(A, `سحب صفقته مع ${B.name}`, 0, 'info'); }
+    else if(how==='reject'){ tr.st='rejected'; tr.done=Date.now(); play('fx_deny',{volume:.5}); logE(B, `رفض صفقة ${A.name}`, 0, 'bad'); }
+    else if(how==='accept'){
+      const okSide=(s,p)=>s.props.every(i=>G.owner[i]===p.id && !(G.level[i]>0)) && p.cash>=s.cash && !p.out;
+      if(!okSide(tr.give,A) || !okSide(tr.get,B)){ tr.st='failed'; tr.done=Date.now(); play('fx_deny',{volume:.5}); logE(null, `صفقة ${A.name} و${B.name} ما زبطت — الوضع تغيّر (عقار انباع أو انبنى أو الكاش ما يكفي)`, 0, 'bad'); }
+      else {
+        tr.give.props.forEach(i=>G.owner[i]=B.id); tr.get.props.forEach(i=>G.owner[i]=A.id);
+        A.cash+=tr.get.cash-tr.give.cash; B.cash+=tr.give.cash-tr.get.cash;
+        A.stats.trades++; B.stats.trades++; tr.st='accepted'; tr.done=Date.now();
+        play('meme:cash',{volume:.6}); toast(`تمت الصفقة بين ${A.name} و${B.name}`, 3200);
+        logE(A, `صفقة مع ${B.name}: عطى ${sideTxt(tr.give)} وأخذ ${sideTxt(tr.get)}`, tr.get.cash-tr.give.cash, 'good');
+        logE(B, `وافق على صفقة ${A.name}: عطى ${sideTxt(tr.get)} وأخذ ${sideTxt(tr.give)}`, tr.give.cash-tr.get.cash, 'good');
+        [[A,tr.get.props],[B,tr.give.props]].forEach(([p,l])=>{ const gs=new Set(l.filter(i=>T[i].t==='city').map(i=>T[i].g)); gs.forEach(g=>{ if(groupFull(p,g)){ toast(`${p.name} كمّل ${T[groupTiles(g)[0]].country} — يقدر يبني فيها`, 3600); logE(p, `كمّل ${T[groupTiles(g)[0]].country} كاملة — يقدر يبني فيها`, 0, 'good'); } }); });
+      }
+      const n=NET(); if(n) n.send(A.id, { t:'notice', msg: tr.st==='accepted' ? `${B.name} وافق على صفقتك` : 'صفقتك ما زبطت — الوضع تغيّر' });
+    }
+    if(how==='reject'){ const n=NET(); if(n) n.send(A.id, { t:'notice', msg:`${B.name} رفض صفقتك` }); }
+    // نخلي آخر 30 عرض بس
+    if(G.trades.length>40) G.trades=G.trades.filter(t=>t.st==='pending').concat(G.trades.filter(t=>t.st!=='pending').slice(-30));
+    renderAll(); renderTrades(); return tr;
+  }
+  // من الجوال: عرض جديد / موافقة / رفض / سحب
+  function onPhoneTrade(pid, d){
+    const me=byId(pid); if(!G || G.over || !me) return;
+    let r=null;
+    if(d.op==='new') r=offerTrade(me, byId(d.to), d.give, d.get, d.counter||null);
+    else { const tr=G.trades.find(t=>t.id===d.id); if(!tr) return;
+      if((d.op==='accept' || d.op==='reject') && tr.to===me.id) r=settleTrade(tr.id, d.op);
+      else if(d.op==='cancel' && tr.from===me.id) r=settleTrade(tr.id, 'cancel'); }
+    if(typeof r==='string'){ const n=NET(); if(n) n.send(me.id, { t:'notice', msg:r }); }
+  }
+  // ---------- الشاشة: لوحة الصفقات المعلّقة + نافذة العرض ----------
+  const propChip = i => `<span class="hm-tp" style="--g:${T[i].color}">${esc(T[i].name)}</span>`;
+  const sideHTML = s => `${s.props.map(propChip).join('')}${s.cash?`<span class="hm-tp cash">${money(s.cash)}</span>`:''}${!s.props.length&&!s.cash?'<span class="hm-tp none">ولا شي</span>':''}`;
+  function renderTrades(){
+    const el=$('#hm-trades'); if(!el||!G) return;
+    const pend=G.trades.filter(t=>t.st==='pending');
+    el.innerHTML=`<div class="hm-trh"><b>صفقات معلّقة</b><span class="hm-trn ${pend.length?'on':''}">${pend.length}</span><button class="btn small" data-trnew>${ic('team')} صفقة</button></div>
+      ${pend.slice(-3).reverse().map(t=>{ const A=byId(t.from), B=byId(t.to); return `<button class="hm-tr" data-tr="${t.id}"><span><b style="color:${A.color}">${esc(A.name)}</b> ← <b style="color:${B.color}">${esc(B.name)}</b></span><small>${esc(sideTxt(t.give))} ⇄ ${esc(sideTxt(t.get))}</small></button>`; }).join('')}`;
+    $$('[data-tr]',el).forEach(b=>b.onclick=()=>tradeModal(b.dataset.tr));
+    const nb=el.querySelector('[data-trnew]'); if(nb) nb.onclick=async ()=>{ const who=await pickPlayer('مين يعرض الصفقة؟'); if(who) builder(who); };
+  }
+  function pickPlayer(title, list){
+    return new Promise(res=>{ const L=list||alive();
+      const m=modal(`<h3>${title}</h3><div class="hm-pk">${L.map(p=>`<button class="btn team" style="--c:${p.color}" data-p="${p.id}">${esc(p.name)}</button>`).join('')}</div><div class="row center mt-s"><button class="btn ghost" data-x>تراجع</button></div>`,{onMount(m){
+        $$('[data-p]',m).forEach(b=>b.onclick=()=>{ m.remove(); res(byId(b.dataset.p)); }); m.querySelector('[data-x]').onclick=()=>{ m.remove(); res(null); }; }}); });
+  }
+  function tradeModal(id){
+    const t=G.trades.find(x=>x.id===id); if(!t) return; const A=byId(t.from), B=byId(t.to);
+    modal(`<div class="eyebrow">صفقة ${TR_AR[t.st]||''}</div><h3><span style="color:${A.color}">${esc(A.name)}</span> ← <span style="color:${B.color}">${esc(B.name)}</span></h3>
+      <div class="hm-trd"><div><div class="lbl">${esc(A.name)} يعطي</div><div class="hm-tps">${sideHTML(t.give)}</div></div><div><div class="lbl">${esc(B.name)} يعطي</div><div class="hm-tps">${sideHTML(t.get)}</div></div></div>
+      ${t.st==='pending'?`<p class="muted small">${phoneOf(B)?`${esc(B.name)} يقدر يرد من جواله، أو`:'المضيف'} يضغط عنه هنا.</p>
+      <div class="row center mt-s"><button class="btn btn-mint" data-a="accept">${esc(B.name)} موافق</button><button class="btn btn-bad" data-a="reject">رفض</button><button class="btn" data-a="counter">عرض ثاني</button><button class="btn ghost" data-a="cancel">${esc(A.name)} يسحبها</button></div>`:''}
+      <div class="row center mt-s"><button class="btn ghost" data-x>إغلاق</button></div>`,{onMount(m){
+        m.querySelector('[data-x]').onclick=()=>m.remove();
+        $$('[data-a]',m).forEach(b=>b.onclick=()=>{ m.remove(); const a=b.dataset.a;
+          if(a==='counter') builder(B, A, { give:t.get, get:t.give, counter:t.id }); else { const r=settleTrade(t.id, a); if(typeof r==='string') toast(r); } }); }});
+  }
+  // نافذة بناء العرض على الشاشة (للي ما عنده جوال، أو المضيف عنه)
+  function builder(from, toPre, pre){
+    if(!G || G.over || !from) return;
+    const others=alive().filter(x=>x!==from); if(!others.length) return;
+    let to=toPre||others[0]; const sel={ give:new Set((pre&&pre.give.props)||[]), get:new Set((pre&&pre.get.props)||[]) };
+    let gc=(pre&&pre.give.cash)||0, tc=(pre&&pre.get.cash)||0;
+    const m=modal('<div id="hm-bld"></div>',{onMount(){}}); m.querySelector('.panel').classList.add('hm-bldp');
+    const draw=()=>{ const box=m.querySelector('#hm-bld');
+      const col=(p,set,k,cash)=>`<div class="hm-bc"><div class="lbl">${p===from?'تعطي':'تاخذ من '+esc(p.name)} <small>(معه ${money(p.cash)})</small></div>
+        <div class="hm-bps">${tradable(p).map(i=>`<button type="button" class="hm-bp ${set.has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${T[i].color}"><b>${esc(T[i].name)}</b><small>${money(T[i].price)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى (المبني ما ينعطى)</p>'}</div>
+        <label class="hm-bcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" max="${p.cash}" step="any" value="${cash}" data-c="${k}"></label></div>`;
+      box.innerHTML=`<div class="eyebrow">صفقة جديدة — ${esc(from.name)}</div><h3>مع مين؟</h3><div class="hm-pk">${others.map(p=>`<button class="btn small team ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${esc(p.name)}</button>`).join('')}</div>
+        <div class="hm-bcols">${col(from,sel.give,'give',gc)}${col(to,sel.get,'get',tc)}</div>
+        <p class="hm-berr" id="hm-berr"></p>
+        <div class="row center"><button class="btn btn-hype" data-send>أرسل العرض</button><button class="btn ghost" data-x>تراجع</button></div>`;
+      $$('[data-to]',box).forEach(b=>b.onclick=()=>{ to=byId(b.dataset.to); sel.get.clear(); tc=0; draw(); });
+      $$('[data-i]',box).forEach(b=>b.onclick=()=>{ const set=sel[b.dataset.k], i=+b.dataset.i; set.has(i)?set.delete(i):set.add(i); b.classList.toggle('on'); });
+      $$('[data-c]',box).forEach(inp=>inp.oninput=()=>{ const v=Math.max(0,Math.round(+inp.value||0)); if(inp.dataset.c==='give') gc=v; else tc=v; });
+      box.querySelector('[data-x]').onclick=()=>m.remove();
+      box.querySelector('[data-send]').onclick=()=>{ const r=offerTrade(from, to, { props:[...sel.give], cash:gc }, { props:[...sel.get], cash:tc }, pre&&pre.counter);
+        if(typeof r==='string'){ box.querySelector('#hm-berr').textContent=r; return; } m.remove(); };
+    };
+    draw();
   }
 
   // ---------- الحركة والخانات ----------
@@ -406,7 +493,9 @@ window.DahoomHawamir = (function(){
         if(alive().length>1) opts.push({v:'trade',label:'صفقة',cls:'big'});
         const v=await decide(p, { title:'وش تسوي؟', options:opts, timeout:90000, def:'roll' });
         if(!G || G.over) return;
-        if(v==='build') await buildMenu(p); else if(v==='trade') await tradeMenu(p); else break;
+        if(v==='build') await buildMenu(p);
+        else if(v==='trade'){ if(phoneOf(p)){ NET().send(p.id,{ t:'hmbuild' }); toast(`${p.name} يجهّز صفقته من جواله`); } else builder(p); }
+        else break;
         if(!G || G.over) return;
       }
       const [a,b]=await rollDice(true); G.lastRoll=a+b;
@@ -440,13 +529,13 @@ window.DahoomHawamir = (function(){
     MAP = DATA.maps.find(m=>m.id===S.map) || DATA.maps[0]; T = buildTiles(MAP);
     G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], cash:S.startCash, pos:0, out:false, discount:false,
           stats:{ rentIn:0, rentOut:0, bought:0, auctions:0, trades:0, built:0, pot:0, stocks:0, takes:0 } }))),
-        turn:0, round:1, owner:{}, level:{}, deck:[], feed:[], sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, endAt:Date.now()+S.minutes*60000, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
+        turn:0, round:1, owner:{}, level:{}, deck:[], feed:[], trades:[], trSeq:0, sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, endAt:Date.now()+S.minutes*60000, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
     G.players.forEach((p,k)=>{ p.cash+=k*(DATA.seatBonus||0); });      // اللي يلعب متأخر ياخذ زيادة بسيطة تعوّضه
-    const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{}, hmDeed:i=>T[i]&&T[i].price?deed(i):'' });
+    const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{}, trade:(id,d)=>onPhoneTrade(id,d), hmDeed:i=>T[i]&&T[i].price?deed(i):'' });
     go('hawamir'); $('#hm-round').textContent='اللفة 1'; $('#hm-ask').innerHTML='';
     const bd=$('#hm-board'); if(bd) bd.style.setProperty('--felt', MAP.felt);
     const mn=$('#hm-mapname'); if(mn) mn.textContent=MAP.name;
-    buildBoard(); renderLog();
+    buildBoard(); renderLog(); renderTrades();
     clearInterval(clock); clock=setInterval(tick,1000); tick();
     play('game:g_mkcount',{volume:.5,max:2500});
     turn();
@@ -507,7 +596,8 @@ window.DahoomHawamir = (function(){
       own:T.map((_,i)=>G.owner[i]||null), lv:T.map((_,i)=>G.level[i]||0), sub:T.map((_,i)=>tileSub(i)), focus:G.focus,
       pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', pos:x.pos, cash:x.cash, worth:worth(x), out:x.out, props:owned(x).length, turn:!G.over && x===cur(), phone:phoneOf(x) })),
       pot:G.pot, round:G.round, endsIn:Math.max(0,G.endAt-Date.now()), lastRound:!!G.lastRound, timeUp:!!G.timeUp, stage:G.stageHtml||'',
-      canBuild: !G.over && cur()===p ? canBuild(p).length : 0 };
+      canBuild: !G.over && cur()===p ? canBuild(p).length : 0,
+      trades: G.trades.filter(t=>t.st==='pending' || Date.now()-(t.done||0)<120000).slice(-20).map(t=>({ id:t.id, from:t.from, to:t.to, give:t.give, get:t.get, st:t.st, ts:t.ts, counter:t.counter })) };
   }
   function hmState(id, cid){
     if(!G) return { waiting:true };
@@ -543,7 +633,7 @@ window.DahoomHawamir = (function(){
       <p><b>البناء:</b> لازم تملك كل مدن الدولة. بعدها تبني بيت ثم عمارة ثم فندق ثم برج، وكل مستوى يرفع الإيجار. تبني قبل ما ترمي النرد.</p>
       <p><b>الشركات:</b> شركتين تنشترى. إيجارها مجموع رمية اللي وقف عليها × ${money(DATA.coRent[0])}، ولو ملكت الثنتين × ${money(DATA.coRent[1])}.</p>
       <p><b>المطارات:</b> إيجارها يزيد كل ما ملكت مطار ثاني: ${DATA.airRent.map(money).join(' ثم ')}.</p>
-      <p><b>الصفقات:</b> قبل ما ترمي النرد تقدر تعرض تشتري عقار من لاعب أو تبيع له، وهو يوافق أو يرفض.</p>
+      <p><b>الصفقات:</b> بأي وقت ترسل عرض للاعب: تحط اللي تعطيه (عقارات وكاش) واللي تبيه منه. العرض يبقى معلّق ويشوفه الكل، وهو يوافق أو يرفض أو يرد بعرض ثاني. العقار المبني ما يدخل بالصفقات.</p>
       <p><b>الصندوق:</b> كل المخالفات والغرامات تتجمع فيه، واللي يوقف على خانة الصندوق ياخذه كله.</p>
       <p><b>الخانات الخاصة:</b> حظك (بطاقة عشوائية)، ساهر (مخالفة)، رحلة مجانية (تطير لمطار أو للبداية)، سوق الأسهم (تستثمر وترمي نرد)، المزاد (عقار عشوائي للكل).</p>
       <p><b>ما معك تدفع؟</b> ينباع بناؤك وبعده عقارك للبنك بنص السعر. لو ما كفى تفلس وتطلع.</p>

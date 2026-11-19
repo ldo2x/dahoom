@@ -103,6 +103,7 @@
     if(d.t==='rsfull'){ if(mirror) mirror.load(d.ops); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
     if(d.t==='close'){ if(st.askId===d.reqId){ closeSheet(); tog('#r-ask', false); $('#r-ask').innerHTML=''; st.askId=null; } return; }
+    if(d.t==='hmbuild'){ if(hm.B) tradeBuilder(); return; }
     if(d.t==='drawn'){ drawn(C(d.card)); return; }
     if(d.t==='info'){ st.info=d; renderSess(); if(!$('#r-main').classList.contains('hidden')) renderMain(); return; }
     if(d.t==='feed'){ st.feed.push(d.f); if(st.feed.length>60) st.feed.shift(); renderFeed(true); return; }
@@ -167,7 +168,7 @@
     tog('#r-wait', waiting);
     if(waiting){
       renderWait(); renderMe();
-      ['#r-timer','#r-view','#r-hm','#r-ask','#r-hmpl'].forEach(q=>tog(q,false));
+      ['#r-timer','#r-view','#r-hm','#r-hmpl','#r-hmtr'].forEach(q=>tog(q,false)); if(!st.askId) tog('#r-ask', false);
       ['#r-final','#r-charade','#r-rasm'].forEach(q=>$(q).classList.add('hidden'));
       $('#r-buzz').style.display='none'; $('#r-hand-wrap').classList.add('hidden'); $('#r-fx').innerHTML=''; $('#r-scores').innerHTML='';
       $('#r-phase').textContent=''; stopTimer(); return; }
@@ -230,7 +231,7 @@
     setTimer(done ? null : (S.timer || (S.rasm && S.rasm.timer) || null));
     renderView(done ? null : S.view);
     const hm = S.game==='hawamir' && S.hm && !done;
-    tog('#r-hm', hm); tog('#r-hmpl', hm); if(hm) renderHM(S.hm); else { tog('#r-ask', false); }
+    tog('#r-hm', hm); tog('#r-hmpl', hm); tog('#r-hmtr', hm); if(hm) renderHM(S.hm); else { tog('#r-ask', false); }
     $('#r-scores').classList.toggle('r-hide', S.game==='hawamir' && !done);
   }
 
@@ -329,7 +330,7 @@
   const hm = { S:null, key:null, built:false, B:null, zoom:false };
   function buildHM(){
     const S=hm.S, box=$('#r-hm');
-    box.innerHTML=`<div class="r-hmbar"><span class="muted small">اضغط أي خانة تشوف تفاصيلها ومالكها</span><button class="btn ghost small" id="r-hmzoom">${hm.zoom?'صغّر اللوحة':'كبّر اللوحة'}</button></div>
+    box.innerHTML=`<div class="r-hmbar"><span class="muted small">اضغط أي خانة تشوف تفاصيلها ومالكها</span><button class="btn small btn-hype r-trjump r-hide" id="r-trjump"></button><button class="btn ghost small" id="r-hmzoom">${hm.zoom?'صغّر اللوحة':'كبّر اللوحة'}</button></div>
       <div class="r-hmscroll ${hm.zoom?'zoom':''}" id="r-hmscroll"><div class="hm-board r-hmboard" style="--felt:${S.felt}"><div class="hm-tiles" id="r-hmtiles">
         ${S.tiles.map((t,i)=>{ const [r,c]=hmCell(i), sd=hmSide(i), pos=`grid-row:${r};grid-column:${c};`;
           return t.p ? `<button class="hm-tile ${t.t} s-${sd}" data-i="${i}" style="${pos}--g:${t.c}"><span class="hm-band">${t.fl}<em>${esc(t.k)}</em></span><span class="hm-body"><b class="hm-name">${esc(t.n)}</b><span class="hm-sub"></span></span><span class="hm-bld"></span><i class="hm-own"></i><span class="hm-ownav"></span></button>`
@@ -367,6 +368,71 @@
     const rank=[...H.pl].sort((a,b)=>(a.out-b.out)||b.worth-a.worth);
     $('#r-hmpl').innerHTML=H.pl.map(p=>`<div class="r-hmp ${p.turn?'turn':''} ${p.out?'out':''} ${p.id===H.me?'me':''}" style="--c:${p.color}"><span class="hm-tok" style="--c:${p.color}">${tokIn(p)}</span>
       <span class="rh-n"><b>${esc(p.name)}${p.id===H.me?' <i>(انت)</i>':''}</b><small>${p.out?'أفلس':`${p.props} عقار · الثروة ${money(p.worth)}`}</small></span><span class="rh-c"><b>${money(p.cash)}</b><small>كاش</small></span><span class="rh-r">${rank.indexOf(p)+1}</span></div>`).join('');
+    renderTrades(H);
+  }
+
+  // ---------- هوامير: الصفقات (عروض معلّقة يشوفها الكل) ----------
+  const TR_ST = { pending:'معلّقة', accepted:'تمت', rejected:'انرفضت', cancelled:'انسحبت', failed:'ما زبطت', countered:'رد بعرض ثاني' };
+  const plOf = id => (hm.B && hm.B.pl.find(p=>p.id===id)) || { name:'?', color:'var(--line)' };
+  const tileOf = i => hm.S.tiles[i];
+  const trSide = s => `${s.props.map(i=>`<span class="r-tp" style="--g:${tileOf(i).c}">${esc(tileOf(i).full)}</span>`).join('')}${s.cash?`<span class="r-tp cash">${money(s.cash)}</span>`:''}${!s.props.length&&!s.cash?'<span class="r-tp none">ولا شي</span>':''}`;
+  const tradableOf = pid => { const H=hm.B; return H.own.map((o,i)=>o===pid && !H.lv[i] && tileOf(i).p ? i : -1).filter(i=>i>=0); };
+  let trSeen=new Set();
+  function renderTrades(H){
+    const box=$('#r-hmtr'); const L=H.trades||[], me=H.me;
+    const pend=L.filter(t=>t.st==='pending');
+    const mine=pend.filter(t=>t.to===me), sent=pend.filter(t=>t.from===me), others=pend.filter(t=>t.to!==me && t.from!==me), done=L.filter(t=>t.st!=='pending').slice(-4).reverse();
+    // صفقة جديدة وصلتك: اهتزاز
+    mine.forEach(t=>{ if(!trSeen.has(t.id)){ trSeen.add(t.id); vibe([60,40,60]); } });
+    const jb=$('#r-trjump'); if(jb){ jb.classList.toggle('r-hide', !mine.length); jb.textContent=`عندك ${mine.length===1?'صفقة معلّقة':mine.length+' صفقات معلّقة'}`; jb.onclick=()=>{ vibe(10); box.scrollIntoView({behavior:'smooth', block:'start'}); }; }
+    const card = (t, acts) => { const A=plOf(t.from), B=plOf(t.to);
+      return `<div class="r-trc ${t.st}"><div class="r-trw"><b style="color:${A.color}">${esc(A.name)}</b> <span>${t.counter?'رد بعرض على':'يعرض على'}</span> <b style="color:${B.color}">${esc(B.name)}</b>${t.st!=='pending'?`<em class="r-trs ${t.st}">${TR_ST[t.st]}</em>`:''}</div>
+        <div class="r-trx"><div><small>${esc(A.name)} يعطي</small><div class="r-tps">${trSide(t.give)}</div></div><div><small>${esc(B.name)} يعطي</small><div class="r-tps">${trSide(t.get)}</div></div></div>
+        ${acts?`<div class="r-tra">${acts}</div>`:''}</div>`; };
+    const sig=JSON.stringify([L.map(t=>t.id+t.st), H.cash]);
+    if(box.dataset.sig===sig) return; box.dataset.sig=sig;
+    box.innerHTML=`<div class="r-trh"><h4>${ic('team')} الصفقات ${mine.length?`<span class="r-trbadge">${mine.length} لك</span>`:''}</h4><button class="btn small btn-hype" data-trnew>صفقة جديدة</button></div>
+      ${mine.length?`<div class="r-trsec"><div class="lbl">مرسولة لك — رد عليها</div>${mine.map(t=>card(t,`<button class="btn btn-mint" data-op="accept" data-id="${t.id}">موافق</button><button class="btn btn-bad" data-op="reject" data-id="${t.id}">لا</button><button class="btn" data-op="counter" data-id="${t.id}">عرض ثاني</button>`)).join('')}</div>`:''}
+      ${sent.length?`<div class="r-trsec"><div class="lbl">أرسلتها — تنتظر الرد</div>${sent.map(t=>card(t,`<button class="btn ghost" data-op="cancel" data-id="${t.id}">اسحب العرض</button>`)).join('')}</div>`:''}
+      ${others.length?`<div class="r-trsec"><div class="lbl">بين الباقين</div>${others.map(t=>card(t,'')).join('')}</div>`:''}
+      ${!pend.length?'<p class="muted small">ما فيه صفقات معلّقة. اعرض على أي لاعب: عقار مقابل عقار، أو كاش، أو الاثنين.</p>':''}
+      ${done.length?`<div class="r-trsec"><div class="lbl">آخر النتائج</div>${done.map(t=>card(t,'')).join('')}</div>`:''}`;
+    box.querySelector('[data-trnew]').onclick=()=>{ vibe(10); tradeBuilder(); };
+    $$('#r-hmtr [data-op]').forEach(b=>b.onclick=()=>{ const t=L.find(x=>x.id===b.dataset.id); if(!t) return; vibe(20);
+      if(b.dataset.op==='counter') return tradeBuilder({ to:t.from, give:t.get, get:t.give, counter:t.id });
+      send({ t:'hmtrade', op:b.dataset.op, id:t.id }); b.closest('.r-tra').innerHTML='<span class="muted small">انرسل…</span>'; });
+  }
+  // بناء عرض: مع مين + اللي تعطيه + اللي تبيه
+  function tradeBuilder(pre){
+    const H=hm.B; if(!H || !hm.S) return;
+    const others=H.pl.filter(p=>p.id!==H.me && !p.out); if(!others.length) return;
+    const meP=plOf(H.me);
+    let to=(pre&&others.find(p=>p.id===pre.to))||others[0];
+    const sel={ give:new Set((pre&&pre.give.props)||[]), get:new Set((pre&&pre.get.props)||[]) };
+    let cash={ give:(pre&&pre.give.cash)||0, get:(pre&&pre.get.cash)||0 };
+    const draw=()=>{
+      const col=(p,k)=>{ const list=tradableOf(p.id);
+        return `<div class="r-tbc"><div class="lbl">${k==='give'?'تعطي':'تاخذ من '+esc(p.name)} <small>معه ${money(p.cash)}</small></div>
+          <div class="r-tbps">${list.map(i=>`<button type="button" class="r-tbp ${sel[k].has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${tileOf(i).c}"><b>${esc(tileOf(i).full)}</b><small>${money(tileOf(i).p)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى — المبني ما يدخل بالصفقات</p>'}</div>
+          <label class="r-tbcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" step="any" value="${cash[k]||''}" placeholder="0" data-c="${k}"></label></div>`; };
+      sheet(`<div class="eyebrow">${pre&&pre.counter?'رد بعرض ثاني':'صفقة جديدة'}</div><h3>مع مين؟</h3>
+        <div class="r-tbto">${others.map(p=>`<button class="btn small ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${esc(p.name)}</button>`).join('')}</div>
+        <div class="r-tbcols">${col(meP,'give')}${col(to,'get')}</div>
+        <p class="r-err" id="r-tberr"></p>
+        <div class="r-actions"><button class="btn btn-hype big" data-send>أرسل العرض</button><button class="btn ghost" data-x>تراجع</button></div>
+        <p class="muted small center">العرض يطلع للكل، وهو يوافق أو يرفض أو يرد بعرض ثاني.</p>`);
+      $$('#r-sheet [data-to]').forEach(b=>b.onclick=()=>{ to=others.find(p=>p.id===b.dataset.to); sel.get.clear(); cash.get=0; vibe(8); draw(); });
+      $$('#r-sheet [data-i]').forEach(b=>b.onclick=()=>{ const s=sel[b.dataset.k], i=+b.dataset.i; s.has(i)?s.delete(i):s.add(i); b.classList.toggle('on'); vibe(8); });
+      $$('#r-sheet [data-c]').forEach(inp=>inp.oninput=()=>{ cash[inp.dataset.c]=Math.max(0, Math.round(+inp.value||0)); });
+      $('#r-sheet [data-x]').onclick=closeSheet;
+      $('#r-sheet [data-send]').onclick=()=>{
+        const err=$('#r-tberr'), give={ props:[...sel.give], cash:cash.give }, get={ props:[...sel.get], cash:cash.get };
+        if(!give.props.length && !get.props.length){ err.textContent='اختار عقار واحد على الأقل'; vibe([40,30,40]); return; }
+        if(give.cash>meP.cash){ err.textContent=`ما معك ${money(give.cash)}`; return; }
+        if(get.cash>to.cash){ err.textContent=`${to.name} ما معه ${money(get.cash)}`; return; }
+        vibe(30); send({ t:'hmtrade', op:'new', to:to.id, give, get, counter:(pre&&pre.counter)||null }); closeSheet(); };
+    };
+    draw();
   }
   function hmTokens(){
     const H=hm.B, b=$('#r-hmtiles'), tl=$('#r-hmtoks'); if(!H||!b||!tl) return;
@@ -555,7 +621,8 @@
   // ---------- أسئلة الشاشة ----------
   function openAsk(reqId, spec){
     st.askId=reqId; vibe([80,40,80]);
-    if(st.S && st.S.game==='hawamir' && !spec.options.some(o=>o.card)){
+    const isHM = spec.hm || (st.S && st.S.game==='hawamir');
+    if(isHM && !spec.options.some(o=>o.card)){
       const box=$('#r-ask'), d = spec.deed!=null && hm.S && hm.S.tiles[spec.deed] ? hm.S.tiles[spec.deed].deed : '';
       box.innerHTML=`<div class="ra-in ${d?'with-deed':''}">${d?`<div class="r-deed">${d}</div>`:''}<div class="ra-q"><div class="eyebrow">دورك تقرر</div><h3>${esc(spec.title)}</h3>${spec.text?`<p class="muted">${esc(spec.text)}</p>`:''}
         ${spec.input?`<form class="ra-in" id="ra-in" novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>

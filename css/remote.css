@@ -453,3 +453,43 @@ body.remote::before{height:10px;background-size:23px 10px}
 .ra-inv{font-family:var(--num);font-weight:900;font-size:1.3rem;color:var(--gold-ink)}
 .ra-inv.bad{color:var(--bad-ink);font-family:var(--body);font-size:.95rem}
 .ra-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+/* ---------- هوامير: الصفقات على جهاز اللاعب ---------- */
+.r-hmtr{display:flex;flex-direction:column;gap:10px}
+.r-trh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.r-trh h4{margin:0}
+.r-trbadge{background:var(--gold);color:var(--ink);border-radius:99px;padding:1px 10px;font-size:.8rem;font-weight:700;animation:rwPulse 1.4s ease-in-out infinite}
+.r-trsec{display:flex;flex-direction:column;gap:8px}
+.r-trc{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.r-trc.accepted{border-color:var(--ok)}
+.r-trc.rejected,.r-trc.failed,.r-trc.cancelled,.r-trc.countered{opacity:.7}
+.r-trw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:600}
+.r-trw span{color:var(--mute)}
+.r-trs{font-style:normal;margin-inline-start:auto;font-size:.78rem;font-weight:700;border-radius:6px;padding:1px 8px;background:var(--surface-3)}
+.r-trs.accepted{background:color-mix(in srgb,var(--ok) 25%,var(--surface));color:var(--ok-ink)}
+.r-trs.rejected,.r-trs.failed{color:var(--bad-ink)}
+.r-trx{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.r-trx small{color:var(--mute);font-weight:700;font-size:.78rem}
+.r-tps{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.r-tp{display:inline-flex;align-items:center;background:var(--surface);border-inline-start:5px solid var(--g);border-radius:8px;padding:2px 9px;font-weight:700;font-size:.88rem}
+.r-tp.cash{--g:var(--ok);font-family:var(--num);font-weight:900}
+.r-tp.none{--g:var(--line);color:var(--mute)}
+.r-tra{display:flex;gap:8px;flex-wrap:wrap}
+.r-tra .btn{flex:1 1 90px}
+.r-tbto{display:flex;flex-wrap:wrap;gap:8px}
+.r-tbto .btn{border-inline-start:5px solid var(--c)}
+.r-tbto .btn.on{box-shadow:0 0 0 3px var(--c);background:color-mix(in srgb,var(--c) 15%,var(--surface))}
+.r-tbcols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.r-tbc{display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border-radius:14px;padding:10px;min-width:0}
+.r-tbc .lbl small{color:var(--mute);font-weight:600;display:block}
+.r-tbps{display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto}
+.r-tbp{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--line);border-inline-start:6px solid var(--g);border-radius:10px;padding:7px 9px}
+.r-tbp b{font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-tbp small{color:var(--mute);font-family:var(--num);font-weight:700;flex:none}
+.r-tbp.on{border-color:var(--g);background:color-mix(in srgb,var(--g) 20%,var(--surface));box-shadow:0 0 0 2px var(--g)}
+.r-tbp:focus-visible{outline:2px solid var(--brand)}
+.r-tbcash{display:flex;align-items:center;gap:8px;font-weight:700}
+.r-tbcash input{flex:1;min-width:0;font-family:var(--num);font-weight:800;font-size:1.1rem;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);direction:ltr;text-align:center}
+@media (max-width:420px){ .r-trx{grid-template-columns:1fr} }
+
+.r-trjump{animation:rwPulse 1.4s ease-in-out infinite;margin-inline-start:auto}
