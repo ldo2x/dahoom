@@ -508,3 +508,22 @@ body.remote::before{height:10px;background-size:23px 10px}
 .rp-solvers span{display:inline-flex;gap:6px;align-items:center;padding:3px 10px 3px 4px;border-radius:999px;background:color-mix(in srgb,var(--c) 20%,var(--surface-2));border:1.5px solid var(--c)}
 .rp-solvers i{font-style:normal;font-family:var(--num);font-weight:900;font-size:.75rem;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:var(--c);color:#fff}
 .rp-solvers em{font-style:normal;font-family:var(--num);font-weight:900;color:var(--ok-ink)}
+
+/* ارسم وخمّن: التخمينات جنب اللوحة — طولها ثابت عشان اللوحة ما تتحرك مع كثرة التخمينات */
+.r-rasm{container-type:inline-size}
+.rg-stage{display:flex;flex-direction:column;gap:12px;min-width:0}
+.rg-board{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rg-aside-in{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rg-fh{display:flex;align-items:center;gap:8px;min-height:28px;min-width:0}
+.rg-fh .lbl{flex:none;margin:0}
+.rg-fh .rg-prog{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none;min-width:0}
+.rg-fh .rg-prog-p,.rg-fh .rg-prog-n{flex:none;white-space:nowrap}
+.rg-stage .rg-feed{height:168px;max-height:none;overflow-y:auto;overscroll-behavior:contain;padding-inline-end:2px}
+@container (min-width:600px){
+  .rg-stage:not(.solo){display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,32%,300px);gap:16px;align-items:stretch}
+  .rg-stage:not(.solo) .rg-aside{position:relative;min-height:280px}
+  .rg-stage:not(.solo) .rg-aside-in{position:absolute;inset:0}
+  .rg-stage:not(.solo) .rg-feed{height:auto;flex:1;min-height:0}
+  .rg-stage:not(.solo) .rg-fh{flex-wrap:wrap}
+  .rg-stage:not(.solo) .rg-fh .rg-prog{flex-wrap:wrap;overflow:visible}
+}

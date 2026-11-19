@@ -527,14 +527,19 @@
   function buildGuess(box, R){
     box.innerHTML=`<div class="eyebrow">${ic('eye')} خمّن الرسمة${R.mirror?'':' اللي على الشاشة'}${R.tag?` · <span class="pill">${esc(R.tag)}</span>`:''}${R.diff?` <span class="pill dim">${esc(R.diff)}</span>`:''}</div>
       <div class="muted small">${esc(R.drawer||'')} يرسم</div>
-      ${R.mirror?'<canvas class="rp-canvas" id="rg-canvas"></canvas>':''}
-      ${R.solved?`<div class="rg-done"><small>خمّنتها صح</small><b>${esc(R.solved.w)}</b><span>+${R.solved.gp} · انتظر لين الباقين يخمّنون أو يخلص الوقت</span></div>`:`<div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
-      <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>`}
-      <div class="rg-prog" id="rg-prog"></div>
-      <div class="lbl">التخمينات</div><div class="rg-feed" id="rg-feed"></div>`;
+      <div class="rg-stage ${R.mirror?'':'solo'}">
+        ${R.mirror?'<div class="rg-board"><canvas class="rp-canvas" id="rg-canvas"></canvas></div>':''}
+        <div class="rg-aside"><div class="rg-aside-in">
+          ${R.solved?`<div class="rg-done"><small>خمّنتها صح</small><b>${esc(R.solved.w)}</b><span>+${R.solved.gp} · انتظر لين الباقين يخمّنون أو يخلص الوقت</span></div>`:`<div class="rg-hint" id="rg-hint">${hintHTML(R)}</div>
+          <form class="rg-row" id="rg-form"><input id="rg-in" maxlength="40" placeholder="اكتب تخمينك" autocomplete="off" enterkeyhint="send"><button class="btn btn-hype" type="submit">خمّن</button></form>`}
+          <div class="rg-fh"><span class="lbl">التخمينات</span><div class="rg-prog" id="rg-prog"></div></div>
+          <div class="rg-feed" id="rg-feed"></div>
+        </div></div>
+      </div>`;
     if(R.solved) vibe([60,30,120]);
+    // بعد كل تخمين نرجع المؤشر للمربع بدون ما تنسحب الصفحة — اللوحة تبقى مكانها
     const fm=$('#rg-form'); if(fm) fm.onsubmit=e=>{ e.preventDefault(); const inp=$('#rg-in'), v=inp.value.trim(); if(!v) return;
-      send({t:'guess', text:v}); vibe(15); inp.value=''; inp.focus(); };
+      send({t:'guess', text:v}); vibe(15); inp.value=''; try{ inp.focus({preventScroll:true}); }catch(err){} };
     if(R.mirror) buildMirror(); else mirror=null;
   }
   // لوحة الرسام: نفس أدوات الشاشة (draw.js) — كل عملية تنرسل للشاشة مباشرة
@@ -542,11 +547,15 @@
   function buildPad(box, word){
     const DR=window.DahoomDraw;
     box.innerHTML=`<div class="rp-word"><small>ارسم:</small> <b>${esc(word)}</b></div>
-      <canvas class="rp-canvas" id="rp-canvas"></canvas>
-      <div class="dr-tools" id="rp-tools"></div>
-      <p class="muted small center">ممنوع حروف وأرقام بالرسمة</p>
-      <div class="rg-prog" id="rg-prog"></div>
-      <div class="lbl">تخمينات الباقين</div><div class="rg-feed" id="rg-feed"></div>`;
+      <div class="rg-stage pad">
+        <div class="rg-board"><canvas class="rp-canvas" id="rp-canvas"></canvas>
+          <div class="dr-tools" id="rp-tools"></div>
+          <p class="muted small center">ممنوع حروف وأرقام بالرسمة</p></div>
+        <div class="rg-aside"><div class="rg-aside-in">
+          <div class="rg-fh"><span class="lbl">تخمينات الباقين</span><div class="rg-prog" id="rg-prog"></div></div>
+          <div class="rg-feed" id="rg-feed"></div>
+        </div></div>
+      </div>`;
     const cv=$('#rp-canvas'), dpr=Math.min(2, window.devicePixelRatio||1);
     const W=cv.clientWidth, H=Math.round(W*0.75); cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
     const B=DR.board(cv), tool=DR.newTool();
