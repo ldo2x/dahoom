@@ -175,11 +175,20 @@ window.DahoomHawamir = (function(){
       if(G.over){ return finish(null); }
       box.innerHTML=`<div class="hm-q ${spec.deed!=null?'with-deed':''}" style="--c:${p.color}">${spec.deed!=null?deed(spec.deed):''}<div class="hm-q-in">
         <div class="hm-who">${tok(p)}<b>${esc(p.name)}</b>${phoneOf(p)?`<small>${ic('phone')} يقدر يجاوب من جواله</small>`:''}</div><h3>${spec.title}</h3>${spec.text?`<p class="hm-q-t">${spec.text}</p>`:''}
+        ${spec.input?`<form class="hm-in" data-in novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>
+          <div class="hm-in-v" data-inv>${money(spec.input.def)}</div><div class="hm-opts many">${(spec.input.chips||[]).map(v=>`<button type="button" class="btn small" data-chip="${v}">${money(v)}</button>`).join('')}</div>
+          <p class="hm-q-t">أي رقم من ${money(spec.input.min)} إلى ${money(spec.input.max)}</p>`:''}
         <div class="hm-opts ${spec.options.length>4?'many':''}">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'} ${spec.big?'big':''}" data-o="${i}">${esc(o.label)}</button>`).join('')}</div>
         ${spec.cancel?`<button class="btn ghost small" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div>`;
       $$('[data-o]',box).forEach(b=>b.onclick=()=>{ const i=+b.dataset.o; finish(i<0?null:spec.options[i].v); });
-      if(phoneOf(p)) rid=NET().ask(p.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, deed: spec.deed!=null ? spec.deed : null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
-        i=>finish(i==null||i<0?null:spec.options[i].v));
+      const num = v => { const n=Math.round(Number(String(v).replace(/[^\d.]/g,''))); return spec.input && n>=spec.input.min && n<=spec.input.max ? n : null; };
+      const form=box.querySelector('[data-in]');
+      if(form){ const inp=form.querySelector('input'), lbl=box.querySelector('[data-inv]');
+        inp.oninput=()=>{ const n=num(inp.value); lbl.textContent = n!=null ? money(n) : 'الرقم برا الحدود'; lbl.classList.toggle('bad', n==null); };
+        form.onsubmit=e=>{ e.preventDefault(); const n=num(inp.value); if(n==null){ toast(`اكتب رقم من ${money(spec.input.min)} إلى ${money(spec.input.max)}`); return; } finish(n); };
+        $$('[data-chip]',box).forEach(b=>b.onclick=()=>{ inp.value=b.dataset.chip; inp.oninput(); inp.focus(); }); }
+      if(phoneOf(p)) rid=NET().ask(p.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, deed: spec.deed!=null ? spec.deed : null, input: spec.input||null, options:spec.options.map(o=>({label:o.label, cls:o.cls||'', color:null})) },
+        i=>{ if(i && typeof i==='object'){ const n=num(i.num); if(n!=null) finish(n); return; } finish(i==null||i<0?null:spec.options[i].v); });
       if(spec.timeout) tm=setTimeout(()=>finish(spec.def===undefined?null:spec.def), spec.timeout);
     });
   }
@@ -261,9 +270,11 @@ window.DahoomHawamir = (function(){
     if(!list.length){ toast(`${seller.name} ما عنده عقار ينباع (العقار المبني ما ينباع)`); return; }
     const i=await decide(p, { title:'أي عقار؟', cancel:'تراجع', options:list.map(k=>({v:k,label:`${T[k].name} (${money(T[k].price)})`,cls:''})) });
     if(i==null) return;
-    const base=T[i].price, prices=[0.75,1,1.5,2,3].map(m=>Math.round(base*m/1000)*1000).filter(v=>v<=buyer.cash);
-    if(!prices.length){ toast(`${buyer.name} ما معه كاش يكفي`); return; }
-    const price=await decide(p, { title:`بكم؟ (${esc(T[i].name)})`, deed:i, cancel:'تراجع', options:prices.map(v=>({v,label:money(v),cls:''})) });
+    const base=T[i].price, maxP=Math.floor(buyer.cash/100)*100;
+    if(maxP<100){ toast(`${buyer.name} ما معه كاش يكفي`); return; }
+    const chips=[0.5,0.75,1,1.5,2,3].map(m=>Math.round(base*m/1000)*1000).filter((v,k,a)=>v>=100 && v<=maxP && a.indexOf(v)===k);
+    const price=await decide(p, { title:`بكم؟ (${esc(T[i].name)})`, text:`حط السعر اللي تبيه. سعرها الأصلي ${money(base)}، و${esc(buyer.name)} معه ${money(buyer.cash)}`, deed:i, cancel:'تراجع', options:[],
+      input:{ min:100, max:maxP, def:Math.min(base, maxP), chips, ok:'اعرض السعر' } });
     if(price==null) return;
     G.focus=i; renderBoard();
     const yes=await decide(x, { deed:i, title: mode==='buy' ? `${esc(p.name)} يبي يشتري منك "${esc(T[i].name)}" بـ ${money(price)}` : `${esc(p.name)} يعرض عليك "${esc(T[i].name)}" بـ ${money(price)}`,

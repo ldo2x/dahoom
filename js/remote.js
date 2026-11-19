@@ -558,8 +558,17 @@
     if(st.S && st.S.game==='hawamir' && !spec.options.some(o=>o.card)){
       const box=$('#r-ask'), d = spec.deed!=null && hm.S && hm.S.tiles[spec.deed] ? hm.S.tiles[spec.deed].deed : '';
       box.innerHTML=`<div class="ra-in ${d?'with-deed':''}">${d?`<div class="r-deed">${d}</div>`:''}<div class="ra-q"><div class="eyebrow">دورك تقرر</div><h3>${esc(spec.title)}</h3>${spec.text?`<p class="muted">${esc(spec.text)}</p>`:''}
+        ${spec.input?`<form class="ra-in" id="ra-in" novalidate><input type="number" inputmode="numeric" min="${spec.input.min}" max="${spec.input.max}" step="any" value="${spec.input.def}" aria-label="السعر"><button class="btn btn-hype" type="submit">${esc(spec.input.ok||'تمام')}</button></form>
+          <div class="ra-inv" id="ra-inv">${money(spec.input.def)}</div><div class="ra-chips">${(spec.input.chips||[]).map(v=>`<button type="button" class="btn small" data-chip="${v}">${money(v)}</button>`).join('')}</div>
+          <p class="muted small">أي رقم من ${money(spec.input.min)} إلى ${money(spec.input.max)}</p>`:''}
         <div class="ra-opts">${spec.options.map((o,i)=>`<button class="btn ${o.cls||'btn-hype'}" data-o="${i}">${esc(o.label)}</button>`).join('')}${spec.cancel?`<button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button>`:''}</div></div></div>`;
       tog('#r-ask', true);
+      if(spec.input){ const I=spec.input, inp=$('#ra-in input'), lbl=$('#ra-inv');
+        const num=v=>{ const n=Math.round(Number(String(v).replace(/[^\d.]/g,''))); return n>=I.min && n<=I.max ? n : null; };
+        inp.oninput=()=>{ const n=num(inp.value); lbl.textContent = n!=null ? money(n) : 'الرقم برا الحدود'; lbl.classList.toggle('bad', n==null); };
+        $$('#r-ask [data-chip]').forEach(b=>b.onclick=()=>{ vibe(8); inp.value=b.dataset.chip; inp.oninput(); });
+        $('#ra-in').onsubmit=e=>{ e.preventDefault(); const n=num(inp.value); if(n==null){ lbl.textContent=`اكتب رقم من ${money(I.min)} إلى ${money(I.max)}`; lbl.classList.add('bad'); vibe([40,30,40]); return; }
+          vibe(25); send({t:'answer', reqId, value:{num:n}}); st.askId=null; tog('#r-ask', false); box.innerHTML=''; }; }
       $$('#r-ask [data-o]').forEach(b=>b.onclick=()=>{ vibe(25); send({t:'answer', reqId, value:+b.dataset.o}); st.askId=null; tog('#r-ask', false); box.innerHTML=''; });
       if(!st.askSeen || st.askSeen!==spec.title){ st.askSeen=spec.title; try{ box.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){} }
       return;

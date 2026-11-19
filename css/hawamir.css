@@ -212,3 +212,9 @@
 .hm-lg b{flex:none}
 .hm-lg span{flex:1;min-width:0}
 .hm-lg .hm-amt{flex:none;margin:0}
+
+/* صفقة: السعر يكتبه اللاعب بحرية */
+.hm-in{display:flex;gap:.6cqw;align-items:stretch}
+.hm-in input{width:14cqw;font-family:var(--num);font-weight:900;font-size:1.6cqw;text-align:center;direction:ltr;border-radius:.7cqw;border:.15cqw solid var(--hm-gold);background:var(--hm-paper);color:var(--hm-ink);padding:.3cqw .6cqw}
+.hm-in-v{font-family:var(--num);font-weight:900;font-size:1.5cqw;color:var(--hm-gold-2)}
+.hm-in-v.bad{color:#FFB3A6;font-family:var(--body);font-size:1.1cqw}

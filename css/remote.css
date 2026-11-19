@@ -446,3 +446,10 @@ body.remote::before{height:10px;background-size:23px 10px}
 .rf-w b{font-weight:700}
 .rf-w small{color:var(--mute);font-size:.78rem;line-height:1.35}
 @media (prefers-reduced-motion:reduce){ .rf-award{animation:none} }
+
+/* هوامير: كتابة السعر بالصفقة */
+.ra-in{display:flex;gap:8px;justify-content:center}
+.ra-in input{flex:1;min-width:0;max-width:240px;font-family:var(--num);font-weight:900;font-size:1.5rem;text-align:center;direction:ltr;padding:10px 12px;border-radius:12px;border:2px solid var(--gold);background:var(--surface-2);color:var(--text)}
+.ra-inv{font-family:var(--num);font-weight:900;font-size:1.3rem;color:var(--gold-ink)}
+.ra-inv.bad{color:var(--bad-ink);font-family:var(--body);font-size:.95rem}
+.ra-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
