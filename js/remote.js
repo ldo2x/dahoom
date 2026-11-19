@@ -219,7 +219,7 @@
       $('#r-hand').classList.toggle('can', !!S.canPlay);
     }
     // النقاط
-    $('#r-scores').innerHTML=(S.scores||[]).map(x=>`<span class="r-sc ${x.id===t.id?'me':''} ${x.turn?'turn':''}" style="--c:${x.color}"><i></i>${esc(x.name)} <b>${x.score}</b>${S.game==='alf'?`<small>${ic('cards')}${x.hand}</small>`:''}</span>`).join('');
+    $('#r-scores').innerHTML=(S.scores||[]).map(x=>`<span class="r-sc ${x.id===t.id?'me':''} ${x.turn?'turn':''}" style="--c:${x.color}"><i></i>${esc(x.name)} <b>${x.score}</b>${S.game==='alf'&&x.hand!=null?`<small>${ic('cards')}${x.hand}</small>`:''}</span>`).join('');
     // ارسم وخمّن: لوحة الرسم للرسام، ومربع التخمين للباقين
     const rs=$('#r-rasm'), isR = S.game==='rasm' && !done && !!S.rasm;
     rs.classList.toggle('hidden', !isR);
@@ -397,16 +397,18 @@
       <div class="r-actions"><button class="btn ghost" data-x>إغلاق</button></div>`);
     $('#r-sheet [data-x]').onclick=closeSheet;
   }
-  // التتويجات (للكل) + جدول النتائج + كل الكلمات
+  // نهاية المباراة للكل: التتويجات + جداول الأرقام + قوائم (الكلمات، اللحظات، الممتلكات)
+  // A = { awards:[{title,desc,icon,who,team,color,value,av,mine}], tables:[{title,icon,head,rows:[{rank,name,color,me,cells}]}], lists:[{title,icon,items:[{b,s,ok}]}] }
   function finalAllHTML(A){
-    const who = A.solo ? 'اللاعب' : 'الفريق';
-    return `${A.awards.length?`<section class="rf-sec"><h4>${ic('trophy')} التتويجات</h4><div class="rf-awards">${A.awards.map((a,i)=>`<div class="rf-award ${a.mine?'mine':''}" style="--c:${a.color||'var(--brand)'};--i:${i}">
+    const aw = (A.awards||[]).length ? `<section class="rf-sec"><h4>${ic('trophy')} التتويجات</h4><div class="rf-awards">${A.awards.map((a,i)=>`<div class="rf-award ${a.mine?'mine':''}" style="--c:${a.color||'var(--brand)'};--i:${i}">
         <span class="rfa-ic">${ic(a.icon||'star')}</span><div class="rfa-t">${esc(a.title)}</div>
         <div class="rfa-who">${a.av?`<img src="${avSrc(a.av)}" alt="">`:''}<b>${esc(a.who)}</b>${a.team?`<small>${esc(a.team)}</small>`:''}</div>
-        <div class="rfa-v">${esc(a.value)}</div><div class="rfa-d">${esc(a.desc)}</div>${a.mine?'<span class="rfa-me">لك</span>':''}</div>`).join('')}</div></section>`:''}
-      <section class="rf-sec"><h4>${ic('podium')} الأرقام</h4><div class="rf-table"><div class="rf-tr rf-th"><span>#</span><span>${who}</span><span>النقاط</span><span>خمّن صح</span><span>رسماته انعرفت</span></div>
-        ${A.table.map(t=>`<div class="rf-tr ${t.me?'me':''}" style="--c:${t.color}"><span>${t.rank}</span><span class="rf-tn"><i></i>${esc(t.name)}</span><b>${t.score}</b><span>${t.guessed}</span><span>${t.drawn}</span></div>`).join('')}</div></section>
-      ${A.words.length?`<section class="rf-sec"><h4>${ic('pencil')} كل الكلمات (${A.words.length})</h4><div class="rf-words">${A.words.map(w=>`<div class="rf-w ${w.ok?'ok':'no'}"><b>${esc(w.w)}</b><small>${w.by?`رسمها ${esc(w.by)} · `:''}${w.ok?(w.g?`خمّنها ${esc(w.g)}`:'انعرفت'):'ما أحد عرفها'}${w.rate?` · ${w.rate.toFixed(1)}/5`:''}</small></div>`).join('')}</div></section>`:''}`;
+        <div class="rfa-v">${esc(a.value)}</div><div class="rfa-d">${esc(a.desc)}</div>${a.mine?'<span class="rfa-me">لك</span>':''}</div>`).join('')}</div></section>` : '';
+    const tb = (A.tables||[]).map(T=>{ const cols=`28px minmax(96px,1.6fr) repeat(${T.head.length-2},minmax(58px,1fr))`;
+      return `<section class="rf-sec"><h4>${ic(T.icon||'podium')} ${esc(T.title)}</h4><div class="rf-table"><div class="rf-tr rf-th" style="grid-template-columns:${cols};min-width:${150+T.head.length*62}px">${T.head.map(h=>`<span>${esc(h)}</span>`).join('')}</div>
+        ${T.rows.map(r=>`<div class="rf-tr ${r.me?'me':''}" style="--c:${r.color||'var(--line)'};grid-template-columns:${cols};min-width:${150+T.head.length*62}px"><span>${r.rank||''}</span><span class="rf-tn"><i></i>${esc(r.name)}</span>${r.cells.map((c,k)=>k===0?`<b>${esc(c)}</b>`:`<span>${esc(c)}</span>`).join('')}</div>`).join('')}</div></section>`; }).join('');
+    const ls = (A.lists||[]).filter(L=>L.items.length).map(L=>`<section class="rf-sec"><h4>${ic(L.icon||'pencil')} ${esc(L.title)} (${L.items.length})</h4><div class="rf-words">${L.items.map(w=>`<div class="rf-w ${w.ok===false?'no':''}" ${w.c?`style="border-inline-start-color:${w.c}"`:''}><b>${esc(w.b)}</b>${w.s?`<small>${esc(w.s)}</small>`:''}</div>`).join('')}</div></section>`).join('');
+    return aw + tb + ls;
   }
 
   // ---------- ارسم وخمّن ----------

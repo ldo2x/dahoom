@@ -474,6 +474,16 @@ window.DahoomHawamir = (function(){
     return out;
   }
 
+  // نهاية المباراة لكل لاعب: التتويجات + جدول الثروات + ممتلكات كل واحد
+  function finalAll(me){
+    const rank=G.final.map(id=>byId(id)).filter(Boolean);
+    const aw=awards(rank).map(a=>{ const p=G.players.find(x=>x.name===a.name); return { title:a.title, desc:a.desc, icon:a.icon, who:a.name, team:'', color:a.color, value:a.value, av:p?p.avatar:'', mine:p===me }; });
+    return { awards:aw,
+      tables:[{ title:'أرقام المباراة', icon:'podium', head:['#','اللاعب','الثروة','كاش','عقارات','إيجار دخل','إيجار دفع','صفقات'],
+        rows:rank.map((p,i)=>({ rank:i+1, name:p.name+(p.out?' (أفلس)':''), color:p.color, me:p===me, cells:[money(worth(p)), money(p.cash), owned(p).length, money(p.stats.rentIn), money(p.stats.rentOut), p.stats.trades] })) }],
+      lists:[{ title:'ممتلكات كل لاعب', icon:'hm-home', items:rank.filter(p=>owned(p).length).map(p=>({ b:p.name, c:p.color, s:owned(p).map(i=>T[i].name+(G.level[i]?` (${LV[G.level[i]-1].name})`:'')).join('، ') })) }] };
+  }
+
   // ---------- حالة الجوال ----------
   // الجزء الثابت (الخانات والصكوك) ينرسل مرة وحدة لكل جهاز
   function hmStatic(){
@@ -496,7 +506,7 @@ window.DahoomHawamir = (function(){
       phase: G.over ? '' : p.out ? 'أفلست — تابع من الشاشة' : cur()===p ? 'دورك — القرارات تجيك هنا' : `دور ${cur().name}`,
       fx: owned(p).map(i=>({ n:T[i].name+(G.level[i]?` · ${LV[G.level[i]-1].name}`:''), bad:false })),
       scores: rank.map(x=>({ id:x.id, name:x.name, color:x.color, score:money(worth(x)), turn:!G.over && x===cur() })), hm: hmBoard(p, cid) };
-    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, awards:[], rows:[['الثروة',money(worth(p))],['الكاش',money(p.cash)],['العقارات',String(owned(p).length)],['إيجار دخل',money(p.stats.rentIn)],['إيجار دفعته',money(p.stats.rentOut)]] }; }
+    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, awards:[], all:finalAll(p), rows:[['الثروة',money(worth(p))],['الكاش',money(p.cash)],['العقارات',String(owned(p).length)],['إيجار دخل',money(p.stats.rentIn)],['إيجار دفعته',money(p.stats.rentOut)]] }; }
     return st;
   }
 

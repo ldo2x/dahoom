@@ -292,9 +292,10 @@
     const avOf = n => { const p=players.find(x=>x.name===n); return p ? p.avatar : ''; };
     return {
       awards:(G.awards||[]).map(a=>({ title:a.title, desc:a.desc, icon:a.icon, who:a.who, team:a.team&&a.team.name!==a.who?a.team.name:'', color:a.team?a.team.color:'', value:a.value, av:avOf(a.who), mine:!!(a.team&&a.team.id===id) })),
-      table:sorted.map((t,i)=>({ rank:i+1, name:t.name, color:t.color, score:t.score, guessed:t.guessedOk, drawn:t.drawnOk, me:t.id===id })),
-      words:G.log.items.filter(x=>x.r==='ok'||x.r==='fail').map(x=>({ w:x.x, ok:x.r==='ok', g:x.g||'', by:x.by||'', rate:x.rate||0 })),
-      solo: D.session.mode==='solo' };
+      tables:[{ title:'الأرقام', icon:'podium', head:['#', D.session.mode==='solo'?'اللاعب':'الفريق', 'النقاط', 'خمّن صح', 'رسماته انعرفت'],
+        rows:sorted.map((t,i)=>({ rank:i+1, name:t.name, color:t.color, me:t.id===id, cells:[t.score, t.guessedOk, t.drawnOk] })) }],
+      lists:[{ title:'كل الكلمات', icon:'pencil', items:G.log.items.filter(x=>x.r==='ok'||x.r==='fail').map(x=>({ b:x.x, ok:x.r==='ok',
+        s:[x.by?'رسمها '+x.by:'', x.r==='ok'?(x.g?'خمّنها '+x.g:'انعرفت'):'ما أحد عرفها', x.rate?x.rate.toFixed(1)+'/5':''].filter(Boolean).join(' · ') })) }] };
   }
   function phoneState(id, cid, pid){
     const t=G && teamById(id);

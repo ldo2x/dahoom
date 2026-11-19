@@ -103,12 +103,31 @@
   }
 
   // ---------- حالة الجوال ----------
+  // نهاية المباراة لكل لاعب: كل التتويجات (فرق ولاعبين) + الأرقام كاملة + أبرز اللحظات
+  function finalAll(sorted, id){
+    const T=G.stats.T, P=G.stats.P||{};
+    const avT = t => t.players.length===1 ? t.players[0].avatar : '';
+    const pT=(G.playerAwards||[]).map(x=>x.title);
+    const teamAw=(G.stats.awards||[]).filter(a=>!(a.key==='thief' && pT.includes('الحرامي')) && !(a.key==='actor' && pT.includes('نجم المسرح'))).map(a=>({ title:a.title, desc:a.desc, icon:a.icon, who:a.team.name, team:'', color:a.team.color, value:a.value, av:avT(a.team), mine:a.team.id===id }));
+    const plAw=(G.playerAwards||[]).map(a=>({ title:a.title, desc:a.desc, icon:a.icon, who:a.p.name, team:a.p.team.players.length>1?a.p.team.name:'', color:a.p.team.color, value:a.value(a.p),
+      av:(a.p.team.players.find(x=>x.id===a.p.id)||{}).avatar||'', mine:a.p.team.id===id }));
+    const f=(o,k)=>`${o.ok[k]}/${o.tries[k]}`;
+    const solo=G.teams.every(t=>t.players.length<=1);
+    const tables=[{ title:'الأرقام كاملة', icon:'podium', head:['#', solo?'اللاعب':'الفريق', 'النقاط', 'أسئلة', 'بدون كلام', 'تحديات', 'سرقات', 'بطاقات', 'أفضل دور', 'أطول سلسلة'],
+      rows:sorted.map((t,i)=>{ const o=T[t.id]; return { rank:i+1, name:t.name, color:t.color, me:t.id===id, cells:[t.score, f(o,'q'), f(o,'c'), f(o,'t'), o.steals, o.cards, '+'+o.bestTurn, o.maxCombo] }; }) }];
+    const pl=Object.entries(P).map(([pid,o])=>({ o, t:G.teams.find(t=>t.players.some(p=>p.id===pid)) })).filter(x=>x.t);
+    if(pl.length && !solo) tables.push({ title:'كل لاعب', icon:'team', head:['#','اللاعب','صح','غلط','سرقات','مثّل'],
+      rows:pl.sort((a,b)=>b.o.ok-a.o.ok).map((x,i)=>({ rank:i+1, name:x.o.name, color:x.t.color, me:x.t.id===id, cells:[x.o.ok, x.o.wrong, x.o.steals, `${x.o.acted} (${x.o.actedOk})`] })) });
+    return { awards:[...teamAw, ...plAw], tables,
+      lists:[{ title:'أبرز اللحظات', icon:'sparkles', items:(G.stats.moments||[]).slice(-14).map(m=>({ b:strip(m.text), s:'اللفة '+m.round, c:m.color||'' })) }] };
+  }
   function phoneState(id, cid, pid){
     const t=G && G.teams.find(x=>x.id===id);
     if(!t) return { game:'alf', waiting:true };
     if(G.ended){ const sorted=[...G.teams].sort((a,b)=>b.score-a.score), o=G.stats.T[id];
       return { game:'alf', team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores:sorted.map(x=>({id:x.id,name:x.name,color:x.color,score:x.score})),
         final:{ rank:sorted.indexOf(t)+1, of:sorted.length, awards:(G.stats.awards||[]).filter(a=>a.team.id===id).map(a=>({title:a.title,value:a.value})),
+          all: finalAll(sorted, id),
           rows:[['أسئلة صح',`${o.ok.q}/${o.tries.q}`],['بدون كلام',`${o.ok.c}/${o.tries.c}`],['تحديات',`${o.ok.t}/${o.tries.t}`],['سرقات',o.steals],['بطاقات لعبتوها',o.cards],['ضربات جتكم',o.hits],['أفضل دور','+'+o.bestTurn],['أطول سلسلة',o.maxCombo]] } }; }
     const mine = cur()===t, can = !!(G.canPlayNow && mine && canPlayCard(t));
     const b=G.buzz && G.buzz.open ? G.buzz : null;
@@ -1144,6 +1163,7 @@
     try{ sendMatchLog(winner, sorted); }catch(e){ console.error(e); }
     const el=$('#match-stats'); if(el && window.DahoomStats){ try{ window.DahoomStats.renderAlf(el, G, S.target); }catch(e){ console.error(e); el.innerHTML=''; } }
     let pAw=[]; try{ pAw=playerStats(el)||[]; }catch(e){ console.error(e); }
+    G.playerAwards=pAw;
     pushAll();
     // عرض التتويج: المضحك أول، والأقوى آخر شي (أقصى شي 8 ألقاب)
     try{ const DS=window.DahoomStats; DS.autoShow(()=>{
