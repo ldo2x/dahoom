@@ -112,7 +112,7 @@
   // ---------- المؤقت الصغير ----------
   function timerHTML(sec){ return `<div class="timer" id="kh-timer" style="width:90px;height:90px"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="num" style="font-size:2rem">${sec}</div></div>`; }
   function startT(sec,onEnd){ clearT(); const el=$('#kh-timer'); if(!el) return; const num=el.querySelector('.num'), fg=el.querySelector('.fg'); let left=sec; play('clockloop',{volume:.3,loop:true});
-    const step=()=>{ num.textContent=left; fg.style.strokeDashoffset=326.7*(1-left/sec); el.classList.toggle('danger',left<=2&&left>0); if(left<=2&&left>0) play('tick'); if(left<=0){ clearT(); play('buzzer',{volume:.6}); onEnd&&onEnd(); return; } left--; timerH=setTimeout(step,1000); }; step(); }
+    const step=()=>{ num.textContent=left; fg.style.strokeDashoffset=326.7*(1-left/sec); el.classList.toggle('danger',left<=2&&left>0); if(left<=2&&left>0) play('countdown'); if(left<=0){ clearT(); play('buzzer',{volume:.6}); onEnd&&onEnd(); return; } left--; timerH=setTimeout(step,1000); }; step(); }
   function clearT(){ clearTimeout(timerH); timerH=null; stop('clockloop'); }
 
   // ---------- اللعب ----------

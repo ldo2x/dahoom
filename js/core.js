@@ -18,53 +18,166 @@ window.Dahoom = (function(){
   };
 
   // ---------- الصوت ----------
-  // الاسم العادي من assets/sfx، و'meme:xxx' من assets/sfx/meme، و'game:xxx' من assets/sfx/game
+  // أصوات النظام كلها أصلية: وصفات تتولّد بالمتصفح (Web Audio) — ولا ملف صوت من برا.
+  // 'meme:xxx' من assets/sfx/meme و'game:xxx' من assets/sfx/game تبقى لمحتوى البطاقات والميمز بس.
   const audio = { on: store.get('sound', true), vol: store.get('volume', 0.4), cache:{}, loops:{} };
-  // أصوات التطبيق: كل اسم قديم يتحول لصوت قيمنق/ميم (تقدر ترجع أي واحد للأصلي بحذفه من هنا)
   // اختيارات صاحب المنصة من صفحة pick.html (تنحفظ بالجهاز): صور البطاقات، أصوات اللعبة، وأصوات موقوفة
   const picks = Object.assign({ snd:{}, csnd:{}, gif:{}, off:[] }, store.get('picks', {}));
+  // الأسماء القديمة ← أصواتنا الأصلية. أي play('game:..') أو اسم قديم ينادى من النظام يتحول هنا
+  // (أصوات البطاقات نفسها تنادى بـ raw:true وما تمر من هنا)
   const ALIAS = {
-    correct:'game:g_ding', wrong:'game:g_feudx', steal:'game:g_mgs', coin:'game:g_mariocoin', bonus:'game:g_oneup',
-    win:'game:g_ffwin', applause:'meme:passed', clockloop:'game:g_jeopardy', fx_tension:'game:g_suspense',
-    // بدل النغمات المولّدة: أصوات حقيقية معروفة
-    cheer:'game:g_mkcount', levelup:'game:g_mclevel', unlock:'meme:discord', bling:'game:g_sonic', fail:'game:g_mariodeath',
-    card:'game:g_swoosh', drumroll:'file:drumroll', buzzer:'file:buzzer', tick:'file:tick',
-    fx_trombone:'meme:spongefail', fx_thunder:'meme:boom',
+    unlock:'join', fx_tension:'suspense', fx_deny:'deny', fx_whoosh:'whoosh', fx_trombone:'card_curse', fx_thunder:'card_legend',
+    'game:g_mgs':'buzzin', 'game:g_zelda':'reveal', 'game:g_mariocoin':'coin_big', 'game:g_oneup':'connect',
+    'game:g_finishhim':'final_round', 'game:g_gong':'event', 'game:g_powerup':'build', 'game:g_swoosh':'whoosh', 'game:g_mkcount':'cheer',
+    'game:g_lightsaber':'card_legend', 'game:g_suspense':'suspense',
+    'game:g_doublekill':'streak2', 'game:g_triplekill':'streak3', 'game:g_ultrakill':'streak4', 'game:g_monsterkill':'streak5', 'game:g_godlike':'streak6',
   };
-  const CAP = { drumroll:2600, buzzer:1500, fail:2600, cheer:3500 };   // أقصى مدة (ملي ثانية)
-  // الاسم ← الملف: اختيار صاحب المنصة أول، بعدين الافتراضي، و'syn' = نغمة مولّدة
-  const resolve = name => picks.snd[name] || ALIAS[name] || (SYN[name] ? 'syn' : name);
-  // أصوات القوائم والواجهة: نغمات قصيرة تتولّد بالمتصفح (خفيفة، ثابتة، وكل وحدة لها معنى)
-  // كل نغمة: [تردد, بداية ms, مدة ms, نوع الموجة, قوة, تردد النهاية؟]
+  const CAP = {};   // أقصى مدة (ملي ثانية) لملف صوت معيّن لو صاحب المنصة اختار ملف بدل الأصلي
+  // الاسم ← المفتاح: اختيار صاحب المنصة أول ('syn' = الأصلي)، بعدين الاسم البديل، و'syn:xxx' = وصفة مولّدة
+  const resolve = name => {
+    const p = picks.snd[name]; if(p && p!=='syn') return p;
+    const n = ALIAS[name] || name; return SYN[n] ? 'syn:'+n : n;
+  };
+
+  // ===== محرك الأصوات الأصلية =====
+  // الطابع: مجلس سعودي — دربوكة وطار، نقرات عود وماريمبا، وأجراس صافية. بدون أصوات ثمانية بت.
+  // كل وصفة: { d: المدة بالثواني، v: موازنة العلو، f: x => ترسم الصوت بأدوات kit }، وloop: تتكرر (إيقاع العدّاد)
+  const hz = m => 440*Math.pow(2,(m-69)/12);          // رقم النوتة ← تردد (يقبل ربع تون: 75.5 = مي نص بيمول، مقام الراست)
+  const NB = new WeakMap();
+  function noiseBuf(c){ let b=NB.get(c); if(!b){ let s=20231; const n=c.sampleRate*2; b=c.createBuffer(1,n,c.sampleRate); const d=b.getChannelData(0); for(let i=0;i<n;i++){ s=(s*1103515245+12345)&0x7fffffff; d[i]=s/0x3fffffff-1; } NB.set(c,b); } return b; }
+  function kit(c, out, t0){
+    const T = t => t0+t, nyq = c.sampleRate/2.3;
+    const env = (p, t, a, g, d) => { p.setValueAtTime(0.0001,T(t)); p.exponentialRampToValueAtTime(Math.max(0.0002,g),T(t+a)); p.exponentialRampToValueAtTime(0.0001,T(t+a+d)); };
+    const tone = (t, f, d, {type='sine', g=.2, a=.004, f2, glide, det=0, to=out}={}) => {
+      if(f>nyq) return; const o=c.createOscillator(), v=c.createGain(); o.type=type; o.frequency.setValueAtTime(f,T(t));
+      if(f2) o.frequency.exponentialRampToValueAtTime(f2,T(t+(glide||d))); if(det) o.detune.value=det;
+      env(v.gain,t,a,g,d); o.connect(v); v.connect(to); o.start(T(t)); o.stop(T(t+a+d+.05));
+    };
+    const noise = (t, d, {g=.2, type='bandpass', f=2000, f2, q=1, a=.002, to=out}={}) => {
+      const s=c.createBufferSource(); s.buffer=noiseBuf(c); s.loop=true; const fl=c.createBiquadFilter(); fl.type=type; fl.Q.value=q;
+      fl.frequency.setValueAtTime(f,T(t)); if(f2) fl.frequency.exponentialRampToValueAtTime(f2,T(t+a+d));
+      const v=c.createGain(); env(v.gain,t,a,g,d); s.connect(fl); fl.connect(v); v.connect(to); s.start(T(t), (t*7.31)%1.5); s.stop(T(t+a+d+.05));
+    };
+    return {
+      hz, tone, noise,
+      // ماريمبا: نغمة خشبية دافية
+      mar:(t, f, d=.35, g=.25) => { tone(t,f,d,{g,a:.002}); tone(t,f*3.93,d*.22,{g:g*.2,a:.001}); },
+      // عود: وترين مزدوجين وفلتر ينغلق (نقرة دافية)
+      oud:(t, f, d=.5, g=.2) => {
+        const fl=c.createBiquadFilter(); fl.type='lowpass'; fl.Q.value=2.5; fl.frequency.setValueAtTime(Math.min(f*9,8000),T(t)); fl.frequency.exponentialRampToValueAtTime(Math.max(f*1.3,180),T(t+d*.75)); fl.connect(out);
+        tone(t,f,d,{type:'sawtooth',g:g*.55,a:.002,to:fl}); tone(t,f,d,{type:'sawtooth',g:g*.45,a:.002,det:8,to:fl});
+        noise(t,.018,{g:g*.25,type:'highpass',f:3000});
+      },
+      // جرس صافي (أجزاء غير متناسقة مثل الجلوكن)
+      bell:(t, f, d=.7, g=.15) => { [[1,1,1],[2.76,.32,.45],[5.4,.12,.25],[8.93,.05,.14]].forEach(([r,k,dd])=>tone(t,f*r,d*dd,{g:g*k,a:.002})); },
+      // دم: ضربة الطار/الدربوكة الغامقة
+      doum:(t, g=.5, f=90, d=.35) => {
+        const o=c.createOscillator(), v=c.createGain(); o.frequency.setValueAtTime(f*1.9,T(t)); o.frequency.exponentialRampToValueAtTime(f,T(t+.045)); o.frequency.exponentialRampToValueAtTime(f*.82,T(t+d));
+        env(v.gain,t,.003,g,d); o.connect(v); v.connect(out); o.start(T(t)); o.stop(T(t+d+.05));
+        tone(t,f*2,d*.5,{g:g*.4,a:.003}); tone(t,f*3.01,d*.3,{g:g*.15,a:.003}); noise(t,.035,{g:g*.3,type:'lowpass',f:1200});   // التوافقيات عشان تنسمع حتى بسماعة الجوال
+      },
+      // تك: حافة الدربوكة
+      tek:(t, g=.3) => { noise(t,.045,{g,f:3400,q:1.4}); tone(t,1250,.05,{type:'triangle',g:g*.3,a:.001}); },
+      // كا: ضربة مكتومة / طرقة خشب
+      ka:(t, g=.25) => { noise(t,.03,{g,f:1800,q:.9}); tone(t,620,.035,{g:g*.35,a:.001}); },
+      // تصفيقة
+      clap:(t, g=.25, f=1400) => { [0,.009,.018].forEach(o=>noise(t+o,.008,{g,f,q:.8,a:.001})); noise(t+.027,.08,{g:g*.8,f,q:.8,a:.001}); },
+      // لمعة خفيفة (هواء عالي)
+      shim:(t, d=.5, g=.05) => noise(t,d,{g,type:'highpass',f:7000,a:.03}),
+    };
+  }
+  const R = (d, v, f, extra) => Object.assign({ d, v, f }, extra||{});
+  // سلسلة نجاحات: كل نجاح زيادة نغمة، وكل مستوى أعلى من اللي قبله
+  const streak = n => R(.07*(n-1)+.62, 0.75, x => { const up=n-2; x.doum(0,.4,95,.25); [84,88,91,96,100].slice(0,n).forEach((m,i)=>x.bell(i*.07, x.hz(m+up), i===n-1?.6:.3, i===n-1?.2:.13)); if(n>=4) x.shim(.07*(n-1), .4, .04); });
   const SYN = {
-    pop:     [[520,0,60,'sine',.2,760]],                                         // تنقل / ضغطة
-    tick:    [[1500,0,28,'triangle',.11]],                                       // عدّاد / اختيار صغير
-    unlock:  [[784,0,80,'triangle',.17],[1175,75,130,'triangle',.17]],           // لاعب انضاف
-    bling:   [[1319,0,70,'sine',.13],[1760,65,70,'sine',.11],[2349,130,150,'sine',.09]], // تلميح / تم
-    jingle:  [[659,0,100,'triangle',.17],[784,95,100,'triangle',.17],[988,190,100,'triangle',.17],[1319,285,300,'triangle',.19]], // دخول المنصة
-    cheer:   [[523,0,90,'triangle',.16],[659,85,90,'triangle',.16],[784,170,260,'triangle',.18],[1047,170,260,'sine',.1]],       // بداية المباراة
-    levelup: [[880,0,80,'triangle',.15],[1320,80,200,'triangle',.15]],           // لفة جديدة / الخانة انسحبت
-    drums:   [[300,0,220,'sine',.12,900]],                                       // بداية السحب
-    drumroll:Array.from({length:8},(_,i)=>[900+i*70, i*95, 30,'triangle',.1]),   // ترتيب الفرق
-    card:    [[420,0,110,'sine',.11,1100]],                                      // سحب بطاقة
-    buzzer:  [[220,0,160,'square',.07],[165,150,240,'square',.07]],              // خلص الوقت
-    fail:    [[523,0,120,'triangle',.14],[440,115,120,'triangle',.14],[349,230,260,'triangle',.14]], // فشل
+    // ---- الواجهة ----
+    pop:      R(.15, 1.19, x => x.mar(0, x.hz(79), .12, .3)),                                          // ضغطة / تنقل
+    tick:     R(.06, 2.5, x => { x.tone(0,1700,.025,{type:'triangle',g:.18,a:.001}); x.noise(0,.015,{g:.12,f:3000,q:2}); }), // اختيار صغير / خطوة
+    bling:    R(.5,  1.47, x => { x.bell(0, x.hz(88), .4, .14); x.bell(.06, x.hz(95), .45, .12); x.shim(.04,.3,.03); }), // تم / تلميح
+    notify:   R(.4,  1.25, x => { x.mar(0, x.hz(81), .2, .22); x.mar(.11, x.hz(81), .25, .22); }),      // تنبيه خفيف
+    jingle:   R(1.05,0.75, x => { x.doum(0,.4); [72,74,75.5,79].forEach((m,i)=>{ x.oud(i*.11, x.hz(m), i===3?.6:.2, .16); x.mar(i*.11, x.hz(m+12), i===3?.5:.15, .1); }); x.bell(.33, x.hz(96), .6, .1); x.shim(.33,.5,.04); }), // دخول المنصة (بصمة الراست)
+    join:     R(.45, 1.08, x => { x.mar(0, x.hz(79), .25, .25); x.mar(.08, x.hz(86), .35, .25); }),     // لاعب انضاف
+    connect:  R(.5,  1.67, x => { [84,88,91].forEach((m,i)=>x.bell(i*.07, x.hz(m), .35, .13)); }),     // جوال اتصل
+    // ---- الدور والوقت ----
+    turn:     R(.6,  0.76, x => { x.doum(0,.35,100,.25); x.tek(.13,.12); x.bell(0, x.hz(88), .5, .14); }), // بداية دور
+    levelup:  R(.8,  0.71, x => { x.doum(0,.4); x.bell(0, x.hz(79), .4, .15); x.bell(.12, x.hz(84), .6, .17); x.shim(.12,.45,.035); }), // لفة / مرحلة جديدة
+    buzzin:   R(.45, 1.28, x => { x.tek(0,.35); x.tone(0,1200,.06,{f2:2400,g:.1}); x.bell(.02, x.hz(93), .4, .16); }), // أول واحد ضغط / انتباه
+    countdown:R(.2,  1.69, x => { x.tek(0,.3); x.mar(0, x.hz(93), .12, .2); }),                          // آخر الثواني
+    clockloop:R(2.4, 1.14, x => { x.doum(0,.22,95,.25); x.tek(.3,.11); x.tek(.9,.11); x.doum(1.2,.18,95,.22); x.tek(1.8,.11); x.ka(2.1,.07); }, {loop:true}), // إيقاع المقسوم تحت العدّاد
+    buzzer:   R(.8,  0.84, x => { x.doum(0,.4,80,.3); x.oud(0, x.hz(57), .25, .3); x.oud(.22, x.hz(53), .5, .32); }), // خلص الوقت (نازل وغامق)
+    // ---- صح وغلط ----
+    correct:  R(.55, 0.9, x => { x.mar(0, x.hz(79), .3, .26); x.mar(.085, x.hz(84), .4, .28); x.bell(.085, x.hz(96), .4, .07); }),
+    wrong:    R(.55, 0.93, x => { x.doum(0,.25,100,.2); x.oud(0, x.hz(51), .22, .26); x.oud(.13, x.hz(50), .35, .26); }),
+    fail:     R(1.05,0.8, x => { [69,67,66,63,62].forEach((m,i)=>x.oud(i*.12, x.hz(m), i===4?.5:.16, .2)); x.doum(.48,.35,85,.4); }), // نزلة حجاز
+    steal:    R(.5,  1.6, x => { x.noise(0,.12,{g:.14,f:600,f2:4000,q:1.2,a:.04}); x.oud(.1, x.hz(74), .35, .18); x.oud(.1, x.hz(81), .35, .14); }),
+    reveal:   R(.75, 1.41, x => { [84,86,87.5,91].forEach((m,i)=>x.bell(i*.08, x.hz(m), i===3?.5:.25, .14)); x.shim(.24,.4,.03); }), // جاهز / انكشف
+    final_round: R(1.2, 0.69, x => { x.doum(0,.5,75,.4); x.doum(.3,.5,75,.4); [62,63,66,67,69].forEach((m,i)=>x.oud(.45+i*.1, x.hz(m), i===4?.3:.12, .18)); x.bell(.85, x.hz(81), .3, .1); }),
+    // ---- الفلوس ----
+    coin:     R(.35, 1.57, x => { x.bell(0, x.hz(95), .25, .15); x.bell(.07, x.hz(100), .28, .13); }),  // دخل فلوس / نقاط
+    coin_big: R(.9,  1.6, x => { [88,92,95,100,96,100,104].forEach((m,i)=>x.bell(i*.075, x.hz(m), .3, .12)); x.shim(.2,.6,.035); }), // القطة / جاك بوت
+    pay:      R(.45, 1.06, x => { x.mar(0, x.hz(64), .22, .26); x.mar(.09, x.hz(59), .3, .26); x.noise(0,.05,{g:.12,type:'lowpass',f:900}); }), // طلعت فلوس
+    bonus:    R(.7,  1.14, x => { [72,76,79,84].forEach((m,i)=>x.mar(i*.06, x.hz(m), i===3?.4:.15, .2)); x.bell(.18, x.hz(96), .45, .08); }),
+    buy:      R(.45, 0.89, x => { x.doum(0,.35,120,.18); x.ka(0,.22); x.bell(.08, x.hz(91), .25, .12); x.bell(.14, x.hz(96), .28, .1); }), // ختم الشراء
+    build:    R(.75, 1.63, x => { x.ka(0,.3); x.ka(.13,.3); x.bell(.26, x.hz(84), .3, .13); x.bell(.34, x.hz(91), .4, .13); }), // طرقتين وبناء
+    deal:     R(.6,  1.85, x => { x.oud(0, x.hz(67), .2, .18); x.oud(.1, x.hz(74), .25, .18); x.bell(.2, x.hz(91), .35, .12); }), // صفقة تمت
+    saher:    R(.55, 2.92, x => { x.noise(0,.02,{g:.1,type:'highpass',f:3000}); x.ka(.03,.12); x.tone(.01,2000,.1,{f2:4000,g:.05}); x.tone(.15, 988, .12,{type:'triangle',g:.15}); x.tone(.29, 784, .2,{type:'triangle',g:.15}); }), // فلاش ساهر
+    snatch:   R(.4,  1.61, x => { x.noise(0,.15,{g:.15,f:800,f2:5000,q:1.2,a:.05}); x.mar(.12, x.hz(86), .22, .2); }), // نشل / استحواذ
+    out:      R(.9,  0.87, x => { x.doum(0,.45,70,.5); x.oud(.05, x.hz(62), .8, .18); x.tone(.05, x.hz(62), .8,{f2:x.hz(55),g:.08}); }), // طلع من اللعبة
+    // ---- البطاقات والنرد ----
+    card:     R(.35, 2.38, x => { x.noise(0,.14,{g:.16,f:1200,f2:4500,q:1,a:.03}); x.mar(.09, x.hz(84), .2, .12); }), // سحب بطاقة
+    card_play:R(.45, 1.52, x => { x.noise(0,.12,{g:.14,f:1000,f2:4000,a:.03}); x.mar(.1, x.hz(79), .2, .2); x.mar(.17, x.hz(86), .25, .2); }),
+    card_rare:R(.7,  1.58, x => { x.noise(0,.12,{g:.14,f:1000,f2:4000,a:.03}); [84,88,91].forEach((m,i)=>x.bell(.08+i*.07, x.hz(m), .4, .13)); x.shim(.15,.45,.035); }),
+    card_legend:R(1.2,0.69, x => { x.doum(0,.55,65,.6); x.noise(0,.4,{g:.2,type:'lowpass',f:1500,f2:300}); x.oud(0, x.hz(50), .9, .18); [86,90,93].forEach(m=>x.bell(.12, x.hz(m), .8, .08)); x.shim(.1,.8,.05); }),
+    card_curse:R(1.0,0.94, x => { x.doum(0,.4,75,.4); [67,66,63,62].forEach((m,i)=>x.oud(i*.15, x.hz(m-12), i===3?.5:.18, .2)); }),
+    suspense: R(1.0, 2.24, x => { [0,.12,.22,.31,.39,.46,.52,.57,.62,.66,.7,.74,.78,.82].forEach((t,i)=>x.mar(t, x.hz(i%2?75:74), .1, .06+i*.009)); x.noise(0,.32,{g:.1,f:300,f2:2500,q:1.5,a:.6}); }),
+    dice_roll:R(.85, 5.93, x => { [0,.06,.11,.19,.24,.33,.4,.5,.58,.7].forEach((t,i)=>{ const k=1-i*.07; x.noise(t,.015,{g:.2*k,f:2600+(i*911)%1900,q:3,a:.001}); x.tone(t,900+(i*373)%500,.02,{type:'triangle',g:.08*k,a:.001}); }); x.noise(0,.75,{g:.04,type:'lowpass',f:400}); }),
+    dice_land:R(.3,  1.41, x => { x.ka(0,.3); x.doum(0,.25,140,.12); x.ka(.08,.15); }),
+    whoosh:   R(.45, 6.31, x => { x.noise(0,.25,{g:.18,f:300,f2:3500,q:.9,a:.12}); }),
+    deny:     R(.4,  1.03, x => { x.oud(0, x.hz(62), .1, .2); x.mar(0, x.hz(62), .12, .2); x.oud(.14, x.hz(57), .16, .2); x.mar(.14, x.hz(57), .18, .2); }), // مرفوض / ما زبطت («أوه-أوه» نازلة)
+    challenge:R(1.15,0.61, x => { [62,62,63,63,64,64,65,65,66,67,68,69].forEach((m,i)=>x.oud(i*.06, x.hz(m), .07, .08+i*.012)); x.noise(0,.22,{g:.12,f:400,f2:3000,q:1.4,a:.56}); x.tek(.8,.4); x.doum(.8,.5,85,.3); x.bell(.8, x.hz(81), .35, .1); x.bell(.8, x.hz(75), .35, .1); }), // «ما أصدقك»: توتر طالع وصفعة
+    event:    R(1.2, 0.68, x => { [[1,1,1],[2.71,.4,.6],[5.15,.15,.35],[8.1,.06,.2]].forEach(([r,k,dd])=>x.tone(0,330*r,1.1*dd,{g:.22*k,a:.003})); x.doum(0,.3,90,.3); }), // حدث / مزاد (طاسة نحاس)
+    // ---- الحماس والفوز ----
+    drums:    R(.6,  0.61, x => { x.doum(0,.45,110,.3); x.doum(.2,.45,110,.3); x.tek(.4,.25); x.noise(0,.2,{g:.07,f:200,f2:1200,q:1,a:.4}); }), // يلا نبدأ السحب
+    drumroll: R(1.2, 0.76, x => { for(let i=0;i<18;i++) (i%2?x.ka:x.tek)(i*.055, .07+i*.012); x.doum(1.0,.5,85,.2); }),
+    cheer:    R(1.2, 0.46, x => { [0,.12,.22,.3,.36,.41,.45].forEach((t,i)=>x.tek(t,.1+i*.03)); x.doum(.5,.55); [72,76,79,84].forEach(m=>x.mar(.5, x.hz(m), .55, .12)); x.bell(.5, x.hz(96), .6, .08); x.clap(.5,.18); x.shim(.5,.55,.04); }), // بداية المباراة
+    win:      R(2.5, 0.53, x => {
+      [[0,'d'],[.25,'t'],[.75,'t'],[1,'d'],[1.5,'t'],[1.75,'t']].forEach(([t,k])=>k==='d'?x.doum(t,.4):x.tek(t,.18));
+      [[0,72],[.125,74],[.25,75.5],[.5,79],[.75,77],[.875,75.5],[1,75.5],[1.25,77],[1.5,79],[1.75,81]].forEach(([t,m])=>{ x.mar(t, x.hz(m), .22, .2); x.oud(t, x.hz(m-12), .2, .08); });
+      [1,1.5].forEach(t=>x.clap(t,.14));
+      x.doum(2,.5,80,.45); x.clap(2,.18); [72,79,84,88].forEach(m=>x.mar(2, x.hz(m), .45, .13)); x.bell(2, x.hz(96), .45, .1); x.shim(2,.42,.05);
+    }),
+    applause: R(2.4, 1.02, x => {   // تصفيق جماعي على الإيقاع (صفقة خليجية) + تصفيق متفرق
+      [0,.3,.6,.75,.9,1.2,1.5,1.65,1.8,2.1].forEach((t,i)=>[0,.007,.013,.021].forEach((o,j)=>x.clap(t+o, .07, 1100+j*260+(i%3)*90)));
+      [0,.9,1.8].forEach(t=>x.doum(t,.3,95,.25));
+      for(let i=0;i<34;i++){ const t=(i*0.6180339)%1*2.2; x.clap(t, .035*(1-t/2.6), 900+(i*577)%1600); }
+    }),
   };
-  let AC=null;
+  [2,3,4,5,6].forEach(n=>SYN['streak'+n]=streak(n));
+
+  let AC=null, BUS=null;
   const actx = () => { if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state==='suspended') AC.resume(); return AC; };
-  function synth(name, vol){
-    const c=actx(); if(!c) return; const t0=c.currentTime+0.005;
-    SYN[name].forEach(([f,st,du,type,g,f2])=>{
-      const o=c.createOscillator(), a=c.createGain(), s=t0+st/1000, e=s+du/1000;
-      o.type=type; o.frequency.setValueAtTime(f,s); if(f2) o.frequency.exponentialRampToValueAtTime(f2,e);
-      a.gain.setValueAtTime(0.0001,s); a.gain.exponentialRampToValueAtTime(Math.max(0.0002,g*vol),s+0.008); a.gain.exponentialRampToValueAtTime(0.0001,e);
-      o.connect(a); a.connect(c.destination); o.start(s); o.stop(e+0.03);
-    });
+  // خط الخروج: محدّد خفيف يمنع التقطيع لو انطبقت أصوات فوق بعض
+  function bus(c){ if(!BUS){ BUS=c.createDynamicsCompressor(); BUS.threshold.value=-6; BUS.knee.value=3; BUS.ratio.value=12; BUS.attack.value=.002; BUS.release.value=.15; BUS.connect(c.destination); } return BUS; }
+  // يرسم وصفة على أي سياق (حي أو أوفلاين للاختبار) — يرجع عقدة العلو
+  function renderSyn(name, c, dest, vol=1, t0){
+    const r=SYN[name]; if(!r) return null; const g=c.createGain(); g.gain.value=vol*(r.v||1); g.connect(dest);
+    r.f(kit(c, g, t0==null ? c.currentTime+0.01 : t0)); return g;
+  }
+  function synth(name, vol){ const c=actx(); if(!c) return; const g=renderSyn(name, c, bus(c), vol); if(g) setTimeout(()=>{ try{ g.disconnect(); }catch(e){} }, (SYN[name].d+0.6)*1000); }
+  // تكرار وصفة (عدّاد السؤال): تنجدول قدّام بثانية، وتوقف بـ pause() مثل ملف الصوت
+  function synLoop(name, vol){
+    const c=actx(); if(!c) return null; const r=SYN[name]; const g=c.createGain(); g.gain.value=vol; g.connect(bus(c));
+    let next=c.currentTime+0.05, alive=true;
+    const pump=()=>{ if(!alive) return; if(next<c.currentTime) next=c.currentTime+0.02; while(next<c.currentTime+1.2){ renderSyn(name, c, g, 1, next); next+=r.d; } };
+    pump(); const iv=setInterval(pump, 300);
+    return { loop:true, currentTime:0,
+      pause(){ if(!alive) return; alive=false; clearInterval(iv); try{ g.gain.setTargetAtTime(0.0001,c.currentTime,.03); }catch(e){} setTimeout(()=>{ try{ g.disconnect(); }catch(e){} },400); },
+      get volume(){ return g.gain.value/2.5; }, set volume(v){ g.gain.value=v*2.5; } };
   }
   const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n.replace(/^file:/,'')+'.mp3';
   function base(name){ if(!audio.cache[name]){ const a=new Audio(srcOf(name)); a.preload='auto'; audio.cache[name]=a; } return audio.cache[name]; }
-  // تجهيز الأصوات بالخلفية: بعد ما تخلص الصفحة تحميل، صوت ورا صوت — ما تزاحم الصفحة ولا تثقّل أول فتحة
-  const warm = [...new Set(['correct','wrong','tick','card','buzzer'].concat(Object.keys(ALIAS)).map(resolve))].filter(k=>k!=='syn'&&k!=='none');
+  // تجهيز ملفات الصوت اللي اختارها صاحب المنصة بالخلفية (أصوات النظام مولّدة وما تحتاج تحميل)
+  const warm = [...new Set(Object.values(picks.snd))].filter(k=>k && k!=='syn' && k!=='none');
   function warmNext(){
     const k=warm.shift(); if(!k) return;
     const a=base(k); let done=false; const nx=()=>{ if(done) return; done=true; setTimeout(warmNext,120); };
@@ -72,12 +185,17 @@ window.Dahoom = (function(){
   }
   if(document.readyState==='complete') setTimeout(warmNext,1500); else window.addEventListener('load',()=>setTimeout(warmNext,1500),{once:true});
   document.addEventListener('pointerdown', ()=>actx(), {once:true});
-  // max: أقصى مدة بالملي ثانية (الميمز الطويلة تنقص)
-  function play(name, {volume=1, loop=false, rate=1, max}={}){
+  // max: أقصى مدة بالملي ثانية (الميمز الطويلة تنقص). raw: صوت محتوى (بطاقة/ميم) يتشغل مثل ما هو بدون تحويل
+  function play(name, {volume=1, loop=false, rate=1, max, raw=false}={}){
     if(!audio.on || !name) return null;
-    let key = resolve(name);
+    let key = raw ? name : resolve(name);
     if(key==='none' || picks.off.includes(key)) return null;
-    if(key==='syn'){ if(!loop){ synth(name, Math.min(1.5, volume*audio.vol*2.5)); return null; } key=name; }
+    if(key.startsWith('syn:')){
+      const n=key.slice(4), v=Math.min(1.5, volume*audio.vol*2.5);
+      if(loop){ stop(name); const L=synLoop(n, v); if(L) audio.loops[name]=L; return L; }
+      synth(n, v); return null;
+    }
+    if(loop) stop(name);
     const b = base(key);
     const a = loop ? b : b.cloneNode();
     a.volume = Math.min(1, volume * audio.vol); a.loop = loop; a.currentTime = 0;
@@ -404,6 +522,7 @@ window.Dahoom = (function(){
 
   // ---------- تهيئة ----------
   function init(){
+    if(!$('#btn-enter')) return;   // صفحات الأدوات (مثل tools-sounds.html) تستخدم النواة بدون واجهة المنصة
     renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); updateThemeBtns(); decorate();
     $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
@@ -433,6 +552,6 @@ window.Dahoom = (function(){
   document.addEventListener('DOMContentLoaded', init);
 
   return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, feed, joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
-    session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
+    session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, renderSyn, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();

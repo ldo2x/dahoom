@@ -118,7 +118,7 @@
     else autoT=setTimeout(()=>{ if(G && G.phase==='claim') autoClaim(); }, AUTO.claim);
   }
   function turnIntro(){
-    const t=cur(), n=NET(), viaPhone = n && n.hasPhone(t.id);
+    const t=cur(), n=NET(), viaPhone = n && n.hasPhone(t.id); play('turn',{volume:.6});
     panel(`<div class="lower-third" style="--c:${t.color}"><span class="lt-k">يرسم</span><span class="lt-v">${esc(t.name)}</span></div>
       <div class="kh-status">${viaPhone?`مين بيرسم من ${esc(t.name)}؟`:`الرسام من ${esc(t.name)} يجي للشاشة`}</div>
       ${viaPhone?`<div class="ch-status">${ic('phone')} واحد منكم يضغط «أنا برسم» من جواله — الكلمات تطلع له بس</div>`:''}
@@ -217,7 +217,7 @@
       if(S.hints && G.word){ const n=[...G.word.w].filter(c=>c!==' ').length;
         if(G.left===Math.floor(G.total/2) && n>=3) revealLetter();
         if(G.left===Math.floor(G.total/4) && n>=5) revealLetter(); }
-      if(G.left<=10 && G.left>0) play('tick',{volume:.35});
+      if(G.left<=10 && G.left>0) play(G.left<=3?'countdown':'tick',{volume:.35});
       if(G.left<=0){ stopTimer(); reveal(null); return; }
       G.left--; timerH=setTimeout(tick,1000);
     };
@@ -243,7 +243,7 @@
     text=String(text||'').trim().slice(0,40); if(!text) return;
     const name=nameOf(t,pid)||t.name, res=check(G.word, text);
     if(res===2) return win(teamId, name);
-    if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('tick',{volume:.7}); }
+    if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('notify',{volume:.7}); }
     else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; tally(G.stats.wrongBy, name); play('pop',{volume:.35}); }
     renderFeed(); pushAll();
   }

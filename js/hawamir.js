@@ -165,9 +165,9 @@ window.DahoomHawamir = (function(){
   const diceHTML = (a,b,cls='') => `<span class="hm-dice3 ${cls}">${die3(a,0,cls==='roll')}${b!=null?die3(b,1,cls==='roll'):''}</span>`;
   async function rollDice(two=true){
     const a=d6(), b=two?d6():null;
-    play('drums',{volume:.4,max:900});
+    play('dice_roll',{volume:.7});
     stage(`<div class="hm-msg">${diceHTML(a,b,'roll')}</div>`);
-    await sleep(1250); play('pop',{volume:.6});
+    await sleep(1250); play('dice_land',{volume:.7});
     return [a,b];
   }
   function tick(){
@@ -386,7 +386,7 @@ window.DahoomHawamir = (function(){
         tr.give.props.forEach(i=>G.owner[i]=B.id); tr.get.props.forEach(i=>G.owner[i]=A.id);
         A.cash+=tr.get.cash-tr.give.cash; B.cash+=tr.give.cash-tr.get.cash;
         A.stats.trades++; B.stats.trades++; tr.st='accepted'; tr.done=Date.now();
-        play('meme:cash',{volume:.6}); toast(`تمت الصفقة بين ${A.name} و${B.name}`, 3200);
+        play('deal',{volume:.6}); toast(`تمت الصفقة بين ${A.name} و${B.name}`, 3200);
         logE(A, `صفقة مع ${B.name}: عطى ${sideTxt(tr.give)} وأخذ ${sideTxt(tr.get)}`, tr.get.cash-tr.give.cash, 'good');
         logE(B, `وافق على صفقة ${A.name}: عطى ${sideTxt(tr.get)} وأخذ ${sideTxt(tr.give)}`, tr.give.cash-tr.get.cash, 'good');
         [[A,tr.get.props],[B,tr.give.props]].forEach(([p,l])=>{ const gs=new Set(l.filter(i=>T[i].t==='city').map(i=>T[i].g)); gs.forEach(g=>{ if(groupFull(p,g)){ toast(`${p.name} كمّل ${T[groupTiles(g)[0]].country} — يقدر يبني فيها`, 3600); logE(p, `كمّل ${T[groupTiles(g)[0]].country} كاملة — يقدر يبني فيها`, 0, 'good'); } }); });
@@ -481,7 +481,7 @@ window.DahoomHawamir = (function(){
     G.focus=i; renderBoard();
     const v=await decide(p, { deed:i, title:`${esc(t.name)} بدون مالك`, text:p.discount?`خصمك شغال: ${money(price)} بدل ${money(t.price)}`:(p.cash<price?'ما معك سعرها — تروح للمزاد':'تشتريها ولا تروح للمزاد؟'), options:opts, timeout:45000, def:'auc' });
     G.focus=null;
-    if(v==='buy'){ p.cash-=price; G.owner[i]=p.id; p.discount=false; p.stats.bought++; play('bonus',{volume:.6}); toast(`${p.name} اشترى ${t.name}`); logE(p, `اشترى ${t.name}`+(price<t.price?' بالخصم':''), -price);
+    if(v==='buy'){ p.cash-=price; G.owner[i]=p.id; p.discount=false; p.stats.bought++; play('buy',{volume:.6}); toast(`${p.name} اشترى ${t.name}`); logE(p, `اشترى ${t.name}`+(price<t.price?' بالخصم':''), -price);
       if(t.t==='city' && groupFull(p,t.g)){ toast(`${p.name} كمّل ${t.country} — يقدر يبني فيها`, 3600); play('levelup',{volume:.6}); logE(p, `كمّل ${t.country} كاملة — يقدر يبني فيها`, 0, 'good'); }
       renderAll(); }
     else await auction(i, Math.round(t.price/2/1000)*1000, 'مزاد');
@@ -496,7 +496,7 @@ window.DahoomHawamir = (function(){
       if(o.jail){ stage(`<div class="hm-msg">${ic('hm-jail')} ${esc(o.name)} بالسجن — ما يستلم إيجار</div>`); logE(p, `وقف على ${t.name} وصاحبه بالسجن — ما دفع إيجار`, 0, 'info'); await sleep(1100); return; }
       const r=rentOf(i); G.focus=i; renderBoard();
       stage(`<div class="hm-msg bad">${esc(p.name)} يدفع إيجار <b class="hm-num">${money(r)}</b> لـ <b style="color:${o.color}">${esc(o.name)}</b> على ${esc(t.name)}</div>`);
-      play('wrong',{volume:.5});
+      play('pay',{volume:.6});
       const paid=await charge(p, r, o, `إيجار ${t.name} لـ ${o.name}`); p.stats.rentOut+=paid; o.stats.rentIn+=paid;
       if(!p.out) logE(p, `دفع إيجار ${t.name} لـ ${o.name}`, -paid);
       renderAll(); await sleep(1500);
@@ -504,7 +504,7 @@ window.DahoomHawamir = (function(){
       G.focus=null; return;
     }
     if(t.t==='start'){ stage(`<div class="hm-msg">${esc(p.name)} وقف على البداية</div>`); await sleep(600); return; }
-    if(t.t==='saher'){ stage(`<div class="hm-msg bad">ساهر صادك! مخالفة <b class="hm-num">${money(10000)}</b> تروح للصندوق</div>`); play('meme:fbi',{volume:.5,max:1800}); const fp=await fine(p,10000,'مخالفة ساهر'); logE(p, 'صاده ساهر — المخالفة راحت للصندوق', -fp); renderAll(); await sleep(1500); return; }
+    if(t.t==='saher'){ stage(`<div class="hm-msg bad">ساهر صادك! مخالفة <b class="hm-num">${money(10000)}</b> تروح للصندوق</div>`); play('saher',{volume:.6}); const fp=await fine(p,10000,'مخالفة ساهر'); logE(p, 'صاده ساهر — المخالفة راحت للصندوق', -fp); renderAll(); await sleep(1500); return; }
     if(t.t==='pot'){ const v=G.pot>0?G.pot:5000; G.pot=0; give(p,v); p.stats.pot+=v; logE(p, 'فتح الصندوق وأخذ كل اللي فيه', v); stage(`<div class="hm-msg">${esc(p.name)} فتح الصندوق: <b class="hm-num">${plus(v)}</b></div>`); play('meme:chest',{volume:.6,max:2500}); if(v>=30000) confetti(80,1500); renderAll(); await sleep(1700); return; }
     if(t.t==='jail'){ stage(`<div class="hm-msg">${esc(p.name)} يزور السجن بس — ما عليه شي</div>`); await sleep(800); return; }
     if(t.t==='patrol') return goJail(p, `الدورية مسكت ${p.name} — على السجن`);
@@ -528,7 +528,7 @@ window.DahoomHawamir = (function(){
     const yes=await decide(p, { deed:i, title:`تستحوذ على ${esc(t.name)}؟`, text:`تدفع ${money(price)} لـ ${esc(o.name)} وتصير لك. ما يقدر يرفض.`,
       options:[{v:true,label:`استحوذ بـ ${money(price)}`,icon:'flame',cls:'btn-hype big'},{v:false,label:'لا',cls:'big'}], timeout:25000, def:false });
     if(!yes || !canTake(p,o,i)) return;
-    p.cash-=price; if(!o.jail) o.cash+=price; G.owner[i]=p.id; p.stats.takes++; play('meme:yoink',{volume:.6});
+    p.cash-=price; if(!o.jail) o.cash+=price; G.owner[i]=p.id; p.stats.takes++; play('snatch',{volume:.6});
     toast(`${p.name} استحوذ على ${t.name} من ${o.name} بـ ${money(price)}`, 3800); logE(p, `استحوذ على ${t.name} من ${o.name}`, -price); logE(o, `انسحب منه ${t.name} بالقوة`, price);
     if(t.t==='city' && groupFull(p,t.g)){ toast(`${p.name} كمّل ${t.country} — يقدر يبني فيها`, 3600); play('levelup',{volume:.6}); }
     renderAll(); await sleep(900);
@@ -600,7 +600,7 @@ window.DahoomHawamir = (function(){
       if(free!=null){ G.owner[free]=p.id; toast(`${p.name} ورث ${T[free].name}`, 3200); } else { give(p,10000); toast('كل المدن مملوكة: '+plus(10000)); } }
     else if(c.k==='jail'){ logE(p, `حظك: «${c.text}»`, 0, 'bad'); await goJail(p, `${p.name} انمسك يفحط — على السجن`); }
     else if(c.k==='airport'){ logE(p, `حظك: «${c.text}»`, 0, 'info'); let k=p.pos; do{ k=(k+1)%N; if(k===0) passStart(p); }while(T[k].t!=='air'); p.pos=k; renderAll(); await sleep(600); await land(p); }
-    play(c.v<0?'wrong':'coin',{volume:.4});
+    play(c.v<0?'pay':'coin',{volume:.5});
     if(c.k!=='airport' && c.k!=='tostart' && c.k!=='jail'){ const d=p.cash-c0; logE(p, `حظك: «${c.text}»`, d, d>0?'good':d<0?'bad':'info'); }
     renderAll();
   }
@@ -610,7 +610,7 @@ window.DahoomHawamir = (function(){
     if(!G || G.over) return;
     const p=cur();
     if(p.out){ return next(); }
-    renderAll();
+    renderAll(); play('turn',{volume:.5});
     if(p.jail){ const free=await jailTurn(p); if(!G || G.over) return; if(!free) return next(); }
     for(let rolls=0; rolls<2; rolls++){
       for(;;){

@@ -7,7 +7,8 @@ window.DahoomFX = (function(){
   const { play, confetti, reaction } = D;
   const POWER = { legendary:1, medium:.6, normal:.3, black:.35 };
   const TIER_COL = { legendary:'#FF3B4E', medium:'#FFC23A', normal:'#3BA8FF', black:'#6B6478' };
-  const TIER_SND = { legendary:[['game:g_lightsaber',0,.55],['fx_thunder',150,.45]], medium:[['game:g_zelda',0,.5]], normal:[['game:g_swoosh',0,.5]], black:[['fx_trombone',0,.45]] };
+  // صوت الفئة (أصلي، من core.js) — وبعده صوت البطاقة نفسها (محتواها)
+  const TIER_SND = { legendary:[['card_legend',0,.8]], medium:[['card_rare',0,.7]], normal:[['card_play',0,.7]], black:[['card_curse',0,.7]] };
   const SND_DELAY = { legendary:650, medium:450, normal:150, black:300 };
   // نص الختم الكبير لكل تأثير
   const LOOK = {
@@ -70,7 +71,7 @@ window.DahoomFX = (function(){
   function sound(card,{volume=1}={}){
     (TIER_SND[card.tier]||[]).forEach(([n,d,v])=>setTimeout(()=>play(n,{volume:v*volume}),d));
     const snd=((window.Dahoom.picks||{}).csnd||{})[card.id] || card.snd;
-    if(snd && snd!=='none') setTimeout(()=>play(snd,{volume:.9*volume}), SND_DELAY[card.tier]||100);
+    if(snd && snd!=='none') setTimeout(()=>play(snd,{volume:.9*volume, raw:true}), SND_DELAY[card.tier]||100);
   }
 
   // صوت الفئة بس (للسحب السري — ما يفضح البطاقة)
