@@ -1020,3 +1020,5 @@ body.is-owner .r-bar{display:none}
 .ow-pub button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .ow-start.is-wait{filter:saturate(.35);opacity:.85}
 @media (max-width:420px){ .ow-pub button small{display:none} }
+
+.ow-gtag{font-size:.68rem;font-weight:800;color:var(--gold-ink);line-height:1.2;text-align:center}

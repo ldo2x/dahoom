@@ -70,7 +70,7 @@ window.DahoomOwner = (function(){
   const SET_SCREEN = { alf:'settings', khaliya:'khaliya-settings', rasm:'rasm-settings', hawamir:'hawamir-settings', sadq:'sadq-settings' };
   const START_BTN = { alf:'btn-start', khaliya:'btn-khaliya-start', rasm:'btn-rasm-start', hawamir:'btn-hawamir-start', sadq:'btn-sadq-start' };
   const GAMES = [ { id:'rasm', name:'ارسم وخمّن', icon:'pencil', modes:['solo','teams'] }, { id:'sadq', name:'ما أصدقك', icon:'masks', modes:['solo'] },
-    { id:'hawamir', name:'هوامير', icon:'hm-building-bank', modes:['solo'] }, { id:'alf', name:'ألف نقطة', icon:'cards', modes:['teams','solo'] }, { id:'khaliya', name:'خلية الحروف', icon:'hive', modes:['teams'] } ];
+    { id:'hawamir', name:'هوامير', icon:'hm-building-bank', modes:['solo'] }, { id:'alf', name:'ألف نقطة', icon:'cards', modes:['teams','solo'], tag:'للجمعات الحضورية' }, { id:'khaliya', name:'خلية الحروف', icon:'hive', modes:['teams'] } ];
   const txt = el => { let t=''; el.childNodes.forEach(n=>{ if(n.nodeType===3) t+=n.textContent; else if(n.nodeType===1 && !/^(SELECT|INPUT|OPTION|SPAN)$/.test(n.tagName) && !n.classList.contains('ic')) t+=n.textContent; }); return t.replace(/\s+/g,' ').trim(); };
   let fSeq=0;
   // نقرا حقول إعدادات اللعبة من شاشتها (نفس الحقول اللي على الطاولة) — كل حقل ياخذ رقم نرجع له

@@ -370,7 +370,7 @@
       const modes = G.modes.length>1 ? `<div class="ow-seg" role="group" aria-label="طريقة اللعب"><button type="button" data-mode="solo">${ic('person')} كل واحد لحاله</button><button type="button" data-mode="teams">${ic('team')} فرق</button></div>` : '';
       box.innerHTML=`<section class="ow">
         <div class="ow-h"><span class="ow-crown">${ic('crown')}</span><div><b>جلستك</b><small>اختر اللعبة واضبطها، وأول ما يكون الكل مستعد اضغط ابدأ</small></div><span id="ow-rules"></span></div>
-        <div class="ow-sec"><div class="ow-lbl">اللعبة</div><div class="ow-games">${games.map(x=>`<button type="button" class="ow-g" data-g="${x.id}">${ic(x.icon)}<span>${esc(x.name)}</span></button>`).join('')}</div></div>
+        <div class="ow-sec"><div class="ow-lbl">اللعبة</div><div class="ow-games">${games.map(x=>`<button type="button" class="ow-g" data-g="${x.id}">${ic(x.icon)}<span>${esc(x.name)}</span>${x.tag?`<small class="ow-gtag">${esc(x.tag)}</small>`:''}</button>`).join('')}</div></div>
         <div class="ow-sec"><div class="ow-lbl">اللاعبين</div>
           <div class="ow-plrow"><span class="ow-n"><b id="ow-n"></b> <span id="ow-nl"></span></span><button type="button" class="btn small" data-copy>${ic('share')} انسخ رابط الدعوة</button></div>
           <div class="ow-pub" role="group" aria-label="من يقدر يدخل الجلسة"><button type="button" data-pub="0">${ic('padlock')}<span><b>جلسة خاصة</b><small>يدخلون بالكود بس</small></span></button><button type="button" data-pub="1">${ic('eye')}<span><b>جلسة عامة</b><small>تطلع بقائمة الجلسات للكل</small></span></button></div>

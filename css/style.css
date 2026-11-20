@@ -1161,3 +1161,7 @@ label.sm-row,.sm-link{cursor:pointer}
 .own-pub b{font-weight:800}
 .own-pub:not(.on){border-color:color-mix(in srgb,var(--gold) 60%,var(--line))}
 .own-pub:not(.on) .ic{color:var(--gold)}
+
+/* تاق «للجمعات الحضورية» على بطاقة اللعبة */
+.gt-tag{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;color:var(--gold-ink);background:color-mix(in srgb,var(--gold) 16%,transparent);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);border-radius:999px;padding:3px 10px;margin-bottom:6px}
+.gt-tag .ic{width:14px;height:14px}

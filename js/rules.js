@@ -336,7 +336,7 @@ window.DahoomRules = (function(){
   const GAMES = {
     alf: { id:'alf', name:'ألف نقطة', icon:'ui-cards', ac:'brand',
       pitch:'فرق تتسابق على ألف نقطة: أسئلة، وتمثيل بدون كلام، وتحديات — والبطاقات تقلب اللعب.',
-      facts:[['team','فريقين أو أكثر'],['phone','الجوال اختياري'],['trophy','الهدف 1000 نقطة']],
+      facts:[['hm-home','للجمعات الحضورية'],['team','فريقين أو أكثر'],['phone','الجوال اختياري'],['trophy','الهدف 1000 نقطة']],
       tabs:[['basics','كيف تلعب',alfBasics],['cards','البطاقات',alfCards],['more','تفاصيل',alfMore]] },
     khaliya: { id:'khaliya', name:'خلية الحروف', icon:'ui-hexagon', ac:'gold',
       pitch:'فريقين على لوحة حروف: جاوب صح وخذ الخلية، وأول من يوصل طرف اللوحة بالطرف الثاني يفوز.',
