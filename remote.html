@@ -114,12 +114,16 @@
       <div class="r-charade hidden" id="r-charade"></div>
       <div class="r-rasm hidden" id="r-rasm"></div>
       <div class="r-sq hidden" id="r-sq"></div>
-      <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">بزّ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
-      <div class="fx-tags" id="r-fx"></div>
-      <div class="r-hand-wrap" id="r-hand-wrap">
-        <div class="r-hand-lbl" id="r-hand-lbl"></div>
-        <div class="r-hand" id="r-hand"></div>
+      <!-- خانة الفعل: ارتفاع ثابت، ومحتواها يتبدل حسب المرحلة (البز / اليد / سطر حالة) عشان ما تتحرك الشاشة -->
+      <div class="r-slot" id="r-slot" data-mode="buzz">
+        <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">بزّ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
+        <div class="r-slot-msg" id="r-slot-msg"></div>
+        <div class="r-hand-wrap" id="r-hand-wrap">
+          <div class="r-hand-lbl" id="r-hand-lbl"></div>
+          <div class="r-hand" id="r-hand"></div>
+        </div>
       </div>
+      <div class="fx-tags" id="r-fx"></div>
     </div>
     <aside class="r-side">
       <details class="r-card r-sess" id="r-sess" open><summary id="r-sess-sum"></summary><div id="r-sess-body"></div></details>

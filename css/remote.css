@@ -876,3 +876,69 @@ body.is-owner .r-bar{display:none}
 .r-logo:focus-visible{outline:2px solid var(--brand)}
 @media (prefers-reduced-motion:reduce){ .ow-sw i,.ow-sw i::after{transition:none} }
 .rs-own{margin-inline:4px}
+/* =====================================================================
+   خانة الفعل (ألف نقطة + خلية الحروف) — #r-slot
+   ارتفاع ثابت ومحتوى يتبدل حسب المرحلة، فما تتحرك الشاشة وسط اللعب:
+   buzz = زر البز بس · play = يد البطاقات (دوركم تلعبون) · idle = سطر حالة هادي + اليد للاطلاع
+   بالكمبيوتر: عمودين — البز أو الحالة على جنب، واليد جنبها
+   ===================================================================== */
+.r-slot{--slot-h:274px;height:var(--slot-h);display:flex;flex-direction:column;justify-content:flex-start;gap:8px;min-width:0}
+.r-slot:not(.has-hand)[data-mode="idle"]{justify-content:center}
+.r-slot>*{min-width:0}
+.r-slot .r-buzz{width:min(60vw,232px);margin:4px 0 10px;flex:none}
+.r-slot:not([data-mode="buzz"]) .r-buzz{display:none}
+.r-slot .r-slot-msg,.r-slot .r-hand-wrap{display:none}
+.r-slot[data-mode="idle"] .r-slot-msg{display:flex}
+.r-slot[data-mode="play"] .r-hand-wrap,.r-slot[data-mode="idle"].has-hand .r-hand-wrap{display:flex}
+/* سطر الحالة */
+.r-slot-msg{align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:8px 12px;box-shadow:var(--shadow);flex:none}
+.rsm-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);color:var(--mute);flex:none}
+.rsm-ic .ic{width:21px;height:21px}
+.rsm-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rsm-t b{font-size:1.02rem;line-height:1.35}
+.rsm-t small{color:var(--mute);font-weight:600;font-size:.84rem;line-height:1.4}
+.r-slot:not(.has-hand) .r-slot-msg{flex-direction:column;text-align:center;background:none;border:0;box-shadow:none;gap:12px}
+.r-slot:not(.has-hand) .rsm-ic{width:64px;height:64px;border-radius:20px}
+.r-slot:not(.has-hand) .rsm-ic .ic{width:32px;height:32px}
+.r-slot:not(.has-hand) .rsm-t b{font-size:1.3rem}
+.r-slot:not(.has-hand) .rsm-t small{font-size:.95rem}
+/* اليد: صف بطاقات مقروءة يتسحب بالعرض */
+.r-slot .r-hand-wrap{flex-direction:column;gap:4px;min-height:0}
+.r-slot .r-hand-lbl{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;min-height:32px;padding-inline:2px;font-size:.95rem}
+.r-slot .r-hand-lbl>span{display:inline-flex;gap:6px;align-items:center}
+.r-slot .r-hand-lbl small{font-weight:600;font-size:.8rem}
+.r-slot .r-hand-lbl .r-can{display:inline-flex;gap:6px;align-items:center;font-size:1.08rem}
+.r-slot .r-fuse{flex:none;margin:0}
+.r-slot .r-hand{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;padding:6px 4px 14px;margin-inline:-4px;scrollbar-width:none;overscroll-behavior-x:contain}
+.r-slot .r-hand::-webkit-scrollbar{display:none}
+/* توسيط آمن: البطاقات بالنص لما تكفي، ولما تزيد تبدأ من أول الصف وتنسحب */
+.r-slot .r-hand>:first-child{margin-inline-start:auto}
+.r-slot .r-hand>:last-child{margin-inline-end:auto}
+.r-hcard{flex:0 0 clamp(150px,40vw,176px);scroll-snap-align:start;padding:0;margin:0;border:0;background:none;cursor:pointer;text-align:inherit;border-radius:14px;-webkit-tap-highlight-color:transparent}
+.r-hcard .tcg{width:100%}
+.r-hcard .tcg:not(.in-phase){box-shadow:0 0 0 1px rgba(0,0,0,.25),0 6px 12px -8px rgba(0,0,0,.6)}
+.r-hcard:active .tcg{transform:scale(.97)}
+.r-hcard:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.r-slot .tcg.mini .tcg-art{aspect-ratio:16/10}
+.r-slot .tcg.mini .tcg-top{font-size:max(11.5px,6cqw)}
+.r-slot .tcg.mini .tcg-name{font-size:max(15px,10cqw);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.r-slot .tcg-flag{top:6px;left:6px}
+.r-slot .r-hand.can .tcg{box-shadow:0 0 0 3px var(--ok),0 10px 20px -8px rgba(0,0,0,.6)}
+@media (min-width:900px){
+  .r-slot{--slot-h:300px;display:grid;grid-template-columns:clamp(200px,32%,270px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);align-items:center;column-gap:22px}
+  .r-slot>*{grid-row:1}
+  .r-slot .r-buzz,.r-slot .r-slot-msg{grid-column:1;justify-self:center}
+  .r-slot .r-buzz{width:min(100%,236px)}
+  .r-slot .r-hand-wrap{grid-column:2}
+  .r-slot[data-mode="buzz"].has-hand .r-hand-wrap{display:flex}
+  .r-slot[data-mode="play"] .r-hand-wrap{grid-column:1/-1}
+  .r-slot:not(.has-hand)>*{grid-column:1/-1}
+  .r-slot.has-hand .r-slot-msg{flex-direction:column;text-align:center;background:none;border:0;box-shadow:none;gap:12px}
+  .r-slot.has-hand .rsm-ic{width:56px;height:56px;border-radius:18px}
+  .r-slot.has-hand .rsm-ic .ic{width:28px;height:28px}
+  .r-slot.has-hand .rsm-t b{font-size:1.2rem}
+  .r-slot.has-hand .rsm-t small{font-size:.92rem}
+  .r-slot:not(.has-hand) .r-buzz{width:280px}
+  .r-hcard{flex-basis:196px}
+}
+@media (prefers-reduced-motion:reduce){ .r-hcard:active .tcg{transform:none} }
