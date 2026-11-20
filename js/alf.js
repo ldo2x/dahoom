@@ -334,7 +334,7 @@
       timerEnds=Date.now()+timerLeft*1000;
       num.textContent=timerLeft; fg.style.strokeDashoffset = 326.7*(1-timerLeft/timerTotal);
       el.classList.toggle('warn', timerLeft<=Math.ceil(timerTotal/2) && timerLeft>3); el.classList.toggle('danger', timerLeft<=3 && timerLeft>0);
-      if(timerLeft<=3 && timerLeft>0) play('tick',{volume:.9});
+      if(timerLeft<=3 && timerLeft>0) play('countdown',{volume:.9});
       if(timerLeft<=0){ clearTimer(); play('buzzer',{volume:.7}); el.classList.add('done'); num.textContent='0'; const b=$('#timeup'); if(b) b.classList.remove('hidden'); onEnd&&onEnd(); return; }
       timerLeft--; timerH=setTimeout(step,1000);
     };
@@ -451,7 +451,7 @@
     turnIntro();
   }
   function turnIntro(){
-    const t=cur(); G.charade=null;
+    const t=cur(); G.charade=null; play('turn',{volume:.6});
     const npc = t.fx.npc, choose = t.fx.choose;
     stage(`<div class="row center">${G.finalRound?'<span class="banner">اللفة الأخيرة — الحسم بنهايتها</span>':''}${inFinalStretch()?`<span class="banner">الحسم: وقت السرقة بالنص${inClimax(t)?' · وما لكم أسئلة سهلة':''}</span>`:''}${G.pot?`<span class="banner dim">${ic('coins')} القطة: ${G.pot} لأول واحد ينجح</span>`:''}</div>
       <div class="eyebrow">اللفة ${G.round} · مرحلة ${PHASE_AR[gamePhase()]}</div>

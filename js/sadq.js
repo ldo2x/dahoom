@@ -127,7 +127,7 @@ window.DahoomSadq = (function(){
     c.up=true; p.stats.lost++; play('fail',{volume:.55});
     log(p, `خسر ورقة: ${RL(c.r).name} — ${why}`, 'bad', RL(c.r).icon);
     stage(`<div class="sq-msg bad">${who(p)} خسر ورقة ${roleChip(c.r)}</div>`);
-    if(!hidden(p).length){ p.out=true; G.outOrder.push(p.id); log(p, 'طلع من المجلس — ما بقى له أوراق', 'bad', 'skull'); play('meme:yoink',{volume:.5}); tell(p, 'طلعت من المجلس — تابع الباقين'); }
+    if(!hidden(p).length){ p.out=true; G.outOrder.push(p.id); log(p, 'طلع من المجلس — ما بقى له أوراق', 'bad', 'skull'); play('out',{volume:.6}); tell(p, 'طلعت من المجلس — تابع الباقين'); }
     wait(null); render(); await sleep(1300);
   }
 
@@ -142,7 +142,7 @@ window.DahoomSadq = (function(){
       options:[{ v:'ch', label:'ما أصدقك', icon:'search', cls:'btn-bad' },{ v:'pass', label:'أصدقه', cls:'plain' }] }), winMs());
     wait(null);
     if(!r || !G || G.over) return null;
-    const ch=r.p; G.act.challenger=ch.id; render(); play('buzzer',{volume:.5});
+    const ch=r.p; G.act.challenger=ch.id; render(); play('challenge',{volume:.7});
     log(ch, `قال لـ ${claimer.name}: ما أصدقك (${RL(role).name})`, 'info', 'search');
     // الشهود: الباقين يقدرون يراهنون بريال
     const wit=alive().filter(x=>x!==claimer && x!==ch);
@@ -256,8 +256,8 @@ window.DahoomSadq = (function(){
     else if(k==='salfa'){ p.coins+=DATA.loanTake; p.loan=true; p.stats.earned+=DATA.loanTake; log(p, `أخذ سلفة: +${DATA.loanTake} (يرجّع ${DATA.loanPay} دوره الجاي)`, 'info', 'hm-cash'); play('coin',{volume:.4}); }
     else if(k==='tijara'){ p.coins+=3; p.stats.earned+=3; log(p, 'تجارة: +3', 'good', 'coins'); play('coin',{volume:.5}); }
     else if(k==='wasta'){ const v=Math.min(G.pot, DATA.wastaMax); G.pot-=v; p.coins+=v; p.stats.earned+=v; log(p, `واسطة: أخذ ${v} من الصندوق`, 'good', 'phone'); play('bonus',{volume:.5}); }
-    else if(k==='nashl'){ const v=Math.min(2, t.coins); t.coins-=v; p.coins+=v; p.stats.earned+=v; log(p, `نشل ${v} من ${t.name}`, 'bad', 'ninja'); play('meme:yoink',{volume:.5}); tell(t, `${p.name} نشل منك ${v}`); }
-    else if(k==='mukhalafa'){ const v=Math.min(2, t.coins); t.coins-=v; G.pot+=v; log(t, `دفع مخالفة ${v} للصندوق`, 'bad', 'hm-siren'); play('wrong',{volume:.4}); }
+    else if(k==='nashl'){ const v=Math.min(2, t.coins); t.coins-=v; p.coins+=v; p.stats.earned+=v; log(p, `نشل ${v} من ${t.name}`, 'bad', 'ninja'); play('snatch',{volume:.5}); tell(t, `${p.name} نشل منك ${v}`); }
+    else if(k==='mukhalafa'){ const v=Math.min(2, t.coins); t.coins-=v; G.pot+=v; log(t, `دفع مخالفة ${v} للصندوق`, 'bad', 'hm-siren'); play('pay',{volume:.5}); }
     else if(k==='tard' || k==='fadiha'){ p.stats.taken++; render(); await loseCard(t, k==='tard' ? `${p.name} طرده` : `${p.name} فضحه`); }
     else if(k==='istishara'){
       const drawn=[draw(), draw()], h=hidden(p);
@@ -289,7 +289,7 @@ window.DahoomSadq = (function(){
     if(!G || G.over) return;
     const p=cur(); if(p.out) return next();
     G.act=null; render();
-    stage(`<div class="sq-msg">دور ${who(p)}</div>`);
+    stage(`<div class="sq-msg">دور ${who(p)}</div>`); play('turn',{volume:.5});
     if(p.loan){ p.loan=false;
       if(p.coins>=DATA.loanPay){ p.coins-=DATA.loanPay; G.pot+=DATA.loanPay; log(p, `سدد السلفة: ${DATA.loanPay} للصندوق`, 'info', 'hm-cash'); render(); await sleep(700); }
       else { const v=p.coins; p.coins=0; G.pot+=v; log(p, 'ما قدر يسدد السلفة', 'bad', 'hm-cash'); await loseCard(p, 'ما سدد السلفة'); if(p.out) return next(); }
