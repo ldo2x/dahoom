@@ -1271,7 +1271,8 @@
     $('#btn-again').onclick=()=>newGame();
     $('#btn-adjust').onclick=adjustModal;
     $('#btn-help').onclick=helpModal;
-    $('#btn-guide-alf').onclick=e=>{ e.stopPropagation(); renderGuide(); go('guide-alf'); };
+    // الشرح الجديد المبسّط (js/rules.js) — والشاشة القديمة تبقى احتياط لو الملف ما حمّل
+    $('#btn-guide-alf').onclick=e=>{ e.stopPropagation(); if(window.DahoomRules){ window.DahoomRules.open('alf'); return; } renderGuide(); go('guide-alf'); };
     $('#btn-guide-play').onclick=()=>$('#card-alf').click();
     $('#btn-skip').onclick=async ()=>{ if(!G) return; if(await confirmBox(`<h3>تخطي دور ${esc(cur().name)}؟</h3>`,'تخطي','لا')){ clearTimer(); stopAll(); nextTurn(); } };
     $('#btn-quit').onclick=async ()=>{ if(await confirmBox('<h3>تنهي المباراة؟</h3><p class="muted">بتروح النقاط الحالية.</p>','أنهِ','كمّل','btn-bad')){ clearTimer(); stopAll(); go('home'); } };

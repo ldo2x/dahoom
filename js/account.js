@@ -626,8 +626,12 @@ window.DahoomAccount = (function(){
       const now=Date.now();
       const ops=[ { path:'users/'+st.uid, data:{ username:u, unameAt:now }, merge:true }, { path:'usernames/'+u, data: em ? { uid:st.uid, em, at:now } : { uid:st.uid, at:now } } ];
       if(old) ops.push({ path:'usernames/'+old, del:true });
-      await cloud.batch(ops);
-      p.username=u; p.unameAt=now; saveCache(st.uid, p); emit();
+      // نقفل المزامنة وقت الحجز: مزامنة قرت الوثيقة قبله وكتبت بعده كانت بتمسح اليوزرنيم
+      while(st.syncing) await new Promise(r=>setTimeout(r,100));
+      st.syncing=true;
+      try{ await cloud.batch(ops); }
+      finally{ st.syncing=false; if(syncAgain){ syncAgain=false; setTimeout(sync, 50); } }
+      st.prof.username=u; st.prof.unameAt=now; saveCache(st.uid, st.prof); emit();   // st.prof ممكن تبدّل وقت المزامنة — نعدّل الحالي
       return { ok:true, why:'' };
     }catch(e){ console.warn('[DahoomAccount] setUsername', e && (e.code||e.message)); return { ok:false, why:'ما قدرنا نحجزه — يمكن أحد سبقك عليه، جرّب مرة ثانية' }; }
   }
@@ -645,9 +649,9 @@ window.DahoomAccount = (function(){
       hookAuth();
       const free=await cloud.get('usernames/'+u); if(free) return { ok:false, why:'اليوزرنيم مأخوذ، جرّب غيره' };
       const em='u'+rid(14)+'@'+LOGIN_DOMAIN;
+      if(o.name || o.avatar) continueAsGuest({ name:o.name, avatar:o.avatar });   // الاسم والصورة يمشون مع الحساب الجديد (ينقرون وقت الدخول)
       const user=await cloud.signUpPw(em, pw);
-      if(o.name || o.avatar) continueAsGuest({ name:o.name, avatar:o.avatar });   // الاسم والصورة يمشون مع الحساب الجديد
-      await enterUser(user);
+      if(st.mode!=='user' || st.uid!==user.uid) await enterUser(user);
       const r=await setUsername(u);
       if(!r.ok) return { ok:true, why:'انفتح حسابك، بس اليوزرنيم ما انحجز: '+r.why };
       return { ok:true, why:'' };
@@ -685,12 +689,16 @@ window.DahoomAccount = (function(){
   // s: 'on' متصل بالموقع، 'lobby' بجلسة ينتظر، 'play' يلعب الحين، 'off' طلع. g: اللعبة
   const ACT = { s:'on', g:'' }; let actT=0, actSent='';
   const ONLINE_MS = 150*1000;
+  // setActivity(null): هالصفحة توقف تكتب الحالة (صفحة ثانية مسؤولة عنها، مثل شاشة صاحب الجلسة داخل الإطار)
   function setActivity(s, g){
+    if(s===null){ ACT.paused=true; clearTimeout(actT); return; }
+    ACT.paused=false;
     ACT.s = ['on','lobby','play','off'].includes(s) ? s : 'on'; ACT.g = GAMES[g] ? g : '';
     clearTimeout(actT); actT=setTimeout(beat, 400);
   }
   async function beat(force){
     clearTimeout(actT);
+    if(ACT.paused && !force) return;
     try{
       if(!signedIn() || !cloudOk){ actT=setTimeout(beat, 60000); return; }
       if(document.visibilityState==='hidden' && ACT.s!=='off' && !force){ actT=setTimeout(beat, 60000); return; }

@@ -65,9 +65,10 @@
 
   // ---------- بدون هوية: سجّل أو كمّل كضيف ----------
   let gateAv = A.AVATARS[Math.floor(Math.random()*A.AVATARS.length)];
-  function renderGate(){
+  function renderGate(fromGuest){
+    if(fromGuest!==undefined) V.gateBack=!!fromGuest;
     document.title='دحوم — ملفك';
-    root.innerHTML=`<section class="pf-card pf-gate">
+    root.innerHTML=`<section class="pf-card pf-gate">${V.gateBack && A.current() ? `<button type="button" class="btn small ghost pf-gback" id="g-back">${ic('back')} رجوع لملفك</button>` : ''}
       <div class="pf-gate-top"><span class="pf-gate-mark">${ic('acc-award')}</span></div>
       <h1>ملفك في دحوم</h1>
       <p class="muted">أرقامك وإنجازاتك وأصدقاؤك، كلها بمكان واحد.</p>
@@ -94,6 +95,7 @@
         <p class="small muted center">ملف الضيف ينحفظ بهالجهاز بس، وتقدر تنقله لحسابك بعدين.</p>
       </form></section>`;
     $('#g-google').onclick=signIn;
+    const gb=$('#g-back'); if(gb) gb.onclick=()=>{ V.gateBack=false; render(); };
     $$('[data-gt]').forEach(b=>b.onclick=()=>{ V.gate=b.dataset.gt; renderGate(); const f=$(V.gate==='in'?'#gi-u':'#gu-u'); if(f) f.focus(); });
     const gi=$('#g-in'); if(gi) gi.onsubmit=async e=>{ e.preventDefault(); const btn=$('button[type=submit]',gi); btn.disabled=true; $('#gi-err').textContent='';
       const r=await busy(A.signInWithPassword($('#gi-u').value, $('#gi-p').value), 'ندخلك…'); btn.disabled=false;
@@ -140,6 +142,7 @@
     bindHero();
     if(V.editing) bindEditor(); else { bindAch(); bindRecent(); bindFriends(); bindAccount(); bindTheirs(); }
     const cta=$('#pf-cta-in'); if(cta) cta.onclick=signIn;
+    const ctu=$('#pf-cta-un'); if(ctu) ctu.onclick=()=>{ V.gate='in'; renderGate(true); const f=$('#gi-u'); if(f) f.focus(); };
   }
 
   // ---------- الواجهة العلوية ----------
@@ -159,8 +162,8 @@
         ${A.avatarHTML(p, 104, 'pf-avatar')}
         <div class="pf-who">
           <h1 class="pf-name">${esc(p.name)}</h1>
-          ${p.username?`<button type="button" class="pf-uname" id="pf-uname" dir="ltr" title="انسخ اليوزرنيم">@${esc(p.username)}</button>`:''}
-          ${!V.mine && V.pres && V.pres.text ? `<span class="pf-pres ${V.pres.on?'on':''}"><i></i>${esc(V.pres.text)}</span>` : (V.mine && !p.guest && !V.editing ? '<span class="pf-pres on"><i></i>متصل</span>' : '')}
+          <div class="pf-sub">${p.username?`<button type="button" class="pf-uname" id="pf-uname" dir="ltr" title="انسخ اليوزرنيم">@${esc(p.username)}</button>`:''}
+          ${!V.mine && V.pres && V.pres.text ? `<span class="pf-pres ${V.pres.on?'on':''}"><i></i>${esc(V.pres.text)}</span>` : (V.mine && !p.guest && !V.editing ? '<span class="pf-pres on"><i></i>متصل</span>' : '')}</div>
           <div class="pf-tags"><span class="pill pf-title">${esc(A.titleName(p.title))}</span>${p.guest?`<span class="pill dim">${ic('acc-ghost')} ضيف</span>`:''}${p.offline?`<span class="pill dim">${ic('acc-cloud-off')} بدون نت</span>`:''}</div>
         </div>
         ${actions ? `<div class="pf-actions">${actions}</div>` : ''}
@@ -193,7 +196,7 @@
   }
   const guestCta = () => `<section class="pf-cta" role="note"><span class="pf-cta-ic">${ic('acc-cloud-off')}</span>
       <div><b>سجّل دخول عشان ينحفظ ملفك</b><p>الحين أرقامك بهالجهاز بس. لو سجّلت، تنتقل كلها لحسابك وتقدر تضيف أصدقاءك.</p></div>
-      <button class="btn btn-hype" id="pf-cta-in">${ic('acc-google')} سجّل بقوقل</button></section>`;
+      <div class="pf-cta-acts"><button class="btn" id="pf-cta-un">${ic('acc-login')} ادخل باليوزرنيم</button><button class="btn btn-hype" id="pf-cta-in">${ic('acc-google')} سجّل بقوقل</button></div></section>`;
 
   // ---------- الأرقام ----------
   function statsHTML(p){
@@ -297,7 +300,8 @@
   // ---------- حسابك: اليوزرنيم وكلمة السر ----------
   function accountHTML(p){
     const w=A.unameWait(), mins=Math.ceil(w/60000), hasPw=A.hasPassword();
-    const waitTxt = w>0 ? (mins>=60 ? `تقدر تغيّره بعد ${Math.floor(mins/60)} ساعة${mins%60?` و${mins%60} دقيقة`:''}` : `تقدر تغيّره بعد ${mins} دقيقة`) : 'تقدر تغيّره مرة كل ساعتين';
+    const hrs=Math.floor(mins/60), rest=mins%60, hTxt = hrs===2 ? 'ساعتين' : 'ساعة';
+    const waitTxt = w>0 ? (mins>=60 ? `تقدر تغيّره بعد ${hTxt}${rest?` و${rest} دقيقة`:''}` : `تقدر تغيّره بعد ${mins} دقيقة`) : 'تقدر تغيّره مرة كل ساعتين';
     return `<section class="pf-card pf-acct" id="pf-acct"><h2 class="pf-h">${ic('acc-user-check')} حسابك</h2>
       ${!p.username ? `<p class="pf-need">${ic('star')} اختر يوزرنيم — هو معرّفك اللي يضيفك فيه أخوياك، وتدخل فيه مع كلمة السر.</p>` : ''}
       <form class="pf-gform" id="ac-u" novalidate>
@@ -419,7 +423,7 @@
     A.onChange(c=>{
       const key = c ? c.uid+'|'+c.guest : 'none', changed = key!==lastKey;
       lastKey=key;
-      if(changed){ V.friends=V.requests=null; V.results=null; }
+      if(changed){ V.friends=V.requests=null; V.results=null; V.gateBack=false; }
       if(V.editing) return;
       if(V.mine || changed) load();
     });

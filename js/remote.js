@@ -192,7 +192,14 @@
   // ---------- الشاشة الرئيسية ----------
   let buzzSent = 0;
   const tog = (sel, on) => { const e=$(sel); if(e) e.classList.toggle('r-hide', !on); };
+  // حالتي لأصدقائي: بجلسة لعبة كذا / يلعبها الحين
+  function activity(){
+    const A=window.DahoomAccount; if(!A || !A.setActivity) return;
+    const I=st.info||{}, S=st.S, k = !st.room ? 'on' : (S && !S.waiting && S.locked) || I.locked ? 'play' : 'lobby', g=I.game||'';
+    if(st.actKey===k+g) return; st.actKey=k+g; A.setActivity(k, g);
+  }
   function renderMain(){
+    activity();
     const sw=$('#r-switch'); if(sw) sw.style.display = (st.S && st.S.locked) || st.mode==='solo' ? 'none' : '';
     renderSess();
     const S=st.S, waiting = !S || !!S.waiting;   // لازم true/false بالضبط: toggle مع undefined يقلب الكلاس كل مرة (كان يخفي سطر الحالة ويرجّعه فتتحرك الشاشة)

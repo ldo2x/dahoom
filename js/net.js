@@ -252,5 +252,8 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, waitingFor:()=>waitingFor().map(p=>p.name), isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  // للاختبارات المحلية بس: نعتبر كل المتصلين مستعدين
+  const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  return { _readyAll: isLocal ? ()=>{ onlinePids().forEach(id=>RD.add(id)); infoAll(); } : undefined,
+    get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, waitingFor:()=>waitingFor().map(p=>p.name), isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

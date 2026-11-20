@@ -41,7 +41,9 @@ window.DahoomOwner = (function(){
     const n=NET(); if(!n) return;
     if(/[?&]noown=1/.test(location.search)) { n.start(); return; }   // للاختبارات وشاشات العرض: الطاولة بس
     n.start(); on=true; wrap().classList.remove('hidden'); ensureFrame(); setMode('me');
+    actv(null);   // الحالة يكتبها جوال صاحب الجلسة (داخل الإطار)
   }
+  const actv = v => { const A=window.DahoomAccount; if(A && A.setActivity) A.setActivity(v); };
   function leave(){
     on=false; wrap().classList.add('hidden'); const f=$('#own-frame'); f.src='about:blank'; frameRoom=null;
     try{ sessionStorage.removeItem(KEY); }catch(e){} render(); toast('صار هالجهاز شاشة عرض بس — اللاعبين يدخلون من أجهزتهم'); try{ const n=NET(); n && n.refresh(); }catch(e){}
@@ -58,7 +60,7 @@ window.DahoomOwner = (function(){
   document.addEventListener('dahoom:screen', ()=>{ if(!on) return; const scr=(document.querySelector('.screen.active')||{}).id||'';
     if((GAME_SCREENS.includes(scr) || scr==='results') && NET() && NET().ownerPid) { if(mode!=='me') setMode('me'); } render(); });
   // شارة الحساب بالرئيسية (دخول بقوقل / ضيف / ملفي)
-  document.addEventListener('DOMContentLoaded', ()=>{ const A=window.DahoomAccount, el=document.getElementById('acc-badge'); if(A && el){ A.init(); A.mountBadge(el); } });
+  document.addEventListener('DOMContentLoaded', ()=>{ const A=window.DahoomAccount, el=document.getElementById('acc-badge'); if(A && el){ A.init(); A.mountBadge(el); } if(A && A.setActivity) A.setActivity(on ? null : 'on'); });
   // بعد تحديث الصفحة: نرجع زي ما كنا
   document.addEventListener('DOMContentLoaded', ()=>{ try{ const s=JSON.parse(sessionStorage.getItem(KEY)||'null'); if(s && s.on){ mode=s.mode||'me'; setTimeout(enter, 300); setTimeout(()=>setMode(s.mode||'me'), 600); } }catch(e){} });
   setInterval(()=>{ if(on){ ensureFrame(); render(); } }, 3000);
@@ -124,7 +126,7 @@ window.DahoomOwner = (function(){
     end:async()=>{ if(await D.confirmBox('<h3>تنهي الجلسة؟</h3><p class="muted">الجلسة تنقفل والكل يطلع منها، وترجع للرئيسية.</p>','إيه، أنهها','لا','btn-bad')) closeSession(); },
     again:()=>{ const b=document.getElementById('btn-again'); if(b) b.click(); }, toSetup:()=>{ const n=NET(); if(n) n.use(null); D.go('lobby'); prepare(); },
   };
-  function closeSession(){ try{ window.DahoomLobby && window.DahoomLobby.close(); }catch(e){} const n=NET(); if(n) n.newSession(); on=false; wrap().classList.add('hidden'); const f=$('#own-frame'); f.src='about:blank'; frameRoom=null; try{ sessionStorage.removeItem(KEY); sessionStorage.removeItem('dahoom_room'); }catch(e){} render(); D.go('home'); }
+  function closeSession(){ actv('on'); try{ window.DahoomLobby && window.DahoomLobby.close(); }catch(e){} const n=NET(); if(n) n.newSession(); on=false; wrap().classList.add('hidden'); const f=$('#own-frame'); f.src='about:blank'; frameRoom=null; try{ sessionStorage.removeItem(KEY); sessionStorage.removeItem('dahoom_room'); }catch(e){} render(); D.go('home'); }
 
   // ادخل جلسة: الجلسات العامة المفتوحة + الدخول بالكود
   const GAME_IC = { alf:'cards', khaliya:'hive', rasm:'pencil', hawamir:'hm-building-bank', sadq:'masks' };

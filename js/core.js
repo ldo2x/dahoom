@@ -578,6 +578,10 @@ window.Dahoom = (function(){
     $('#card-rasm').onclick=()=>openGame('rasm');
     { const hm=$('#card-hawamir'); if(hm) hm.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('hawamir'); }; }
     { const sq=$('#card-sadq'); if(sq) sq.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('sadq'); }; }
+    // زر «طريقة اللعب» بكل بطاقة لعبة (ألف نقطة عندها زرها)
+    $$('.game-tile').forEach(t=>{ const g=(t.id||'').replace('card-',''), body=$('.gt-body', t); if(!g || !body || $('.gt-guide', t)) return;
+      const b=document.createElement('button'); b.type='button'; b.className='gt-guide'; b.innerHTML=`${ic('ui-book')} طريقة اللعب`;
+      b.onclick=e=>{ e.stopPropagation(); if(window.DahoomRules) window.DahoomRules.open(g); }; b.addEventListener('keydown', e=>e.stopPropagation()); body.appendChild(b); });
     $$('.game-tile').forEach(t=>t.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target===t){ e.preventDefault(); t.click(); } }));
     $('#btn-add-player').onclick=addPlayer;
     $('#p-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });

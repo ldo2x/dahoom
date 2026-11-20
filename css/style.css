@@ -167,11 +167,11 @@ b{font-weight:700}
 .span-all{grid-column:1/-1}
 
 /* حقول */
-input[type=text],input[type=number],select{
+input[type=text],input[type=number],input[type=password],input[type=search],select{
   font-family:var(--body);font-size:1.05rem;font-weight:600;padding:10px 14px;width:100%;
   background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-s);
 }
-[data-theme="day"] input[type=text],[data-theme="day"] input[type=number],[data-theme="day"] select{background:var(--surface-2)}
+[data-theme="day"] input[type=text],[data-theme="day"] input[type=number],[data-theme="day"] input[type=password],[data-theme="day"] select{background:var(--surface-2)}
 input::placeholder{color:var(--mute);opacity:.8}
 input[type=color]{background:var(--bg-2);border:1px solid var(--line);cursor:pointer}
 label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var(--mute);font-size:.92rem}

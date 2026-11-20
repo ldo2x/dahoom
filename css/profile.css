@@ -208,3 +208,37 @@ input[type=search]{font-family:var(--body);font-size:1rem;font-weight:600;paddin
 @keyframes pfPulse{from{opacity:.55}to{opacity:1}}
 
 @media (prefers-reduced-motion:reduce){.pf-lvl-bar i{transition:none}.pf-skel>*{animation:none}}
+
+/* ===== اليوزرنيم والحالة وأصدقاء الصديق ===== */
+.pf-uname{all:unset;cursor:pointer;display:inline-block;font-weight:700;color:var(--mute);font-size:.95rem;border-radius:8px;padding:1px 6px;margin-inline-start:-6px}
+.pf-uname:hover{background:var(--surface-2);color:var(--text)}
+.pf-uname:focus-visible{outline:2px solid var(--brand)}
+.pf-pres{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:.85rem;color:var(--mute)}
+.pf-pres i{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.pf-pres.on{color:var(--ok-ink)}
+.pf-pres.on i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.pf-who .pf-pres{display:flex;margin-top:4px}
+.pf-person.is-on .dacc-av{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ok);border-radius:50%}
+.pf-pu{font-weight:600;color:var(--mute);font-size:.82em}
+.pf-mt{color:var(--ok-ink);font-weight:700}
+.pf-mutual{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-weight:700;color:var(--text);background:color-mix(in srgb,var(--ok) 12%,var(--surface));border-radius:12px;padding:8px 12px}
+.pf-mutual .ic{width:18px;height:18px;color:var(--ok)}
+.pf-hint{display:block;font-size:.8rem;font-weight:600;color:var(--mute);margin-top:4px}
+.pf-hint.ok{color:var(--ok-ink)}
+.pf-hint.bad{color:var(--bad)}
+.pf-at{display:flex;align-items:center;gap:0;direction:ltr;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.pf-at b{padding:0 4px 0 12px;color:var(--mute)}
+.pf-at input{border:0!important;background:transparent!important;flex:1;min-width:0;box-shadow:none!important}
+.pf-at:focus-within{border-color:var(--brand)}
+.pf-need{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;font-weight:700;line-height:1.6;background:color-mix(in srgb,var(--gold) 14%,var(--surface));border-radius:12px;padding:10px 12px}
+.pf-need .ic{width:18px;height:18px;color:var(--gold);flex:none;margin-top:3px}
+.pf-acct .pf-gform{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.pf-acct .pf-gform .btn{align-self:flex-start}
+.pf-gseg{margin:6px 0 4px}
+.pf-gate input[dir=ltr]{text-align:left}
+
+.pf-cta-acts{display:flex;gap:8px;flex-wrap:wrap}
+.pf-gback{align-self:flex-start}
+.pf-sub{display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.pf-sub .pf-uname{margin:0}
+.pf-who .pf-sub .pf-pres{margin:0}
