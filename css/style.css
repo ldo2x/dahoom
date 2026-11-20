@@ -196,21 +196,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .tags-wrap label.off{border-color:var(--line);background:transparent;color:var(--mute);text-decoration:line-through;font-weight:500}
 .tags-wrap input{display:none}
 
-/* ---------- شاشة البداية ---------- */
-#splash.active{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.splash-in{text-align:center;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px}
-.logo-plat{display:flex;flex-direction:column;align-items:center;gap:6px}
-.lp-word{position:relative;font-family:var(--display);font-weight:400;font-size:clamp(6rem,19vw,13rem);line-height:1.05;color:var(--text);animation:logoIn .8s cubic-bezier(.2,1.2,.3,1) both}
-.lp-word::after{content:'';display:block;height:14px;margin:-.05em auto 0;width:110%;margin-inline-start:-5%;background:var(--sadu-band) 0 0/32px 14px repeat-x;border-radius:2px}
-@keyframes logoIn{from{transform:translate3d(0,30px,0) scale(.9);opacity:0}to{transform:none;opacity:1}}
-.lp-tag{font-family:var(--body);font-weight:700;font-size:clamp(1.05rem,2.2vw,1.45rem);color:var(--mute);margin-top:10px;animation:fadeUp .6s .45s both}
-@keyframes fadeUp{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
-#btn-enter{animation:fadeUp .6s .7s both}
-.hint{color:var(--mute);font-size:.92rem;margin:0}
-.splash-cards{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.5}
-[data-theme="day"] .splash-cards{opacity:.65}
-.splash-cards .tcg{position:absolute;width:150px}
-.splash-corner{position:absolute;top:16px;left:20px;z-index:3}
 
 /* ---------- الهيدر ---------- */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
@@ -223,34 +208,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .vol-slider{width:100px;accent-color:var(--brand)}
 .btn-theme .ic{width:1.2em;height:1.2em}
 
-/* ---------- الرئيسية: منتقي ألعاب بأسلوب الكونسول ---------- */
-.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px}
-.game-tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
-.game-tile::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--text);opacity:0;transition:opacity .15s;pointer-events:none}
-.game-tile:hover,.game-tile:focus-visible{transform:translate3d(0,-4px,0)}
-.game-tile:hover::after,.game-tile:focus-visible::after{opacity:1}
-.gt-art{height:clamp(220px,22vw,300px);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
-.alf .gt-art{background:#1C1029}
-.kh .gt-art{background:#0B2036;flex-direction:column;gap:10px}
-.alf .gt-art::before,.kh .gt-art::before{content:'';position:absolute;inset:0;opacity:.1;background:var(--sadu-weave) 0 0/42px 42px}
-.kh .gt-art::before{opacity:0}
-.gt-body{padding:20px 24px 24px;display:flex;flex-direction:column;gap:12px;flex:1}
-.gt-body h3{font-family:var(--display);font-weight:400;font-size:2.1rem;line-height:1.1}
-.gt-body p{color:var(--mute);margin:0;font-size:1.02rem}
-.alf-logo{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;transform:rotate(-4deg);margin-inline-start:-140px}
-.alf-logo .n{font-family:var(--num);font-weight:900;font-size:6rem;line-height:.85;color:var(--t-medium);text-shadow:4px 4px 0 #7A4A00}
-.alf-logo .w{font-family:var(--display);font-size:1.8rem;background:var(--brand);color:var(--ink);padding:4px 16px 0;border-radius:var(--r-xs);margin-top:8px}
-.gt-fan{position:absolute;left:24px;bottom:-34px;width:220px;height:240px}
-.gt-fan .tcg{position:absolute;width:124px;bottom:0;left:48px;transform-origin:50% 120%;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
-.game-tile:hover .gt-fan .tcg:nth-child(1){transform:rotate(-22deg) translate3d(0,-6px,0)!important}
-.game-tile:hover .gt-fan .tcg:nth-child(3){transform:rotate(22deg) translate3d(0,-6px,0)!important}
-.kh-logo{position:relative;width:126px;height:110px;display:grid;place-items:center;z-index:1}
-.kh-logo svg{position:absolute;inset:0;fill:var(--info)}
-.kh-logo span{position:relative;font-family:var(--display);font-size:3.8rem;color:var(--ink);padding-top:8px}
-.kh-logo-w{font-family:var(--display);font-size:2rem;color:#F7F4EF;position:relative;z-index:1}
-/* خلفية خلية الحروف: شبكة سداسية خفيفة */
-.kh .gt-art{background:
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 1 54 16v31L28 62 2 47V16Z M28 63v34 M2 47 0 48 M54 47 56 48' fill='none' stroke='%2345B0FF' stroke-opacity='.18' stroke-width='2'/%3E%3C/svg%3E") 0 0/56px 97px,#0B2036}
 
 /* ---------- اللاعبين والفرق ---------- */
 .lobby-net{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
@@ -646,7 +603,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
   .timer{width:96px;height:96px}.timer .num{font-size:2.2rem}
   .btn.big{font-size:1.15rem;padding:12px 20px}
   .hand .tcg{width:120px}
-  .gt-fan{display:none}.alf-logo{margin:0}
   .scoreboard{width:100%}
   .tchip{min-width:0;flex:1 1 50%;padding:8px 10px 12px}
   .tchip+.tchip{border-inline-start:1px solid var(--line)}
@@ -741,10 +697,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .rep-note{width:100%;min-height:70px;margin-top:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--text);font:inherit;padding:10px;resize:vertical}
 
 /* ===== ارسم وخمّن ===== */
-.rs .gt-art{background:#2A1640}
-.rs-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
-.rs-logo svg{width:190px;height:110px;stroke:var(--gold)}
-.rs-logo span{font-family:var(--display);font-size:2rem;color:#F7F4EF}
 .brand-mark.rs{background:var(--gold)}
 .rs-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:20px;align-items:start}
 .rs-board-wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
@@ -852,17 +804,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 /* ارسم وخمّن: عدّاد الدور الجاي على زر المضيف */
 .rs-cd{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;border-radius:99px;background:rgba(0,0,0,.25);font-family:var(--num);font-weight:900;margin-inline-start:6px}
 
-/* ===== الرئيسية: سوّ جلسة / ادخل جلسة / ملفي ===== */
-.hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:6px 0 26px}
-.hub-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;color:var(--text)}
-.hub-card:hover{transform:translateY(-2px)}
-.hub-card:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
-.hub-card b{display:block;font-size:1.2rem;font-weight:800}
-.hub-card small{display:block;color:var(--mute);font-weight:600;line-height:1.5}
-.hub-ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;color:#fff;background:var(--brand)}
-.hub-ic .ic{width:26px;height:26px}
-.hub-card.join .hub-ic{background:var(--sky,#2478C8)}
-.hub-card.me .hub-ic{background:var(--gold);color:var(--ink)}
 /* ادخل جلسة */
 .jl-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto;margin:10px 0}
 .jl-room{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);text-decoration:none}
@@ -905,10 +846,279 @@ body.own-on{padding-top:48px}
 body.own-me{overflow:hidden}
 @media (max-width:720px){ .own-b span{display:none} .own-b.hot span,.own-b.sw span{display:inline} .own-b{padding:6px 9px} }
 
-.legal-links{text-align:center;margin:28px 0 8px;color:var(--mute)}
-.legal-links a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 
 .own-b.hot{color:var(--ink)}
 .own-dock{backdrop-filter:none;background:var(--surface)}
-
 .acc-slot{display:flex;align-items:center;margin-inline-start:auto;margin-inline-end:12px;min-width:0}
+.legal-links{text-align:center;margin:28px 0 8px;color:var(--mute)}
+.legal-links a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+@keyframes fadeUp{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
+
+/* =====================================================================
+   البداية والرئيسية — القواعد اللي مشى عليها التصميم
+   1. تسلسل واحد واضح: زر أساسي وحيد «سوّ جلسة»، بجنبه زر ثانوي «ادخل جلسة»، وبعدها الألعاب.
+   2. مقياس مسافات ثابت: 4 / 8 / 12 / 16 / 24 / 32 / 48 (--sp-1 لين --sp-7) وما نطلع منه.
+   3. شبكة مرتبة: كل بلاطة لعبة نفس الطول ونفس الترتيب (رسمة، اسم، سطر وصف، معلومتين).
+   4. مقياس خطوط محدود: عنوان كبير، عنوان قسم، اسم لعبة، نص، نص صغير. خمس درجات بس.
+   5. تباين كافي بالوضعين، وأي نص فوق لون فاقع يكون حبر غامق.
+   6. مساحة فاضية سخية بدل الصناديق والخطوط الزايدة.
+   7. كل شي ينضغط حجمه 44 بكسل أو أكثر، والتركيز بالكيبورد ظاهر دايم.
+   8. ما فيه قفزة بالتخطيط: الرسومات والصور والشارة محجوزة أحجامها من البداية.
+   9. يتجاوب من جوال 390 لين شاشة 2000، ويحترم «تقليل الحركة».
+   10. الإعدادات الثانوية (الصوت، الوضع، تصفير المحتوى) كلها بقائمة الترس، مو بالشريط.
+   ===================================================================== */
+:root{--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;--sp-7:48px}
+
+/* ---------- الشعار «دحوم»: واضح إنه ينضغط ويرجعك للرئيسية ---------- */
+.topbar .brand[data-go]{border-radius:var(--r-m);padding:var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3);margin:calc(var(--sp-1) * -1) calc(var(--sp-1) * -1) calc(var(--sp-1) * -1) calc(var(--sp-3) * -1);min-height:48px;transition:background-color .15s,color .15s;user-select:none}
+.topbar .brand[data-go]:hover{background:var(--hover);color:var(--brand-ink)}
+.topbar .brand[data-go] .brand-mark{transition:transform .2s cubic-bezier(.2,1.4,.4,1)}
+.topbar .brand[data-go]:hover .brand-mark{transform:rotate(-8deg)}
+.topbar .brand[data-go]:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+
+/* ---------- البداية: دعوة المجلس ---------- */
+#splash{max-width:none;padding:0}
+#splash.active{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:calc(100vh - 14px);min-height:calc(100svh - 14px)}
+/* بقعة ضوء خفيفة ورا الشعار + شريط سدو تحت يقابل اللي فوق: كأنك واقف عند باب المجلس */
+#splash::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(42% 46% at 50% 48%,color-mix(in srgb,var(--brand) 16%,transparent),transparent 72%)}
+#splash::after{content:'';position:absolute;inset-inline:0;bottom:0;height:14px;background:var(--sadu-band) 0 0/32px 14px repeat-x}
+.splash-in{text-align:center;position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:var(--sp-5);padding:var(--sp-7) var(--sp-4)}
+.sp-kicker{margin:0;font-weight:700;font-size:1.05rem;color:var(--brand-ink);animation:fadeUp .5s .1s both}
+.logo-plat{display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
+.lp-word{position:relative;font-family:var(--display);font-weight:400;font-size:clamp(6rem,19vw,12rem);line-height:1.05;color:var(--text);animation:logoIn .8s cubic-bezier(.2,1.2,.3,1) both}
+.lp-word::after{content:'';display:block;height:14px;margin:-.05em auto 0;width:110%;margin-inline-start:-5%;background:var(--sadu-band) 0 0/32px 14px repeat-x;border-radius:2px}
+@keyframes logoIn{from{transform:translate3d(0,30px,0) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.lp-tag{font-weight:700;font-size:clamp(1.05rem,2vw,1.35rem);color:var(--mute);margin-top:var(--sp-3);animation:fadeUp .6s .45s both}
+#btn-enter{min-height:56px;padding-inline:var(--sp-6);animation:fadeUp .6s .65s both}
+#btn-enter .ic{width:1.1em;height:1.1em}
+.hint{display:inline-flex;align-items:center;gap:var(--sp-2);color:var(--mute);font-size:.9rem;margin:0;animation:fadeUp .6s .8s both}
+.splash-corner{position:absolute;top:var(--sp-4);inset-inline-end:var(--sp-5);z-index:3}
+/* يدّين ورق على جنبين الشاشة، كل وحدة متجهة للنص */
+.splash-cards{position:absolute;inset:0;pointer-events:none;z-index:1}
+.sp-hand{position:absolute;top:50%;width:300px;height:280px;margin-top:-140px}
+.sp-hand:nth-child(1){inset-inline-start:max(-80px,calc(50% - 680px));transform:rotate(-10deg);animation:handInR .9s .35s cubic-bezier(.2,.9,.3,1) both}
+.sp-hand:nth-child(2){inset-inline-end:max(-80px,calc(50% - 680px));transform:rotate(10deg);animation:handInL .9s .45s cubic-bezier(.2,.9,.3,1) both}
+.sp-hand .tcg{position:absolute;left:50%;bottom:0;width:140px;margin-left:-70px;transform-origin:50% 120%}
+.sp-hand .tcg:nth-child(1){transform:rotate(-16deg)}
+.sp-hand .tcg:nth-child(2){transform:translate3d(0,-14px,0);z-index:1}
+.sp-hand .tcg:nth-child(3){transform:rotate(16deg)}
+@keyframes handInR{from{opacity:0;transform:translate3d(60px,0,0) rotate(-4deg)}to{opacity:1;transform:rotate(-10deg)}}
+@keyframes handInL{from{opacity:0;transform:translate3d(-60px,0,0) rotate(4deg)}to{opacity:1;transform:rotate(10deg)}}
+
+/* ---------- الرئيسية: الشريط ---------- */
+#home{max-width:1480px}
+.home-top{flex-wrap:nowrap;border-bottom:0;padding-bottom:0;margin-bottom:0;min-height:64px}
+.home-tools{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.home-tools .acc-slot{margin:0}
+.home-tools .btn.small{min-height:44px}
+.icon-btn{width:48px;height:48px;padding:0;border-radius:50%;border:1px solid var(--line)!important;flex:none}
+.icon-btn .ic{width:22px;height:22px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.icon-btn[aria-expanded="true"]{background:var(--surface-2)}
+.icon-btn[aria-expanded="true"] .ic{transform:rotate(60deg)}
+
+/* قائمة الإعدادات */
+.set-wrap{position:relative}
+.set-menu{position:absolute;top:calc(100% + var(--sp-2));inset-inline-end:0;z-index:60;width:min(340px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow-2);padding:var(--sp-2);display:flex;flex-direction:column;gap:2px;transform-origin:top left;animation:menuIn .16s ease-out}
+.set-menu[hidden]{display:none}
+@keyframes menuIn{from{opacity:0;transform:translate3d(0,-6px,0) scale(.98)}to{opacity:1;transform:none}}
+.sm-row{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:56px;padding:var(--sp-2) var(--sp-3);border-radius:var(--r-m);color:var(--text);cursor:default}
+label.sm-row,.sm-link{cursor:pointer}
+.sm-link:hover,label.sm-row:hover{background:var(--hover)}
+.sm-link:focus-visible{outline:3px solid var(--info);outline-offset:-3px}
+.sm-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:var(--r-s);background:var(--surface-2);flex:none}
+.sm-ic .ic{width:20px;height:20px}
+.sm-t{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.35}
+.sm-t b{font-size:1rem;font-weight:700}
+.sm-t small{color:var(--mute);font-size:.82rem;font-weight:500}
+.sm-chev{width:18px;height:18px;color:var(--mute)}
+.sm-group{border-block:1px solid var(--line-soft);margin-block:var(--sp-1);padding-block:var(--sp-1)}
+.sw-sound{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.sm-sw{position:relative;width:46px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--line);flex:none;transition:background-color .15s}
+.sm-sw::after{content:'';position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--mute);transition:transform .18s ease-out}
+.sw-sound:checked+.sm-sw{background:var(--ok);border-color:transparent}
+.sw-sound:checked+.sm-sw::after{transform:translate3d(-20px,0,0);background:var(--ink)}
+.sw-sound:focus-visible+.sm-sw{outline:3px solid var(--info);outline-offset:2px}
+.sm-vol{padding:0 var(--sp-3) var(--sp-2);padding-inline-start:60px}
+.sm-vol input{width:100%;height:32px;margin:0;accent-color:var(--brand);cursor:pointer}
+.sm-vol input:disabled{opacity:.35;cursor:not-allowed}
+.sm-seg{padding:3px}
+.sm-seg span{padding:var(--sp-2) var(--sp-3);min-height:38px;display:grid;place-items:center;font-size:.92rem}
+
+/* ---------- الرئيسية: البطل ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);align-items:center;gap:var(--sp-7);padding:var(--sp-7) 0 64px}
+.hero-kicker{display:flex;align-items:center;gap:var(--sp-3);margin:0 0 var(--sp-4);color:var(--brand-ink);font-weight:700;font-size:1rem}
+.hk-sadu{width:48px;height:14px;flex:none;border-radius:2px;background:var(--sadu-band) 0 0/32px 14px repeat-x}
+.hero-title{font-family:var(--display);font-weight:400;font-size:clamp(3rem,5.4vw,5.25rem);line-height:1.08;margin:0}
+.hero-sub{font-size:clamp(1.05rem,1.25vw,1.25rem);color:var(--mute);max-width:30ch;margin:var(--sp-4) 0 0;line-height:1.75}
+.hero-cta{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-top:var(--sp-6)}
+.hero-cta .btn{min-height:56px}
+.hero-cta .btn .ic{width:1.05em;height:1.05em}
+.hero-join{background:var(--surface)}
+
+/* الرسمة: شاشة المجلس + سجادة سدو + جوالات اللاعبين قدامها (ثابتة بالوضعين لأنها أغراض حقيقية) */
+.hero-art{position:relative;width:100%;max-width:640px;justify-self:center;padding-bottom:var(--sp-7)}
+.ha-tv{position:relative;aspect-ratio:16/10;border-radius:22px;padding:10px;background:#0B0910;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 34px 60px -30px rgba(0,0,0,.75)}
+.ha-screen{position:relative;height:100%;border-radius:14px;overflow:hidden;isolation:isolate;background:radial-gradient(110% 90% at 50% 100%,#3D1652 0%,#1C1029 58%,#120B1C 100%)}
+.ha-screen::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.07;background:var(--sadu-weave) 0 0/36px 36px}
+.ha-screen::after{content:'';position:absolute;top:0;inset-inline:0;height:10px;background:var(--sadu-band) 0 0/23px 10px repeat-x}
+.ha-sc{position:absolute;top:26px;z-index:3;display:inline-flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-3);border-radius:999px;background:rgba(10,8,16,.78);border:1px solid rgba(255,255,255,.12);color:#F7F4EF;font-weight:700;font-size:.85rem;line-height:1.4}
+.ha-sc:nth-child(1){inset-inline-start:var(--sp-4)}
+.ha-sc:nth-child(2){inset-inline-end:var(--sp-4)}
+.ha-sc i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.ha-sc b{font-family:var(--num);font-weight:800;font-size:1.1rem;color:var(--c)}
+.ha-fan{position:absolute;inset:0}
+.ha-fan .tcg{position:absolute;left:50%;top:22%;width:21%;margin-left:-10.5%;transform-origin:50% 130%;box-shadow:0 0 0 1px rgba(0,0,0,.3),0 18px 30px -12px rgba(0,0,0,.85)}
+.ha-fan .tcg:nth-child(1){transform:rotate(-15deg)}
+.ha-fan .tcg:nth-child(2){transform:translate3d(0,-6%,0);z-index:2}
+.ha-fan .tcg:nth-child(3){transform:rotate(15deg)}
+.ha-rug{position:absolute;inset-inline:5%;bottom:14px;height:24px;border-radius:3px;background:var(--sadu-band) 0 0/55px 24px repeat-x;box-shadow:0 12px 18px -12px rgba(0,0,0,.6)}
+.ha-phones{position:absolute;inset-inline:0;bottom:22px;display:flex;justify-content:center;align-items:flex-end;gap:clamp(18px,6%,40px)}
+.ha-ph{position:relative;width:clamp(54px,12%,74px);aspect-ratio:9/17;border-radius:14px;padding:5px;background:#0B0910;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 16px 24px -10px rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;isolation:isolate}
+.ha-ph::before{content:'';position:absolute;inset:5px;z-index:-1;border-radius:10px;background:color-mix(in srgb,var(--c) 26%,#15121E)}
+.ha-ph:nth-child(1){transform:rotate(-9deg) translate3d(0,4px,0)}
+.ha-ph:nth-child(2){transform:translate3d(0,-10px,0)}
+.ha-ph:nth-child(3){transform:rotate(9deg) translate3d(0,4px,0)}
+.ha-av{width:64%;aspect-ratio:1;border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px var(--c);background:#1E1A2A}
+.ha-av img{width:100%;height:100%;object-fit:cover;display:block}
+.ha-ph>i{width:56%;height:6px;border-radius:3px;background:var(--c)}
+.ha-ph>i.s{position:absolute;bottom:9px;width:28%;height:3px;background:rgba(255,255,255,.35)}
+.ha-ph.buzz b{display:grid;place-items:center;width:74%;aspect-ratio:1;border-radius:50%;background:var(--c);color:var(--ink);font-family:var(--display);font-weight:400;font-size:clamp(1rem,1.6vw,1.4rem);line-height:1;padding-top:.15em;box-shadow:0 4px 0 #9E1449}
+.hero-art .ha-tv{animation:fadeUp .6s .1s both}
+.hero-art .ha-ph{animation:phoneUp .6s cubic-bezier(.2,1.3,.4,1) both}
+.hero-art .ha-ph:nth-child(1){animation-delay:.35s}.hero-art .ha-ph:nth-child(2){animation-delay:.45s}.hero-art .ha-ph:nth-child(3){animation-delay:.55s}
+@keyframes phoneUp{from{opacity:0;translate:0 24px}to{opacity:1;translate:0 0}}
+
+/* ---------- الرئيسية: الألعاب ---------- */
+.games-sec{scroll-margin-top:var(--sp-4)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5);margin-bottom:var(--sp-5)}
+.sec-head h2{font-family:var(--display);font-weight:400;font-size:clamp(1.75rem,2.6vw,2.4rem);line-height:1.15;outline:none}
+.sec-head p{margin:0;color:var(--mute)}
+.games-sec.cue .sec-head h2{animation:cueTitle 1.4s ease-out}
+.games-sec.cue .game-tile{animation:cueTile .7s cubic-bezier(.2,1.3,.4,1) both}
+.games-sec.cue .game-tile:nth-child(2){animation-delay:.06s}.games-sec.cue .game-tile:nth-child(3){animation-delay:.12s}.games-sec.cue .game-tile:nth-child(4){animation-delay:.18s}.games-sec.cue .game-tile:nth-child(5){animation-delay:.24s}
+@keyframes cueTitle{0%,40%{color:var(--brand-ink)}100%{color:var(--text)}}
+@keyframes cueTile{0%{translate:0 0}40%{translate:0 -8px}100%{translate:0 0}}
+
+.games{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--sp-4)}
+.game-tile{--art-h:clamp(150px,11.5vw,190px);position:relative;display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .15s}
+.game-tile:hover{transform:translate3d(0,-4px,0);border-color:color-mix(in srgb,var(--text) 35%,var(--line))}
+.game-tile:focus-visible{outline:3px solid var(--info);outline-offset:3px}
+.gt-art{position:relative;height:var(--art-h);flex:none;display:grid;place-items:center;overflow:hidden;isolation:isolate}
+.gt-art::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.09;background:var(--sadu-weave) 0 0/36px 36px}
+.alf .gt-art{background:#26102E}
+.kh .gt-art{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 1 54 16v31L28 62 2 47V16Z M28 63v34 M2 47 0 48 M54 47 56 48' fill='none' stroke='%2345B0FF' stroke-opacity='.16' stroke-width='2'/%3E%3C/svg%3E") 0 0/56px 97px,#0B2036}
+.kh .gt-art::before{display:none}
+.hm .gt-art{background:#0E3B2E}
+.sq .gt-art{background:#3A1220}
+.rs .gt-art{background:#1E1B46}
+.gt-mark{position:relative;display:grid;place-items:center;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.game-tile:hover .gt-mark{transform:scale(1.05)}
+/* ألف نقطة: ظهور بطاقات سدو ورقم الألف */
+.mk-alf{width:180px;height:112px;margin-top:34px}
+.mk-backs{position:absolute;inset:0 0 auto;height:72px;display:grid;place-items:center}
+.mk-backs i{grid-area:1/1;width:46px;height:64px;border-radius:7px;background:#1C1029 var(--sadu-weave) 0 0/16px 16px;border:3px solid var(--gold);box-shadow:0 8px 16px -8px rgba(0,0,0,.8)}
+.mk-backs i:nth-child(1){transform:translate3d(-40px,6px,0) rotate(-16deg)}
+.mk-backs i:nth-child(2){transform:translate3d(0,-4px,0)}
+.mk-backs i:nth-child(3){transform:translate3d(40px,6px,0) rotate(16deg)}
+.mk-num{position:absolute;left:50%;bottom:4px;font-family:var(--num);font-weight:900;font-size:3.3rem;line-height:.85;color:var(--t-medium);text-shadow:3px 3px 0 #7A4A00,0 0 22px rgba(0,0,0,.7);transform:translate3d(-50%,0,0) rotate(-5deg);direction:ltr}
+/* خلية الحروف */
+.mk-kh{width:112px;height:98px}
+.mk-kh svg{position:absolute;inset:0;width:100%;height:100%;fill:var(--info)}
+.mk-kh span{position:relative;font-family:var(--display);font-size:3.4rem;line-height:1;color:var(--ink);padding-top:10px}
+/* هوامير: أفق مدينة يبنيه اللاعب، كل برج بلون مجموعة عقار */
+.mk-hm{display:flex;align-items:flex-end;gap:5px;height:118px;padding:0 10px;border-bottom:4px solid var(--hm-gold,#E3A43A)}
+.mk-hm i{position:relative;width:24px;height:var(--h);border-radius:3px 3px 0 0;background:linear-gradient(90deg,transparent 44%,rgba(0,0,0,.22) 44% 56%,transparent 56%),repeating-linear-gradient(to bottom,var(--b) 0 9px,rgba(0,0,0,.26) 9px 11px)}
+.mk-hm i.t{width:30px}
+.mk-hm i.t::before{content:'';position:absolute;bottom:100%;left:50%;width:3px;height:14px;margin-left:-1.5px;background:var(--hm-gold,#E3A43A)}
+.mk-hm i.t::after{content:'';position:absolute;bottom:calc(100% + 12px);left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--hm-gold-2,#F4CF7A)}
+/* ما أصدقك: ورقتين مكشوفة وحدة مقلوبة */
+.mk-sq{grid-auto-flow:column;align-items:end}
+.mk-sq i{display:block;width:58px;height:82px;border-radius:9px;background:var(--sq-paper,#F6EEDC);border-top:20px solid var(--rc);box-shadow:0 8px 18px -8px rgba(0,0,0,.7);margin-inline:-7px}
+.mk-sq i.b{background:#241A35 var(--sadu-weave) 0 0/20px 20px;border:3px solid var(--sq-brass,#E3A43A);z-index:1;transform:translate3d(0,-6px,0)}
+.mk-sq i:first-child{transform:rotate(10deg) translate3d(0,6px,0)}
+.mk-sq i:last-child{transform:rotate(-10deg) translate3d(0,6px,0)}
+/* ارسم وخمّن: خط رسمة */
+.mk-rs svg{width:170px;height:100px;stroke:var(--gold)}
+
+/* زر البدء الدائري على حد الرسمة: يقول «اضغطني» بدون كلام */
+.gt-play{position:absolute;top:calc(var(--art-h) - 22px);inset-inline-end:var(--sp-4);z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--surface);color:var(--text);border:1px solid var(--line);box-shadow:var(--shadow);transition:background-color .15s,color .15s,transform .2s cubic-bezier(.2,.8,.2,1)}
+.gt-play .ic{width:20px;height:20px}
+.game-tile:hover .gt-play,.game-tile:focus-visible .gt-play{background:var(--brand);color:var(--ink);border-color:transparent;transform:translate3d(-4px,0,0)}
+.gt-body{display:flex;flex-direction:column;gap:var(--sp-2);flex:1;padding:var(--sp-5)}
+.gt-body h3{font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1.15;padding-inline-end:var(--sp-7)}
+.gt-body p{margin:0;color:var(--mute);font-size:.95rem;line-height:1.65;min-height:3.3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gt-facts{list-style:none;margin:auto 0 0;padding:var(--sp-3) 0 0;display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);border-top:1px solid var(--line-soft)}
+.gt-facts li{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;color:var(--mute);white-space:nowrap}
+.gt-facts .ic{width:16px;height:16px;color:var(--text)}
+/* ألف نقطة: الشرح ومعرض البطاقات — شارة بزاوية الرسمة */
+.gt-guide{all:unset;box-sizing:border-box;position:absolute;top:var(--sp-3);inset-inline-start:var(--sp-3);z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:var(--sp-1) var(--sp-3);border-radius:999px;background:rgba(10,8,16,.74);color:#F7F4EF;border:1px solid rgba(255,255,255,.2);font-weight:700;font-size:.8rem;line-height:1.3;cursor:pointer;transition:background-color .15s,color .15s}
+.gt-guide::after{content:'';position:absolute;inset:-6px}
+.gt-guide .ic{width:15px;height:15px}
+.gt-guide:hover{background:#F7F4EF;color:#120F1C}
+.gt-guide:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+
+/* ---------- الرئيسية: التذييل ---------- */
+.home-foot{margin-top:var(--sp-7);padding-top:var(--sp-4);border-top:1px solid var(--line-soft);display:flex;justify-content:center}
+.home-foot .legal-links{display:flex;align-items:center;gap:var(--sp-2);margin:0;font-size:.85rem}
+.home-foot .legal-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--sp-2);text-decoration-color:color-mix(in srgb,var(--mute) 50%,transparent)}
+.home-foot .legal-links a:hover{color:var(--text)}
+
+/* ---------- التجاوب ---------- */
+@media (max-width:1199px){
+  .games{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .game-tile{grid-column:span 2;--art-h:170px}
+  .game-tile:nth-child(4){grid-column:2/span 2}
+}
+@media (max-width:899px){
+  .hero{grid-template-columns:1fr;gap:var(--sp-6);padding:var(--sp-6) 0 var(--sp-7)}
+  .hero-art{max-width:520px}
+  .games{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .game-tile{grid-column:span 2}
+  .game-tile:nth-child(4){grid-column:auto/span 2}
+  .game-tile:nth-child(5){grid-column:2/span 2}
+}
+@media (max-width:599px){
+  .home-top{min-height:56px}
+  .home-tools{gap:var(--sp-2)}
+  .home-tools [data-guest]{font-size:0;gap:0;width:44px;padding:0}
+  .home-tools [data-guest] .ic{width:20px;height:20px}
+  .home-tools .dacc-bt small{display:none}
+  .icon-btn{width:44px;height:44px}
+  .hero{padding:var(--sp-5) 0 var(--sp-6);gap:var(--sp-5)}
+  .hero-kicker{margin-bottom:var(--sp-3)}
+  .hero-title{font-size:2.75rem}
+  .hero-sub{font-size:1rem;margin-top:var(--sp-3)}
+  .hero-cta{margin-top:var(--sp-5)}
+  .hero-cta .btn{flex:1 1 0;padding-inline:var(--sp-3);font-size:1.1rem}
+  .ha-sc{top:18px;font-size:.75rem;padding:2px var(--sp-2)}
+  .ha-sc b{font-size:.95rem}
+  .sec-head{margin-bottom:var(--sp-4)}
+  .games{grid-template-columns:1fr;gap:var(--sp-3)}
+  .game-tile,.game-tile:nth-child(4),.game-tile:nth-child(5){grid-column:auto}
+  .game-tile{flex-direction:row;min-height:120px}
+  .gt-art{width:104px;height:auto;align-self:stretch}
+  .gt-mark{position:absolute;left:50%;top:50%;margin:0;transform:translate3d(-50%,-50%,0) scale(.5)}
+  .game-tile:hover .gt-mark{transform:translate3d(-50%,-50%,0) scale(.53)}
+  .mk-alf{margin:0}
+  .gt-play{top:50%;margin-top:-20px;inset-inline-end:var(--sp-3);width:40px;height:40px}
+  .gt-body{padding:var(--sp-3) var(--sp-4);padding-inline-end:64px;gap:var(--sp-1);justify-content:center}
+  .gt-body h3{font-size:1.4rem;padding-inline-end:0}
+  .gt-body p{min-height:0;font-size:.9rem;line-height:1.55}
+  .gt-facts{margin-top:var(--sp-1);padding-top:0;border-top:0;gap:var(--sp-1) var(--sp-3)}
+  .gt-facts li{font-size:.8rem}
+  .gt-guide{position:relative;top:auto;inset-inline-start:auto;align-self:flex-start;margin-top:var(--sp-2);background:var(--surface-2);color:var(--text);border-color:var(--line);min-height:40px}
+  .gt-guide:hover{background:var(--text);color:var(--bg)}
+  .sp-hand{width:220px;height:200px;margin-top:0}
+  .sp-hand .tcg{width:104px;margin-left:-52px}
+  .sp-hand:nth-child(1){top:4%;inset-inline-start:-70px}
+  .sp-hand:nth-child(2){top:auto;bottom:5%;inset-inline-end:-70px}
+  .splash-corner{inset-inline-end:var(--sp-4)}
+}
+@media (min-width:1700px){
+  .hero{padding:64px 0 80px}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-art .ha-ph,.hero-art .ha-tv,.sp-hand,.games-sec.cue .game-tile{animation:none!important}
+  .game-tile:hover,.game-tile:hover .gt-mark{transform:none}
+}
+

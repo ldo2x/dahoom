@@ -8,16 +8,6 @@
 */
 :root{ --hm-paper:#F6EEDC; --hm-paper-2:#EADFC6; --hm-ink:#1B1915; --hm-ink-2:#5E5749; --hm-gold:#E3A43A; --hm-gold-2:#F4CF7A; --hm-wood:#1E1510; }
 
-/* بلاطة اللعبة بالصفحة الرئيسية */
-.hm .gt-art{background:#0E3B2E;flex-direction:column}
-.hm .gt-art::before{content:'';position:absolute;inset:0;opacity:.09;background:var(--sadu-weave) 0 0/42px 42px}
-.hm-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px}
-.hm-logo-w{font-family:var(--display);font-size:3.4rem;color:var(--hm-gold-2);line-height:1}
-.hm-logo-deeds{display:flex;align-items:flex-end}
-.hm-logo-deeds i{display:block;width:62px;height:82px;border-radius:7px;background:var(--hm-paper);border-top:20px solid var(--g);box-shadow:0 8px 18px -8px rgba(0,0,0,.7);margin-inline:-7px}
-.hm-logo-deeds i:nth-child(1){transform:rotate(9deg) translateY(6px)}
-.hm-logo-deeds i:nth-child(2){transform:translateY(-4px);z-index:1}
-.hm-logo-deeds i:nth-child(3){transform:rotate(-9deg) translateY(6px)}
 .brand-mark.hm{background:var(--hm-gold);color:var(--hm-ink)}
 
 /* ---------- الشاشة ---------- */

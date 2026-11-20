@@ -5,15 +5,6 @@
 :root{ --sq-paper:#F6EEDC; --sq-ink:#1B1915; --sq-ink-2:#5E5749; --sq-night:#241A35; --sq-rug:#4A1622; --sq-brass:#E3A43A; }
 
 /* ---------- بلاطة اللعبة بالرئيسية ---------- */
-.sq .gt-art{background:var(--sq-night);flex-direction:column}
-.sq .gt-art::before{content:'';position:absolute;inset:0;opacity:.1;background:var(--sadu-weave) 0 0/42px 42px}
-.sq-logo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px}
-.sq-logo-w{font-family:var(--display);font-size:3.2rem;color:var(--sq-brass);line-height:1}
-.sq-logo-cards{display:flex;align-items:flex-end}
-.sq-logo-cards i{display:block;width:64px;height:90px;border-radius:9px;background:var(--sq-paper);border-top:22px solid var(--rc);box-shadow:0 8px 18px -8px rgba(0,0,0,.7);margin-inline:-8px}
-.sq-logo-cards i.b{background:var(--sq-night) var(--sadu-weave) 0 0/22px 22px;border:3px solid var(--sq-brass);z-index:1;transform:translateY(-6px)}
-.sq-logo-cards i:first-child{transform:rotate(10deg) translateY(6px)}
-.sq-logo-cards i:last-child{transform:rotate(-10deg) translateY(6px)}
 .brand-mark.sq{background:var(--sq-brass);color:var(--sq-ink)}
 
 /* ---------- شرح الشخصيات (الإعدادات والقوانين والجوال) ---------- */
