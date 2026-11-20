@@ -91,16 +91,7 @@ window.DahoomRules = (function(){
     const count = k => C ? C.filter(c=>c.kind===k).length : 0;
     const tiers = `<ul class="rl-tiers">${ALF_TIERS.map(t=>`<li class="rl-tier ${t.k}"><span class="rl-gem" aria-hidden="true"></span><b>${t.name}</b><span>${t.d} <span class="rl-mute">${t.f}.</span></span></li>`).join('')}</ul>`;
     const kinds = `<ul class="rl-kinds">${Object.entries(ALF_KINDS).map(([k,v])=>`<li><span class="rl-kic">${ic(v.icon)}</span><span><b>${v.name}</b>${C&&count(k)?` <span class="rl-count">${count(k)}</span>`:''}<small>${v.d}</small></span></li>`).join('')}</ul>`;
-    let all = '';
-    if(C){
-      const kn = (window.DAHOOM_DATA.cardKinds) || {};
-      all = `<details class="rl-all"><summary><span>${ic('cards')} كل البطاقات</span><span class="rl-count">${C.length}</span></summary>
-        ${ALF_TIERS.map(t=>{ const L=C.filter(c=>c.tier===t.k); if(!L.length) return '';
-          return `<div class="rl-allg ${t.k}"><h4><span class="rl-gem" aria-hidden="true"></span>${t.name} <span class="rl-count">${L.length}</span></h4><ul>${L.map(c=>{
-            const k=ALF_KINDS[c.kind]||{}, nm=(kn[c.kind]&&kn[c.kind].name)||k.name||'';
-            return `<li><div class="rl-cn"><b>${esc(c.name)}</b>${nm?`<span class="rl-ck">${k.icon?ic(k.icon):''}${esc(nm)}</span>`:''}</div><p>${esc(c.desc)}</p></li>`; }).join('')}</ul></div>`; }).join('')}
-      </details>`;
-    }
+    const all = C ? cardGallery(C) : '';
     return sec('متى تشتغل البطاقات', 'cards', steps([
         'من <b>اللفة الثانية</b>، كل فريق يسحب بطاقة بداية دوره. تقدر تمسك لين 3 بطاقات، ولو جتك وحدة زيادة ترمي وحدة.',
         'تلعب <b>بطاقة وحدة بس</b> كل دور، وتلعبها قبل ما تسحب الخانة.',
@@ -110,10 +101,64 @@ window.DahoomRules = (function(){
         ['recycle', 'معك سودتين؟', 'تدمجهم وتطلع لك بطاقة زرقا.'],
         ['hourglass', 'بعض البطاقات لها وقت:', 'تطلع أكثر ببداية المباراة أو وسطها أو نهايتها، وبعضها أقوى بوقتها.'],
       ]))
+      + all
       + sec('ألوان البطاقات', 'star', tiers)
-      + sec('أنواع البطاقات', 'attack', kinds)
-      + all;
+      + sec('أنواع البطاقات', 'attack', kinds);
   }
+
+  // ---------- معرض البطاقات: كل بطاقة بشكلها الحقيقي وتأثيرها كامل ----------
+  const TARGET_TXT = { next:'تنزل على الفريق اللي بعدك', prev:'تنزل على الفريق اللي قبلك', leader:'تنزل على الفريق المتصدر', choose:'انت تختار الفريق' };
+  const PHASE_TXT = { early:'تطلع أكثر ببداية المباراة', mid:'تطلع أكثر بوسط المباراة', late:'تطلع أكثر بنهاية المباراة' };
+  const BURN = { legendary:100, medium:50, normal:25 };
+  const TIER_NAME = { legendary:'حمراء', medium:'ذهبية', normal:'زرقاء', black:'سودا' };
+  // نفس رسم البطاقة اللي باللعبة: الشاشة (Dahoom.cardHTML) أو الجوال (DahoomCardHTML)
+  const cardFace = (c, o) => { const f=(window.Dahoom && window.Dahoom.cardHTML) || window.DahoomCardHTML;
+    return f ? f(c, o||{}) : `<div class="rl-cfb ${c.tier}"><b>${esc(c.name)}</b><p>${esc(c.desc)}</p></div>`; };
+  function cardMeta(c){
+    const kn=(ALF_KINDS[c.kind]||{}).name||'', W=(window.DAHOOM_DATA||{}).cardWeights||{}, C=cardsData()||[];
+    const sameTier=C.filter(x=>x.tier===c.tier).length, tot=Object.values(W).reduce((a,b)=>a+b,0);
+    const pct = W[c.tier] && sameTier && tot ? (100*W[c.tier]/tot/sameTier) : 0;
+    const rows=[
+      ['cards', 'النوع', `${kn} · ${TIER_NAME[c.tier]||''}`],
+      c.target ? ['next', 'على مين', TARGET_TXT[c.target]||''] : (c.kind==='attack'||c.kind==='duel') ? null : ['person', 'على مين', c.kind==='reaction' ? 'تشتغل لحالها لما يصير شرطها' : 'على فريقك'],
+      c.phase ? ['hourglass', 'وقتها', PHASE_TXT[c.phase]||''] : null,
+      BURN[c.tier] ? ['skull', 'لو انحرقت', `تخسر ${BURN[c.tier]} نقطة (لو شرطها مو متحقق)`] : null,
+      pct ? ['dice', 'فرصة تسحبها', pct<1 ? 'أقل من 1٪ بكل سحبة' : `تقريبًا ${pct.toFixed(pct<10?1:0)}٪ بكل سحبة`] : null,
+    ].filter(Boolean);
+    return `<dl class="rl-cmeta">${rows.map(([i,k,v])=>`<div><dt>${ic(i)}${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
+  }
+  function cardGallery(C){
+    const tiers=ALF_TIERS.filter(t=>C.some(c=>c.tier===t.k)), kinds=Object.keys(ALF_KINDS).filter(k=>C.some(c=>c.kind===k));
+    const order={legendary:0,medium:1,normal:2,black:3}, list=C.slice().sort((a,b)=>(order[a.tier]-order[b.tier]) || a.kind.localeCompare(b.kind));
+    const chip=(attr,v,l,n,on)=>`<button type="button" class="rl-chip ${on?'on':''} ${attr==='cf'&&v!=='all'?'t-'+v:''}" data-${attr}="${v}" aria-pressed="${!!on}">${l}${n!=null?` <span>${n}</span>`:''}</button>`;
+    return sec('معرض البطاقات', 'cards', `<p class="rl-mute">كل بطاقات اللعبة (${C.length}) بشكلها وتأثيرها. اضغط أي بطاقة تكبر وتتحرك صورتها، وتشوف على مين تنزل ومتى تطلع وكم فرصة تسحبها.</p>
+      <div class="rl-cfs"><div class="rl-cf" role="group" aria-label="اللون">${chip('cf','all','الكل',C.length,true)}${tiers.map(t=>chip('cf',t.k,t.name,C.filter(c=>c.tier===t.k).length)).join('')}</div>
+        <div class="rl-cf" role="group" aria-label="النوع">${chip('ck','all','كل الأنواع',null,true)}${kinds.map(k=>chip('ck',k,ALF_KINDS[k].name,C.filter(c=>c.kind===k).length)).join('')}</div></div>
+      <ul class="rl-cg">${list.map(c=>`<li data-tier="${c.tier}" data-kind="${c.kind}"><button type="button" class="rl-cbtn" data-card="${esc(c.id)}" aria-label="${esc(c.name)} — كبّرها">${cardFace(c)}</button></li>`).join('')}</ul>
+      <p class="rl-cnone rl-mute" hidden>ما فيه بطاقات بهالفلتر.</p>`);
+  }
+  // الفلاتر والتكبير (نفس النافذة، بدون إعادة رسم)
+  function filterCards(g){
+    const sheet=g.closest('.rl-sec') || document, tf=(sheet.querySelector('[data-cf].on')||{}).dataset, kf=(sheet.querySelector('[data-ck].on')||{}).dataset;
+    const t=tf?tf.cf:'all', k=kf?kf.ck:'all'; let n=0;
+    sheet.querySelectorAll('.rl-cg > li').forEach(li=>{ const ok=(t==='all'||li.dataset.tier===t)&&(k==='all'||li.dataset.kind===k); li.hidden=!ok; if(ok) n++; });
+    const none=sheet.querySelector('.rl-cnone'); if(none) none.hidden=n>0;
+  }
+  function zoomCard(id, from){
+    const c=(cardsData()||[]).find(x=>x.id===id); if(!c) return;
+    const sh=from.closest('.rl-sheet'), host=(sh && sh.parentElement) || document.body;   // فوق النافذة كلها (مو داخل التمرير)
+    const z=document.createElement('div'); z.className='rl-zoom'; z.setAttribute('role','dialog'); z.setAttribute('aria-label', c.name);
+    z.innerHTML=`<div class="rl-zin">${cardFace(c, { size:'big', anim:true })}${cardMeta(c)}<button type="button" class="rl-zx">${ic('cancel')} رجوع للمعرض</button></div>`;
+    const done=()=>{ z.remove(); try{ from.focus(); }catch(e){} };
+    z.addEventListener('click', e=>{ if(e.target===z || e.target.closest('.rl-zx')) done(); });
+    host.appendChild(z); const x=z.querySelector('.rl-zx'); if(x) x.focus();
+  }
+  document.addEventListener('click', e=>{
+    const f=e.target.closest && e.target.closest('[data-cf],[data-ck]');
+    if(f && f.closest('.rl-cfs')){ const attr=f.hasAttribute('data-cf')?'data-cf':'data-ck';
+      f.parentElement.querySelectorAll('['+attr+']').forEach(b=>{ b.classList.toggle('on', b===f); b.setAttribute('aria-pressed', b===f); }); filterCards(f); return; }
+    const cb=e.target.closest && e.target.closest('.rl-cbtn[data-card]'); if(cb) zoomCard(cb.dataset.card, cb);
+  });
 
   // ================== خلية الحروف ==================
   function hexBoardSVG(){
@@ -395,7 +440,10 @@ window.DahoomRules = (function(){
   const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,summary,[tabindex]:not([tabindex="-1"])';
   function onKey(e){
     if(!root) return;
-    if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+    if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation();
+      const z=root.querySelector('.rl-zoom'); if(z){ z.querySelector('.rl-zx').click(); return; }   // بطاقة مكبّرة: نرجع للمعرض بس
+      close(); return; }
+    if(e.key==='Tab' && root.querySelector('.rl-zoom')){ e.preventDefault(); const x=root.querySelector('.rl-zx'); if(x) x.focus(); return; }
     if(e.key==='Tab'){
       const sheet=root.querySelector('.rl-sheet');
       const f=[...sheet.querySelectorAll(FOCUSABLE)].filter(x=>!x.closest('[hidden]') && x.offsetParent!==null);

@@ -48,6 +48,8 @@
       <div class="tcg-foil"></div>
     </div>`;
   }
+  window.DahoomCardHTML = cardHTML;   // شرح اللعبة (js/rules.js) يرسم البطاقات بنفس الشكل
+
 
   // ---------- الوضع النهاري / الليلي (نفس مفتاح الشاشة: dahoom_theme) ----------
   const getTheme = () => document.documentElement.getAttribute('data-theme')==='day' ? 'day' : 'night';
