@@ -1,5 +1,5 @@
 /* ===== دحوم — صفحة الملف الشخصي =====
-   profile.html        → ملفي (مع التعديل والربع)
+   profile.html        → ملفي (مع التعديل والأصدقاء واليوزرنيم وكلمة السر)
    profile.html?u=UID  → ملف أي لاعب (عام)
    كل البيانات من window.DahoomAccount (js/account.js).
 */
@@ -36,10 +36,12 @@
     return d.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { day:'numeric', month:'short', year: d.getFullYear()===now.getFullYear()?undefined:'numeric' });
   }
   const pct = (a,b) => b ? Math.round(100*a/b) : 0;
+  const busy = (p, msg) => window.DahoomBusy ? window.DahoomBusy.wrap(p, msg) : p;
   const profUrl = uid => 'profile.html?u='+encodeURIComponent(uid);
 
   // ---------- الحالة ----------
-  const V = { prof:null, mine:true, editing:false, draft:null, tab:'friends', friends:null, requests:null, q:'', results:null, achF:'all', achAll:false, recAll:false, loadingFriends:false };
+  const V = { prof:null, mine:true, editing:false, draft:null, tab:'friends', friends:null, requests:null, q:'', results:null, achF:'all', achAll:false, recAll:false, loadingFriends:false,
+    gate:'in', pres:null, theirs:null, theirsAll:false };
 
   async function load(){
     const c=A.current();
@@ -55,6 +57,8 @@
       if(!p){ renderMissing(); return; }
       V.prof=p; render();
       if(c && !c.guest && V.friends===null) loadFriends();
+      A.getPresence(target).then(pr=>{ V.pres=pr; const h=$('#pf-hero-slot'); if(h && !V.mine){ h.innerHTML=heroHTML(V.prof, A.current()); bindHero(); } });
+      if(c && !c.guest) A.listFriendsOf(target).then(l=>{ V.theirs=l; redrawTheirs(); });
     }
   }
   const skeleton = () => `<div class="pf-skel" aria-busy="true"><div class="pf-skel-b"></div><div class="pf-skel-l"></div><div class="pf-skel-l s"></div></div>`;
@@ -66,8 +70,21 @@
     root.innerHTML=`<section class="pf-card pf-gate">
       <div class="pf-gate-top"><span class="pf-gate-mark">${ic('acc-award')}</span></div>
       <h1>ملفك في دحوم</h1>
-      <p class="muted">أرقامك وإنجازاتك وربعك، كلها بمكان واحد.</p>
-      <button class="btn btn-hype big pf-wide" id="g-google">${ic('acc-google')} سجّل دخول بقوقل</button>
+      <p class="muted">أرقامك وإنجازاتك وأصدقاؤك، كلها بمكان واحد.</p>
+      <div class="pf-seg pf-gseg" role="tablist" aria-label="طريقة الدخول"><button type="button" role="tab" data-gt="in" aria-selected="${V.gate==='in'}" class="${V.gate==='in'?'on':''}">دخول</button><button type="button" role="tab" data-gt="up" aria-selected="${V.gate==='up'}" class="${V.gate==='up'?'on':''}">حساب جديد</button></div>
+      ${V.gate==='in' ? `<form id="g-in" class="pf-gform" novalidate>
+        <label class="field">اليوزرنيم<input type="text" id="gi-u" maxlength="21" autocomplete="username" dir="ltr" placeholder="dahoom_1" autocapitalize="none" spellcheck="false"></label>
+        <label class="field">كلمة السر<input type="password" id="gi-p" maxlength="64" autocomplete="current-password" dir="ltr"></label>
+        <button class="btn btn-hype pf-wide" type="submit">${ic('acc-login')} ادخل</button>
+        <p class="pf-err" id="gi-err" role="alert"></p></form>`
+      : `<form id="g-up" class="pf-gform" novalidate>
+        <label class="field">اليوزرنيم <small class="muted">— معرّفك، ما يتكرر</small><input type="text" id="gu-u" maxlength="21" autocomplete="username" dir="ltr" placeholder="dahoom_1" autocapitalize="none" spellcheck="false"><small class="pf-hint" id="gu-uh">حروف إنجليزية صغيرة وأرقام و _ و .</small></label>
+        <label class="field">كلمة السر<input type="password" id="gu-p" maxlength="64" autocomplete="new-password" dir="ltr"><small class="pf-hint">6 حروف أو أكثر. احفظها زين — ما نقدر نرجعها لو نسيتها.</small></label>
+        <label class="field">اسمك<input type="text" id="gu-n" maxlength="20" autocomplete="nickname" placeholder="وش نناديك؟"></label>
+        <button class="btn btn-hype pf-wide" type="submit">${ic('acc-user-plus')} سوّ حسابي</button>
+        <p class="pf-err" id="gu-err" role="alert"></p></form>`}
+      <div class="pf-or"><span>أو</span></div>
+      <button class="btn pf-wide" id="g-google">${ic('acc-google')} ادخل بقوقل</button>
       <div class="pf-or"><span>أو</span></div>
       <form id="g-guest" class="pf-gform" novalidate>
         <label class="field">اسمك<input type="text" id="g-name" maxlength="20" autocomplete="nickname" placeholder="وش نناديك؟" required></label>
@@ -77,6 +94,19 @@
         <p class="small muted center">ملف الضيف ينحفظ بهالجهاز بس، وتقدر تنقله لحسابك بعدين.</p>
       </form></section>`;
     $('#g-google').onclick=signIn;
+    $$('[data-gt]').forEach(b=>b.onclick=()=>{ V.gate=b.dataset.gt; renderGate(); const f=$(V.gate==='in'?'#gi-u':'#gu-u'); if(f) f.focus(); });
+    const gi=$('#g-in'); if(gi) gi.onsubmit=async e=>{ e.preventDefault(); const btn=$('button[type=submit]',gi); btn.disabled=true; $('#gi-err').textContent='';
+      const r=await busy(A.signInWithPassword($('#gi-u').value, $('#gi-p').value), 'ندخلك…'); btn.disabled=false;
+      if(r.ok) toast('هلا، دخلت'); else $('#gi-err').textContent=r.why; };
+    const gu=$('#g-up'); if(gu){
+      let ck=0; $('#gu-u').oninput=e=>{ const v=e.target.value, h=$('#gu-uh'); clearTimeout(ck); const bad=A.unameProblem(v.trim().replace(/^@/,'').toLowerCase());
+        if(!v.trim()){ h.textContent='حروف إنجليزية صغيرة وأرقام و _ و .'; h.className='pf-hint'; return; }
+        if(bad){ h.textContent=bad; h.className='pf-hint bad'; return; }
+        h.textContent='نتأكد…'; h.className='pf-hint'; ck=setTimeout(async()=>{ const r=await A.checkUsername(v); if($('#gu-u') && $('#gu-u').value===v){ h.textContent=r.ok?'متاح':r.why; h.className='pf-hint '+(r.ok?'ok':'bad'); } }, 450); };
+      gu.onsubmit=async e=>{ e.preventDefault(); const btn=$('button[type=submit]',gu); $('#gu-err').textContent='';
+        const n=$('#gu-n').value.trim(); if(!n){ $('#gu-err').textContent='اكتب اسمك'; $('#gu-n').focus(); return; }
+        btn.disabled=true; const r=await busy(A.signUpWithPassword($('#gu-u').value, $('#gu-p').value, { name:n, avatar:gateAv }), 'نسوي حسابك…'); btn.disabled=false;
+        if(r.ok) toast(r.why || ('هلا '+n+'، حسابك جاهز')); else $('#gu-err').textContent=r.why; }; }
     bindRadio($('.pf-avs', root), v=>{ gateAv=v; });
     $('#g-guest').onsubmit=e=>{
       e.preventDefault(); const n=$('#g-name').value.trim();
@@ -106,9 +136,9 @@
       ${V.mine && p.guest && !V.editing ? guestCta() : ''}
       ${V.editing ? editorHTML() : `<div class="pf-grid">
         <div class="pf-col">${statsHTML(p)}${achHTML(p)}</div>
-        <aside class="pf-col pf-side">${friendsHTML(c)}${recentHTML(p)}</aside></div>`}`;
+        <aside class="pf-col pf-side">${V.mine && c && !c.guest ? accountHTML(p) : ''}${friendsHTML(c)}${theirsHTML(c)}${recentHTML(p)}</aside></div>`}`;
     bindHero();
-    if(V.editing) bindEditor(); else { bindAch(); bindRecent(); bindFriends(); }
+    if(V.editing) bindEditor(); else { bindAch(); bindRecent(); bindFriends(); bindAccount(); bindTheirs(); }
     const cta=$('#pf-cta-in'); if(cta) cta.onclick=signIn;
   }
 
@@ -129,6 +159,8 @@
         ${A.avatarHTML(p, 104, 'pf-avatar')}
         <div class="pf-who">
           <h1 class="pf-name">${esc(p.name)}</h1>
+          ${p.username?`<button type="button" class="pf-uname" id="pf-uname" dir="ltr" title="انسخ اليوزرنيم">@${esc(p.username)}</button>`:''}
+          ${!V.mine && V.pres && V.pres.text ? `<span class="pf-pres ${V.pres.on?'on':''}"><i></i>${esc(V.pres.text)}</span>` : (V.mine && !p.guest && !V.editing ? '<span class="pf-pres on"><i></i>متصل</span>' : '')}
           <div class="pf-tags"><span class="pill pf-title">${esc(A.titleName(p.title))}</span>${p.guest?`<span class="pill dim">${ic('acc-ghost')} ضيف</span>`:''}${p.offline?`<span class="pill dim">${ic('acc-cloud-off')} بدون نت</span>`:''}</div>
         </div>
         ${actions ? `<div class="pf-actions">${actions}</div>` : ''}
@@ -154,12 +186,13 @@
     const out=$('#pf-out'); if(out) out.onclick=async()=>{ await A.signOut(); V.friends=V.requests=null; toast('طلعت من حسابك'); };
     const sh=$('#pf-share'); if(sh) sh.onclick=async()=>{
       const url = new URL(profUrl(A.current().uid), location.href).href;
-      try{ await navigator.clipboard.writeText(url); toast('نسخنا الرابط، أرسله لربعك'); }catch(e){ prompt('انسخ الرابط:', url); }
+      try{ await navigator.clipboard.writeText(url); toast('نسخنا الرابط، أرسله لأخوياك'); }catch(e){ prompt('انسخ الرابط:', url); }
     };
+    const un=$('#pf-uname'); if(un) un.onclick=async()=>{ try{ await navigator.clipboard.writeText('@'+V.prof.username); toast('نسخنا اليوزرنيم'); }catch(e){} };
     bindFriendButtons($('#pf-hero-slot'));
   }
   const guestCta = () => `<section class="pf-cta" role="note"><span class="pf-cta-ic">${ic('acc-cloud-off')}</span>
-      <div><b>سجّل دخول عشان ينحفظ ملفك</b><p>الحين أرقامك بهالجهاز بس. لو سجّلت، تنتقل كلها لحسابك وتقدر تضيف ربعك.</p></div>
+      <div><b>سجّل دخول عشان ينحفظ ملفك</b><p>الحين أرقامك بهالجهاز بس. لو سجّلت، تنتقل كلها لحسابك وتقدر تضيف أصدقاءك.</p></div>
       <button class="btn btn-hype" id="pf-cta-in">${ic('acc-google')} سجّل بقوقل</button></section>`;
 
   // ---------- الأرقام ----------
@@ -217,24 +250,25 @@
   // ---------- الربع ----------
   function friendsHTML(c){
     if(!V.mine) return '';
-    if(!c || c.guest) return `<section class="pf-card"><h2 class="pf-h">${ic('acc-users')} الربع</h2><p class="muted">سجّل دخول عشان تضيف ربعك وتشوف ملفاتهم.</p></section>`;
+    if(!c || c.guest) return `<section class="pf-card"><h2 class="pf-h">${ic('acc-users')} الأصدقاء</h2><p class="muted">سجّل دخول عشان تضيف أصدقاءك وتشوف ملفاتهم وحالتهم.</p></section>`;
     const F=V.friends, R=V.requests;
     const tab = (v,l,n) => `<button type="button" role="tab" aria-selected="${V.tab===v}" class="${V.tab===v?'on':''}" data-ft="${v}">${l}${n?` <span class="count">${n}</span>`:''}</button>`;
     let body='';
     if(V.results){
-      body = V.results.length ? `<ul class="pf-people">${V.results.map(u=>person(u, friendAction(u.uid, true))).join('')}</ul>` : `<p class="muted pf-empty">ما لقينا أحد بهالاسم.</p>`;
+      body = V.results.length ? `<ul class="pf-people">${V.results.map(u=>person(u, friendAction(u.uid, true))).join('')}</ul>` : `<p class="muted pf-empty">ما لقينا أحد بهالاسم أو اليوزرنيم.</p>`;
     } else if(F===null) body = `<p class="muted pf-empty">نحمّل…</p>`;
-    else if(V.tab==='friends') body = F.length ? `<ul class="pf-people">${F.map(f=>person(f, `<button class="btn small ghost pf-icon" data-rm="${esc(f.uid)}" aria-label="شيل ${esc(f.name)} من ربعك" title="شيله">${ic('acc-user-x')}</button>`)).join('')}</ul>`
-      : `<p class="muted pf-empty">ما عندك ربع للحين. دوّر عليهم بالاسم فوق.</p>`;
+    else if(V.tab==='friends') body = F.length ? `<ul class="pf-people">${F.map(f=>person(f, `<button class="btn small ghost pf-icon" data-rm="${esc(f.uid)}" aria-label="شيل ${esc(f.name)} من أصدقائك" title="شيله">${ic('acc-user-x')}</button>`)).join('')}</ul>`
+      : `<p class="muted pf-empty">ما عندك أصدقاء للحين. دوّر عليهم بالاسم أو اليوزرنيم فوق.</p>`;
     else body = (R&&R.length) ? `<ul class="pf-people">${R.map(r=>person(r, `<button class="btn small btn-mint pf-icon" data-accept="${esc(r.uid)}" aria-label="اقبل ${esc(r.name)}" title="اقبل">${ic('check')}</button><button class="btn small ghost pf-icon" data-reject="${esc(r.uid)}" aria-label="ارفض ${esc(r.name)}" title="ارفض">${ic('cancel')}</button>`)).join('')}</ul>`
       : `<p class="muted pf-empty">ما فيه طلبات.</p>`;
-    return `<section class="pf-card pf-friends" id="pf-friends"><h2 class="pf-h">${ic('acc-users')} الربع</h2>
-      <form class="pf-search" role="search"><input type="search" id="pf-q" maxlength="20" placeholder="دوّر لاعب باسمه" aria-label="دوّر لاعب باسمه" value="${esc(V.q)}" autocomplete="off"><button class="btn small" type="submit" aria-label="دوّر">${ic('search')}</button></form>
+    const onN = F ? F.filter(f=>f.pres && f.pres.on).length : 0;
+    return `<section class="pf-card pf-friends" id="pf-friends"><div class="pf-h-row"><h2 class="pf-h">${ic('acc-users')} الأصدقاء</h2>${onN?`<span class="pf-count"><b>${onN}</b> متصل</span>`:''}</div>
+      <form class="pf-search" role="search"><input type="search" id="pf-q" maxlength="21" placeholder="دوّر بالاسم أو @اليوزرنيم" aria-label="دوّر لاعب بالاسم أو اليوزرنيم" value="${esc(V.q)}" autocomplete="off"><button class="btn small" type="submit" aria-label="دوّر">${ic('search')}</button></form>
       ${V.results ? `<div class="pf-h-row small"><span class="muted">نتايج البحث</span><button class="btn small ghost" type="button" id="pf-clear">رجوع</button></div>`
-        : `<div class="pf-seg" role="tablist" aria-label="الربع والطلبات">${tab('friends','ربعي', F?F.length:0)}${tab('requests','الطلبات', R?R.length:0)}</div>`}
+        : `<div class="pf-seg" role="tablist" aria-label="الأصدقاء والطلبات">${tab('friends','أصدقائي', F?F.length:0)}${tab('requests','الطلبات', R?R.length:0)}</div>`}
       ${body}</section>`;
   }
-  const person = (u, act) => `<li class="pf-person">${A.avatarHTML(u, 38)}<a class="pf-pn" href="${profUrl(u.uid)}"><b>${esc(u.name)}</b><small>المستوى ${u.level||1}${u.titleName?' · '+esc(u.titleName):''}</small></a><span class="pf-pa">${act}</span></li>`;
+  const person = (u, act) => `<li class="pf-person ${u.pres&&u.pres.on?'is-on':''}">${A.avatarHTML(u, 38)}<a class="pf-pn" href="${profUrl(u.uid)}"><b>${esc(u.name)}${u.username?` <span class="pf-pu" dir="ltr">@${esc(u.username)}</span>`:''}</b><small>${u.pres&&u.pres.text?`<span class="pf-pres ${u.pres.on?'on':''}"><i></i>${esc(u.pres.text)}</span>`:`المستوى ${u.level||1}${u.titleName?' · '+esc(u.titleName):''}`}</small></a><span class="pf-pa">${act}</span></li>`;
   async function loadFriends(){
     if(V.loadingFriends) return; V.loadingFriends=true;
     try{ const [f, r] = await Promise.all([A.listFriends(), A.listRequests()]); V.friends=f; V.requests=r; }
@@ -247,7 +281,7 @@
     const s=$('#pf-friends'); if(!s) return;
     $$('[data-ft]', s).forEach(b=>b.onclick=()=>{ V.tab=b.dataset.ft; rerenderFriends(); $(`[data-ft="${V.tab}"]`).focus(); });
     const f=$('.pf-search', s); f.onsubmit=async e=>{ e.preventDefault(); V.q=$('#pf-q').value.trim(); if(!V.q){ V.results=null; rerenderFriends(); return; }
-      const btn=$('button',f); btn.disabled=true; V.results=await A.searchUsers(V.q); rerenderFriends(); const q=$('#pf-q'); if(q) q.focus(); };
+      const btn=$('button',f); btn.disabled=true; V.results=await busy(A.searchUsers(V.q), 'ندوّر…'); rerenderFriends(); const q=$('#pf-q'); if(q) q.focus(); };
     const cl=$('#pf-clear', s); if(cl) cl.onclick=()=>{ V.results=null; V.q=''; rerenderFriends(); };
     bindFriendButtons(s);
   }
@@ -255,10 +289,55 @@
     if(!scope) return;
     const after = async (ok, okMsg, failMsg) => { toast(ok?okMsg:failMsg); await loadFriends(); if(!V.mine){ const h=$('#pf-hero-slot'); if(h){ h.innerHTML=heroHTML(V.prof, A.current()); bindHero(); } } else if(V.results) rerenderFriends(); };
     $$('[data-add]', scope).forEach(b=>b.onclick=async()=>{ b.disabled=true; after(await A.sendFriendRequest(b.dataset.add), 'انرسل الطلب', 'ما قدرنا نرسل الطلب'); });
-    $$('[data-accept]', scope).forEach(b=>b.onclick=async()=>{ b.disabled=true; after(await A.respondFriendRequest(b.dataset.accept, true), 'صرتوا ربع', 'ما قدرنا نقبل الطلب'); });
+    $$('[data-accept]', scope).forEach(b=>b.onclick=async()=>{ b.disabled=true; after(await A.respondFriendRequest(b.dataset.accept, true), 'صرتوا أصدقاء', 'ما قدرنا نقبل الطلب'); });
     $$('[data-reject]', scope).forEach(b=>b.onclick=async()=>{ b.disabled=true; after(await A.respondFriendRequest(b.dataset.reject, false), 'انرفض الطلب', 'ما قدرنا نرفض الطلب'); });
-    $$('[data-rm]', scope).forEach(b=>b.onclick=async()=>{ const f=(V.friends||[]).find(x=>x.uid===b.dataset.rm); if(!confirm(`تشيل ${f?f.name:'هالصديق'} من ربعك؟`)) return; b.disabled=true; after(await A.removeFriend(b.dataset.rm), 'انشال من ربعك', 'ما قدرنا نشيله'); });
+    $$('[data-rm]', scope).forEach(b=>b.onclick=async()=>{ const f=(V.friends||[]).find(x=>x.uid===b.dataset.rm); if(!confirm(`تشيل ${f?f.name:'هالصديق'} من أصدقائك؟`)) return; b.disabled=true; after(await A.removeFriend(b.dataset.rm), 'انشال من أصدقائك', 'ما قدرنا نشيله'); });
   }
+
+  // ---------- حسابك: اليوزرنيم وكلمة السر ----------
+  function accountHTML(p){
+    const w=A.unameWait(), mins=Math.ceil(w/60000), hasPw=A.hasPassword();
+    const waitTxt = w>0 ? (mins>=60 ? `تقدر تغيّره بعد ${Math.floor(mins/60)} ساعة${mins%60?` و${mins%60} دقيقة`:''}` : `تقدر تغيّره بعد ${mins} دقيقة`) : 'تقدر تغيّره مرة كل ساعتين';
+    return `<section class="pf-card pf-acct" id="pf-acct"><h2 class="pf-h">${ic('acc-user-check')} حسابك</h2>
+      ${!p.username ? `<p class="pf-need">${ic('star')} اختر يوزرنيم — هو معرّفك اللي يضيفك فيه أخوياك، وتدخل فيه مع كلمة السر.</p>` : ''}
+      <form class="pf-gform" id="ac-u" novalidate>
+        <label class="field">اليوزرنيم<span class="pf-at"><b>@</b><input type="text" id="ac-un" maxlength="20" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(p.username||'')}" ${w>0?'disabled':''}></span>
+          <small class="pf-hint" id="ac-uh">${p.username ? waitTxt : 'حروف إنجليزية صغيرة وأرقام و _ و .'}</small></label>
+        <button class="btn small" type="submit" ${w>0?'disabled':''}>${ic('check')} ${p.username?'غيّر اليوزرنيم':'احجز اليوزرنيم'}</button>
+      </form>
+      ${p.username ? `<form class="pf-gform" id="ac-p" novalidate>
+        <label class="field">${hasPw?'كلمة سر جديدة':'كلمة سر'} <small class="muted">— ${hasPw?'تدخل فيها مع اليوزرنيم':'عشان تقدر تدخل باليوزرنيم من أي جهاز'}</small><input type="password" id="ac-pw" maxlength="64" dir="ltr" autocomplete="new-password"></label>
+        <button class="btn small" type="submit">${ic('acc-lock')} ${hasPw?'غيّر كلمة السر':'حط كلمة سر'}</button>
+        <p class="pf-err" id="ac-perr" role="alert"></p>
+      </form>` : ''}
+    </section>`;
+  }
+  function bindAccount(){
+    const s=$('#pf-acct'); if(!s) return;
+    const fu=$('#ac-u', s), inp=$('#ac-un', s), h=$('#ac-uh', s); let ck=0;
+    if(inp) inp.oninput=()=>{ clearTimeout(ck); const v=inp.value.trim().toLowerCase(); const bad=A.unameProblem(v);
+      if(v===V.prof.username){ h.textContent='هذا يوزرنيمك الحالي'; h.className='pf-hint'; return; }
+      if(bad){ h.textContent=bad; h.className='pf-hint bad'; return; }
+      h.textContent='نتأكد…'; h.className='pf-hint'; ck=setTimeout(async()=>{ const r=await A.checkUsername(v); if(inp.value.trim().toLowerCase()===v){ h.textContent=r.ok?'متاح':r.why; h.className='pf-hint '+(r.ok?'ok':'bad'); } }, 450); };
+    if(fu) fu.onsubmit=async e=>{ e.preventDefault(); const b=$('button',fu); b.disabled=true;
+      const r=await busy(A.setUsername(inp.value), 'نحجز اليوزرنيم…'); b.disabled=false;
+      if(r.ok){ toast('صار يوزرنيمك @'+inp.value.trim().toLowerCase()); V.prof=await A.getProfile(); render(); } else { h.textContent=r.why; h.className='pf-hint bad'; } };
+    const fp=$('#ac-p', s); if(fp) fp.onsubmit=async e=>{ e.preventDefault(); const b=$('button',fp); b.disabled=true; $('#ac-perr').textContent='';
+      const r=await busy(A.setPassword($('#ac-pw').value), 'نحفظ كلمة السر…'); b.disabled=false;
+      if(r.ok){ toast('انحفظت كلمة السر — تقدر تدخل باليوزرنيم'); $('#ac-pw').value=''; render(); } else $('#ac-perr').textContent=r.why; };
+  }
+  // أصدقاء لاعب ثاني + المشتركين معك
+  function theirsHTML(c){
+    if(V.mine || !c || c.guest || !V.prof) return '';
+    const L=V.theirs, mutual=L ? L.filter(f=>f.mutual).length : 0, CAP=8, shown=L ? (V.theirsAll ? L : L.slice(0,CAP)) : [];
+    return `<section class="pf-card" id="pf-theirs"><div class="pf-h-row"><h2 class="pf-h">${ic('acc-users')} أصدقاء ${esc(V.prof.name)}</h2>${L?`<span class="pf-count"><b>${L.length}</b></span>`:''}</div>
+      ${L===null ? '<p class="muted pf-empty">نحمّل…</p>' : !L.length ? '<p class="muted pf-empty">ما عنده أصدقاء للحين.</p>' : `
+      ${mutual?`<p class="pf-mutual">${ic('acc-user-check')} <b>${mutual}</b> ${mutual===1?'صديق مشترك':'أصدقاء مشتركين'} بينكم</p>`:''}
+      <ul class="pf-people">${shown.map(f=>`<li class="pf-person">${A.avatarHTML(f, 34)}<a class="pf-pn" href="${f.me?'profile.html':profUrl(f.uid)}"><b>${esc(f.name)}${f.me?' <span class="pf-pu">(انت)</span>':''}</b>${f.mutual?'<small class="pf-mt">صديق مشترك</small>':''}</a></li>`).join('')}</ul>
+      ${L.length>CAP ? moreBtn('theirs', V.theirsAll, L.length) : ''}`}</section>`;
+  }
+  function redrawTheirs(){ const s=$('#pf-theirs'); if(s){ s.outerHTML=theirsHTML(A.current()); bindTheirs(); } }
+  function bindTheirs(){ const m=$('[data-more="theirs"]'); if(m) m.onclick=()=>{ V.theirsAll=!V.theirsAll; redrawTheirs(); }; }
 
   // ---------- التعديل ----------
   function startEdit(){
@@ -336,6 +415,7 @@
   A.init().then(()=>{
     load();
     let lastKey='';
+    if(A.setActivity) A.setActivity('on');
     A.onChange(c=>{
       const key = c ? c.uid+'|'+c.guest : 'none', changed = key!==lastKey;
       lastKey=key;

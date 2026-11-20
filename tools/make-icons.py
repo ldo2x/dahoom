@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """يولّد أيقونات التطبيق وصورة المشاركة (assets/app/).
 
-التشغيل (ويندوز):  python tools-make-icons.py
+التشغيل (ويندوز):  python tools/make-icons.py
 يحتاج: Pillow + arabic-reshaper + python-bidi  (pip install pillow arabic-reshaper python-bidi)
 الخط: Tahoma Bold من ويندوز (C:/Windows/Fonts/tahomabd.ttf).
 الألوان من css/style.css: --brand #FF3D81 ، --bg #0D0B14 ، --ink #120F1C ، ألوان السدو.
@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import arabic_reshaper
 from bidi.algorithm import get_display
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # جذر المشروع
 OUT = os.path.join(ROOT, 'assets', 'app')
 os.makedirs(OUT, exist_ok=True)
 

@@ -541,7 +541,7 @@ window.Dahoom = (function(){
 
   // ---------- تهيئة ----------
   function init(){
-    if(!$('#btn-enter')) return;   // صفحات الأدوات (مثل tools-sounds.html) تستخدم النواة بدون واجهة المنصة
+    if(!$('#btn-enter')) return;   // صفحات الأدوات (مثل pick.html) تستخدم النواة بدون واجهة المنصة
     renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); updateThemeBtns(); decorate();
     $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
@@ -549,7 +549,21 @@ window.Dahoom = (function(){
     $$('.vol-slider').forEach(sl=>{ sl.oninput=()=>setVolume(sl.value/100); sl.onchange=()=>play('pop'); });
     initSettingsMenu();
     // اختيار لعبة = تسوي جلسة: تفتح الغرفة وتدخلها كلاعب من نفس الجهاز (تقدر تخليه شاشة عرض بس من الشريط)
-    const openGame=g=>{ closeSettingsMenu(); session.game=g; renderTeams(); go('lobby'); if(window.DahoomOwner) window.DahoomOwner.enter(); };
+    // أسئلة اللعبة (البنوك الكبيرة) تبدأ تتحمّل بالخلفية أول ما تنختار اللعبة — وقت الانتظار يكفيها غالباً
+    const openGame=g=>{ closeSettingsMenu(); session.game=g; renderTeams(); go('lobby'); if(window.DahoomLazy) window.DahoomLazy.need(g).catch(()=>{}); if(window.DahoomOwner) window.DahoomOwner.enter(); };
+    // لو ضغطوا «ابدأ» قبل ما تكمل الأسئلة: نوقف الضغطة، نعرض «نجهّز الأسئلة» وبعدها نكمل تلقائي
+    const START_OF = { 'btn-start':'alf', 'btn-khaliya-start':'khaliya', 'btn-rasm-start':'rasm', 'btn-hawamir-start':'hawamir', 'btn-sadq-start':'sadq' };
+    document.addEventListener('click', e=>{
+      const b=e.target.closest && e.target.closest('button[id]'); const g=b && (START_OF[b.id] || (b.id==='btn-again' ? session.game : null)), L=window.DahoomLazy;
+      if(!g) return;
+      // كل اللاعبين المتصلين لازم يكونون ضاغطين «مستعد»
+      const N=window.DahoomNet, wait=N && N.waitingFor ? N.waitingFor() : [];
+      if(wait.length){ e.stopImmediatePropagation(); e.preventDefault(); toast('ننتظر يضغطون مستعد: '+wait.join('، '), 3500); play('fx_deny',{volume:.5}); return; }
+      if(!L || L.ready(g)) return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      const B=window.DahoomBusy, job=L.need(g);
+      (B ? B.wrap(job, 'نجهّز الأسئلة…') : job).then(()=>b.click(), ()=>toast('ما قدرنا نحمّل أسئلة اللعبة — تأكد من النت وجرّب مرة ثانية', 4000));
+    }, true);
     // «سوّ جلسة»: ينزل لقسم الألعاب ويوقف على أول لعبة — اختيار اللعبة هو اللي يفتح الجلسة
     { const hm=$('#hub-make'); if(hm) hm.onclick=()=>{
       const sec=$('#games'); if(!sec) return;

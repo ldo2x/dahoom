@@ -9,7 +9,9 @@ rules_version = '2';
 //   rooms/{code}                     اللوبي العام (REST بدون تسجيل): قراءة وإنشاء وتحديث للكل بشروط، بدون حذف
 //   users/{uid}                      الملف العام: يقراه الكل، يكتبه صاحبه بس
 //   users/{uid}/requests/{fromUid}   طلبات الصداقة: ينشئها المرسل بس
-//   users/{uid}/friends/{friendUid}  الربع: صاحب القائمة، أو الصديق نفسه وقت قبول الطلب أو الحذف
+//   users/{uid}/friends/{friendUid}  الأصدقاء: يقراها أي مسجّل (عشان أصدقاء الصديق والمشتركين)، يكتبها صاحب القائمة أو الصديق وقت القبول/الحذف
+//   usernames/{username}             حجز اليوزرنيم: { uid, em?, at } — يقراه الكل (للدخول باليوزرنيم)، يحجزه صاحب الحساب بس
+//   presence/{uid}                   الحالة (متصل / بجلسة / يلعب): يقراها الكل، يكتبها صاحبها
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -90,7 +92,7 @@ service cloud.firestore {
       return !(g in p) || (p[g] is map && p[g].size() <= 4 && (!('s' in p[g]) || (p[g].s is map && p[g].s.size() <= 8)));
     }
     function validUser(d) {
-      return d.keys().hasOnly(['name','nameLower','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak',
+      return d.keys().hasOnly(['name','nameLower','username','unameAt','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak',
                                'podiums','lasts','maxOf','night','days','lastDay','friends','per','ach','recent','merged','created','updated'])
         && d.keys().hasAll(['name','nameLower','avatar','xp','level','games','wins'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
@@ -110,13 +112,30 @@ service cloud.firestore {
               && perGame(d.per, 'alf') && perGame(d.per, 'khaliya') && perGame(d.per, 'rasm') && perGame(d.per, 'hawamir') && perGame(d.per, 'sadq')))
         && (!('ach' in d) || (d.ach is map && d.ach.size() <= 64))
         && (!('recent' in d) || (d.recent is list && d.recent.size() <= 20))
-        && (!('merged' in d) || (d.merged is list && d.merged.size() <= 10));
+        && (!('merged' in d) || (d.merged is list && d.merged.size() <= 10))
+        && (!('unameAt' in d) || isInt(d.unameAt, 0, 9999999999999))
+        && (!('username' in d) || (d.username is string && d.username.size() <= 20));
+    }
+    function nowMs() { return request.time.toMillis(); }
+    // اليوزرنيم: ما يتغيّر إلا مع حجزه بنفس العملية (usernames/{الجديد} باسمه)، ومرة كل ساعتين
+    function unameOk(uid) {
+      let d = request.resource.data;
+      let before = resource.data.get('username', '');
+      let after = d.get('username', '');
+      let lastAt = resource.data.get('unameAt', 0);
+      return (after == before && d.get('unameAt', 0) == lastAt)
+        || (after.matches('^[a-z0-9_.]{3,20}$')
+            && getAfter(/databases/$(database)/documents/usernames/$(after)).data.uid == uid
+            && d.unameAt is int && d.unameAt > nowMs() - 300000 && d.unameAt < nowMs() + 300000
+            && (before == '' || lastAt == 0 || d.unameAt >= lastAt + 7200000));
     }
 
     match /users/{uid} {
       allow get: if true;                                   // الملف عام
       allow list: if request.query.limit <= 20;             // البحث بالاسم (limit 10)
-      allow create, update: if signedIn() && request.auth.uid == uid && validUser(request.resource.data);
+      allow create: if signedIn() && request.auth.uid == uid && validUser(request.resource.data)
+        && request.resource.data.get('username', '') == '';
+      allow update: if signedIn() && request.auth.uid == uid && validUser(request.resource.data) && unameOk(uid);
       allow delete: if signedIn() && request.auth.uid == uid;
 
       // طلب صداقة من fromUid إلى uid
@@ -147,13 +166,41 @@ service cloud.firestore {
             && isStr(request.resource.data.avatar, 40)
             && isNum(request.resource.data.at, 0, 9999999999999);
         }
-        allow read: if signedIn() && (request.auth.uid == uid || request.auth.uid == friendUid);
+        allow read: if signedIn();
         allow create: if signedIn() && friendUid != uid && validFriend() && (
             (request.auth.uid == uid && exists(/databases/$(database)/documents/users/$(uid)/requests/$(friendUid)))
          || (request.auth.uid == friendUid && exists(/databases/$(database)/documents/users/$(friendUid)/requests/$(uid))));
         allow update: if signedIn() && request.auth.uid == uid && validFriend();
         allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == friendUid);
       }
+    }
+
+    // ---------------- اليوزرنيم ----------------
+    function validUname() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['uid','em','at']) && d.uid == request.auth.uid
+        && optStr(d, 'em', 80) && (!('at' in d) || isNum(d.at, 0, 9999999999999));
+    }
+    match /usernames/{name} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn() && name.matches('^[a-z0-9_.]{3,20}$') && validUname()
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == name;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid && validUname();
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username != name;
+    }
+
+    // ---------------- الحالة ----------------
+    match /presence/{uid} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['s','g','at'])
+        && request.resource.data.s in ['on','lobby','play','off']
+        && optStr(request.resource.data, 'g', 12)
+        && isNum(request.resource.data.at, 0, 9999999999999);
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     // أي شي ثاني: مقفل

@@ -1135,3 +1135,27 @@ label.sm-row,.sm-link{cursor:pointer}
 
 /* نوافذ التأكيد فوق شاشة صاحب الجلسة (كانت تطلع خلفها) */
 .modal{z-index:90}
+
+/* ===== مؤشر التحميل (js/busy.js) — ثلاث معيّنات تنط بالترتيب بألوان دحوم ===== */
+.dh-loader{display:inline-flex;align-items:flex-end;gap:7px;height:30px;padding-bottom:2px}
+.dh-loader i{width:12px;height:12px;border-radius:3px;transform:rotate(45deg);background:var(--brand);animation:dhHop .9s cubic-bezier(.45,0,.3,1) infinite}
+.dh-loader i:nth-child(2){background:#38B6FF;animation-delay:.15s}
+.dh-loader i:nth-child(3){background:#FFC23A;animation-delay:.3s}
+.dh-loader.sm{height:18px;gap:5px}
+.dh-loader.sm i{width:7px;height:7px;border-radius:2px}
+@keyframes dhHop{0%,70%,100%{transform:translateY(0) rotate(45deg)}35%{transform:translateY(-14px) rotate(225deg)}}
+.dh-loader.sm i{animation-name:dhHopSm}
+@keyframes dhHopSm{0%,70%,100%{transform:translateY(0) rotate(45deg)}35%{transform:translateY(-7px) rotate(225deg)}}
+.dh-busy{position:fixed;inset:0;z-index:96;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 55%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .18s,visibility 0s .18s}
+.dh-busy.on{opacity:1;visibility:visible;transition:opacity .18s}
+.dh-busy-card{display:flex;flex-direction:column;align-items:center;gap:14px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:22px 30px;box-shadow:var(--shadow-2);min-width:200px;text-align:center}
+.dh-busy-msg{font-weight:700;font-size:1rem}
+@media (prefers-reduced-motion:reduce){
+  .dh-loader i,.dh-loader.sm i{animation:dhFade 1.2s ease-in-out infinite}
+  @keyframes dhFade{0%,100%{opacity:.35}50%{opacity:1}}
+}
+
+/* زر عام/خاص بالشريط: يوضح وضع الجلسة الحالي */
+.own-pub b{font-weight:800}
+.own-pub:not(.on){border-color:color-mix(in srgb,var(--gold) 60%,var(--line))}
+.own-pub:not(.on) .ic{color:var(--gold)}

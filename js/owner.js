@@ -28,7 +28,7 @@ window.DahoomOwner = (function(){
     dock().innerHTML = `<div class="own-l"><button class="own-brand" data-own="home" title="الرئيسية"><span class="brand-mark">د</span><span>دحوم</span></button>
         <span class="own-code" title="كود الجلسة">${ic('team')}<b>${esc(code)}</b></span>
         <button class="own-b" data-own="copy">${ic('share')}<span>انسخ رابط الدعوة</span></button>
-        <button class="own-b ${pub?'on':''}" data-own="pub" aria-pressed="${pub}">${ic(pub?'eye':'padlock')}<span>${pub?'جلسة عامة':'جلسة خاصة'}</span></button></div>
+        <button class="own-b own-pub ${pub?'on':''}" data-own="pub" aria-pressed="${pub}" title="${pub?'أي أحد يشوفها بقائمة الجلسات ويدخل — اضغط عشان تخليها خاصة':'ما يدخلها إلا اللي معه الكود — اضغط عشان تخليها عامة'}">${ic(pub?'eye':'padlock')}<span>الجلسة: <b>${pub?'عامة':'خاصة'}</b></span></button></div>
       <div class="own-r">${view}</div>`;
   }
   function ensureFrame(){
@@ -108,6 +108,8 @@ window.DahoomOwner = (function(){
     if(comps.length<2) return D.session.mode==='solo' ? 'نحتاج لاعبين اثنين على الأقل — أرسل رابط الدعوة للشباب' : 'نحتاج فريقين فيهم لاعبين — وزّع الفرق أول';
     const loose = D.session.mode!=='solo' && g!=='hawamir' && g!=='sadq' ? D.session.players.filter(p=>!D.session.teams.some(t=>t.members.includes(p.id))) : [];
     if(loose.length) return 'فيه لاعبين بدون فريق: '+loose.map(p=>p.name).join('، ');
+    const wait=(NET() && NET().waitingFor) ? NET().waitingFor() : [];
+    if(wait.length) return 'ننتظر يضغطون «مستعد»: '+wait.join('، ');
     prepare(); const b=document.getElementById(START_BTN[g]); if(!b) return 'ما لقينا زر البداية';
     b.click(); return '';
   }
@@ -117,6 +119,8 @@ window.DahoomOwner = (function(){
     teams:()=>D.session.mode==='solo' ? [] : D.session.teams.map(t=>({ name:t.name, color:t.color, n:t.members.length })),
     phoneTeams:v=>{ const c=document.getElementById('opt-phone-teams'); if(!c) return false; if(v!=null){ c.checked=!!v; c.dispatchEvent(new Event('change',{bubbles:true})); } return c.checked; },
     players:()=>D.competitors().length, screen:scrNow, table:()=>setMode('table'), leave:()=>leave(),
+    pub:v=>{ const n=NET(); if(!n) return true; if(v!=null){ n.setPublic(!!v); render(); } return n.isPublic(); },
+    waiting:()=>(NET() && NET().waitingFor) ? NET().waitingFor() : [],
     end:async()=>{ if(await D.confirmBox('<h3>تنهي الجلسة؟</h3><p class="muted">الجلسة تنقفل والكل يطلع منها، وترجع للرئيسية.</p>','إيه، أنهها','لا','btn-bad')) closeSession(); },
     again:()=>{ const b=document.getElementById('btn-again'); if(b) b.click(); }, toSetup:()=>{ const n=NET(); if(n) n.use(null); D.go('lobby'); prepare(); },
   };

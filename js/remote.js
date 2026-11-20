@@ -75,11 +75,12 @@
     'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
     'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
   function show(id){ $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
-  function status(msg){ const s=$('#r-status'); s.textContent=msg||''; s.classList.toggle('hidden', !msg); }
+  // busy=true: شي شغال (اتصال/انتظار) — يطلع جنب الرسالة مؤشر تحميل صغير
+  function status(msg, busy){ const s=$('#r-status'); s.textContent=msg||''; if(msg && busy) s.insertAdjacentHTML('afterbegin','<span class="dh-loader sm" aria-hidden="true"><i></i><i></i><i></i></span>'); s.classList.toggle('busy', !!(msg && busy)); s.classList.toggle('hidden', !msg); }
 
   // ---------- الاتصال ----------
   function connect(){
-    status('نتصل بالشاشة…');
+    status('نتصل بالشاشة…', true);
     try{ st.peer && st.peer.destroy(); }catch(e){}
     const peer = st.peer = new window.Peer(Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
     peer.on('open', ()=>{
@@ -101,7 +102,7 @@
     if(!st.room) return;
     const I = window.DAHOOM_ICE;
     // أول مرة: «نرجع نتصل». لو فيه سبب واضح أو تكرر الفشل: نقول له وش يسوي
-    status(I && ((why && typeof why!=='function') || st.retry>=2) ? I.why(why || 'ice') : 'انقطع الاتصال… نرجع نتصل');
+    status(I && ((why && typeof why!=='function') || st.retry>=2) ? I.why(why || 'ice') : 'انقطع الاتصال… نرجع نتصل', true);
     clearTimeout(st.rt); st.rt=setTimeout(()=>{ if(!st.conn || !st.conn.open) connect(); }, Math.min(8000, 1500*(++st.retry)));
   }
   function send(msg){ if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
@@ -109,7 +110,10 @@
   // ---------- الرسائل ----------
   function onData(d){
     if(!d) return;
-    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; st.canCreate=!!d.canCreate; renderTeams(d.teams); return; }
+    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; st.canCreate=!!d.canCreate;
+      if(!$('#r-reg').classList.contains('hidden')) return;
+      const m=me(); if(m && m.name && st.autoReg!==st.room){ st.autoReg=st.room; send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
+      openReg(); return; }
     // فردي: ما فيه فرق — سجّل اسمك وصورتك على طول
     if(d.t==='soloreg'){ st.teamId=null; st.mode='solo'; st.avatars=d.avatars||[]; st.soloPlayers=d.players||[];
       if(!$('#r-reg').classList.contains('hidden')){ drawSoloList(); return; }
@@ -117,12 +121,13 @@
       openReg(); return; }
     if(d.t==='joined'){ st.teamId=d.teamId; if(d.mode) st.mode=d.mode; if(d.avatars&&d.avatars.length) st.avatars=d.avatars; if(d.teams) st.teams=d.teams; localStorage.setItem(teamKey(), d.teamId); keepAwake();
       const m=me(); if(st.mode==='solo'){ show('r-main'); return; }
-      if(m && m.name && st.registeredRoom===st.room+':'+d.teamId){ show('r-main'); return; }
+      if(m && m.name && (d.known || st.registeredRoom===st.room+':'+d.teamId)){ st.registeredRoom=st.room+':'+d.teamId; show('r-main'); renderMain(); return; }
       if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
       openReg(); return; }
     if(d.t==='registered'){ if(d.teamId){ st.teamId=d.teamId; st.mode=d.mode||st.mode; localStorage.setItem(teamKey(), d.teamId); keepAwake(); }
+      else if(d.teamless){ st.teamId=null; if(d.mode) st.mode=d.mode; localStorage.removeItem(teamKey()); keepAwake(); }
       const m=Object.assign(me()||{}, {pid:d.pid, name:d.name, avatar:d.avatar}); localStorage.setItem(meKey, JSON.stringify(m)); st.registeredRoom=st.room+':'+st.teamId; show('r-main'); renderMain(); return; }
-    if(d.t==='state'){ st.S=d; window.DAHOOM_PHASE=d.phaseKey||null; if(st.teamId && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
+    if(d.t==='state'){ st.S=d; window.DAHOOM_PHASE=d.phaseKey||null; if((st.teamId || d.teamless) && $('#r-reg').classList.contains('hidden')) show('r-main'); renderMain(); return; }
     if(d.t==='rs'){ onMirror(d.m); return; }
     if(d.t==='rsfull'){ if(mirror) mirror.load(d.ops); return; }
     if(d.t==='ask'){ openAsk(d.reqId, d.spec); return; }
@@ -160,9 +165,11 @@
     if(!st.avatars.length) st.avatars=AV_FALLBACK.slice();
     const A=window.DahoomAccount && window.DahoomAccount.current();
     const m=me() || (A ? { name:A.name, avatar:A.avatar } : {}); const t=st.teams.find(x=>x.id===st.teamId)||{};
-    if(st.mode==='solo') drawSoloList(); else { $('#r-reg-lbl').textContent='فريقك'; $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`; }
+    if(st.mode==='solo') drawSoloList();
+    else if(t.name){ $('#r-reg-lbl').textContent='فريقك'; $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name)}</span>`; }
+    else { $('#r-reg-lbl').textContent='الفريق تختاره بعدين من قائمة الانتظار'; $('#r-reg-team').innerHTML=''; }
     $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];
-    const editing = !!(m.name && st.teamId && st.registeredRoom);
+    const editing = !!(m.name && st.registeredRoom);
     $('#r-reg-back').classList.toggle('hidden', !editing);
     $('#r-reg h1').textContent = editing ? 'عدّل اسمك وصورتك' : 'مين انت؟';
     drawAvatars(); show('r-reg');
@@ -301,7 +308,7 @@
     const m=me()||{}, n=I.players.length, on=I.players.filter(p=>p.on).length;
     const host = I.host || 'المضيف';
     $('#r-sess-sum').innerHTML=`<span class="rs-game">${esc(I.gameName||'دحوم')}</span><span class="rs-code">${esc(I.code||st.room||'')}</span><span class="rs-n">${n} ${n===1?'لاعب':'لاعبين'}</span>`;
-    const pl = p => `<div class="rs-p ${p.on?'on':''} ${p.id===m.pid?'me':''}" style="--c:${p.tc||p.color}"><img src="${avSrc(p.avatar)}" alt=""><span><b>${esc(p.name)}${p.own?` <em class="rs-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</b>${p.team&&I.mode!=='solo'?`<small>${esc(p.team)}</small>`:''}</span><em title="${p.on?'متصل':'مو متصل'}"></em></div>`;
+    const pl = p => `<div class="rs-p ${p.on?'on':''} ${p.id===m.pid?'me':''}" style="--c:${p.tc||p.color}"><img src="${avSrc(p.avatar)}" alt=""><span><b>${esc(p.name)}${p.own?` <em class="rs-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</b>${p.team&&I.mode!=='solo'?`<small>${esc(p.team)}</small>`:''}</span>${p.rd&&!I.locked?`<strong class="rs-rd" title="مستعد">${ic('check')}</strong>`:''}<em title="${p.on?'متصل':'مو متصل'}"></em></div>`;
     let list='';
     if(I.mode==='solo' || !I.teams.length) list = I.players.map(pl).join('');
     else { list = I.teams.map(t=>{ const mem=I.players.filter(p=>p.team===t.name); return `<div class="rs-team" style="--c:${t.color}"><div class="rs-th"><i></i>${esc(t.name)} <small>${mem.length}</small></div>${mem.map(pl).join('')||'<p class="muted small">فاضي</p>'}</div>`; }).join('');
@@ -313,8 +320,9 @@
         <div><span>متصلين</span><b>${on} من ${n}</b></div></div>
       <div class="rs-where k-${esc(I.where.k)}"><i></i>${esc(I.where.x)}</div>
       <div class="rs-list">${list||'<p class="muted small">ما فيه لاعبين للحين</p>'}</div>
-      <div class="rs-acts">${!I.locked && st.teamId?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}${OWNER?'':'<button class="btn ghost small" data-leave>اطلع من الغرفة</button>'}</div>`;
+      <div class="rs-acts">${rulesBtn(I.game)}${!I.locked && st.registeredRoom?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}${OWNER?'':'<button class="btn ghost small" data-leave>اطلع من الغرفة</button>'}</div>`;
     const e=$('#r-sess-body [data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
+    bindRoster($('#r-sess-body'));
     const lv=$('#r-sess-body [data-leave]'); if(lv) lv.onclick=()=>{ if(!confirm('تطلع من الغرفة؟')) return; try{ send({t:'leave'}); }catch(err){} st.room=null; try{ st.peer && st.peer.destroy(); }catch(err){} localStorage.removeItem('dahoom_last_room'); localStorage.removeItem(teamKey()); history.replaceState(null,'','remote.html'); show('r-join'); };
     // وسط المباراة بالجوال نطوي القائمة عشان اللعب ياخذ الشاشة (إلا لو اللاعب فتحها بنفسه)
     const det=$('#r-sess'), wide=matchMedia('(min-width:900px)').matches;
@@ -343,25 +351,27 @@
         return groups.map(gr=>`<div class="ow-chg">${gr.t&&gr.t!=='map'?`<div class="ow-lbl">${esc(gr.t)}</div>`:''}<div class="ow-chips">${gr.f.map(f=>`<button type="button" class="ow-chip ${f.type==='pick'?'pick':''}" data-c="${f.id}" data-t="${f.type}"><b>${esc(f.label)}</b>${f.sub?`<small>${esc(f.sub)}</small>`:''}</button>`).join('')}</div></div>`).join(''); };
       const modes = G.modes.length>1 ? `<div class="ow-seg" role="group" aria-label="طريقة اللعب"><button type="button" data-mode="solo">${ic('person')} كل واحد لحاله</button><button type="button" data-mode="teams">${ic('team')} فرق</button></div>` : '';
       box.innerHTML=`<section class="ow">
-        <div class="ow-h"><span class="ow-crown">${ic('crown')}</span><div><b>جلستك</b><small>اختر اللعبة واضبطها، وأول ما يكتمل الشباب اضغط ابدأ</small></div></div>
+        <div class="ow-h"><span class="ow-crown">${ic('crown')}</span><div><b>جلستك</b><small>اختر اللعبة واضبطها، وأول ما يكون الكل مستعد اضغط ابدأ</small></div><span id="ow-rules"></span></div>
         <div class="ow-sec"><div class="ow-lbl">اللعبة</div><div class="ow-games">${games.map(x=>`<button type="button" class="ow-g" data-g="${x.id}">${ic(x.icon)}<span>${esc(x.name)}</span></button>`).join('')}</div></div>
         <div class="ow-sec"><div class="ow-lbl">اللاعبين</div>
           <div class="ow-plrow"><span class="ow-n"><b id="ow-n"></b> <span id="ow-nl"></span></span><button type="button" class="btn small" data-copy>${ic('share')} انسخ رابط الدعوة</button></div>
+          <div class="ow-pub" role="group" aria-label="من يقدر يدخل الجلسة"><button type="button" data-pub="0">${ic('padlock')}<span><b>جلسة خاصة</b><small>يدخلون بالكود بس</small></span></button><button type="button" data-pub="1">${ic('eye')}<span><b>جلسة عامة</b><small>تطلع بقائمة الجلسات للكل</small></span></button></div>
           ${modes}<div id="ow-teams"></div></div>
         ${secs.length?`<details class="ow-set" ${st.owSetOpen?'open':''}><summary>${ic('gears')}<span>إعدادات ${esc(G.name)}</span><small>اختياري — الافتراضي مضبوط</small></summary>
           ${secs.map(s=>`<div class="ow-ss"><div class="ow-lbl">${esc(s.t)}</div>${s.f.map(field).join('')}${chips(s.f.filter(f=>f.type==='chip'||f.type==='pick'))}</div>`).join('')}</details>`:''}
         <p class="r-err" id="ow-err"></p>
-        <button type="button" class="btn btn-hype big ow-start" data-start>${ic('play')} ابدأ ${esc(G.name)}</button>
+        <button type="button" class="btn btn-hype big ow-start" data-start>${ic('play')} <span id="ow-start-l">ابدأ ${esc(G.name)}</span></button>
         <div class="ow-more"><button type="button" class="btn ghost small" data-table>${ic('podium')} اعرض الطاولة على شاشة ثانية</button><button type="button" class="btn ghost small" data-leave>${ic('cancel')} ما بلعب — أخلي الجهاز شاشة عرض</button><button type="button" class="btn ghost small ow-end" data-end>${ic('door')} أنهِ الجلسة</button></div>
       </section>`;
       const A2=OWN(), again=()=>setTimeout(()=>renderOwnerPanel(box), 80);
       { const d=$('.ow-set'); if(d) d.ontoggle=()=>{ st.owSetOpen=d.open; }; }
       $$('.ow [data-g]').forEach(b=>b.onclick=()=>{ vibe(10); A2.chooseGame(b.dataset.g); again(); });
       $$('.ow [data-mode]').forEach(b=>b.onclick=()=>{ vibe(10); A2.setPlayMode(b.dataset.mode); again(); });
+      $$('.ow [data-pub]').forEach(b=>b.onclick=()=>{ vibe(10); A2.pub(b.dataset.pub==='1'); status(b.dataset.pub==='1'?'الجلسة عامة — تطلع للكل بقائمة الجلسات':'الجلسة خاصة — يدخلونها بالكود بس'); setTimeout(()=>status(''),2500); again(); });
       $$('.ow [data-f]').forEach(el=>el.onchange=()=>{ A2.setField(el.dataset.f, el.type==='checkbox' ? el.checked : el.value); again(); });
       $$('.ow [data-c]').forEach(b=>b.onclick=()=>{ vibe(8); const f=A2.fields().find(x=>x.id===b.dataset.c); A2.setField(b.dataset.c, b.dataset.t==='pick' ? true : !(f && f.on)); again(); });
       $('.ow [data-copy]').onclick=async()=>{ const url=location.href.replace(/remote\.html.*$/,'remote.html?room='+st.room); try{ await navigator.clipboard.writeText(url); status('انسخ الرابط — أرسله للشباب'); }catch(e){ status(url); } setTimeout(()=>status(''),2500); };
-      $('.ow [data-start]').onclick=()=>{ vibe(30); const err=A2.start(); $('#ow-err').textContent=err||''; if(err){ vibe([40,30,40]); sfx('bad'); } };
+      $('.ow [data-start]').onclick=()=>{ vibe(30); const err=A2.start(); $('#ow-err').textContent=err||''; clearTimeout(st.owErrT); if(err){ vibe([40,30,40]); sfx('bad'); st.owErrT=setTimeout(()=>{ const e=$('#ow-err'); if(e) e.textContent=''; }, 6000); } };
       $('.ow [data-table]').onclick=()=>A2.table();
       $('.ow [data-end]').onclick=()=>A2.end();
       $('.ow [data-leave]').onclick=()=>{ if(confirm('ما بتلعب؟ تطلع من الجلسة كلاعب ويصير هالجهاز شاشة عرض بس.')) A2.leave(); };
@@ -370,26 +380,69 @@
     $$('.ow [data-g]').forEach(b=>b.classList.toggle('on', b.dataset.g===g));
     $$('.ow [data-mode]').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
     const solo=mode==='solo' || g==='hawamir' || g==='sadq';
-    $('#ow-n').textContent=n; $('#ow-nl').textContent = solo ? (n===1?'لاعب جاهز':'لاعبين جاهزين') : (n===1?'فريق فيه لاعبين':'فرق فيها لاعبين');
-    const tb=$('#ow-teams'); if(tb){ const T=A.teams();
-      tb.innerHTML = solo ? '' : `<div class="ow-tl">${T.map(t=>`<span style="--c:${t.color}"><i></i>${esc(t.name)} <b>${t.n}</b></span>`).join('')||'<span class="muted small">ما فيه فرق للحين</span>'}</div>
-        <div class="ow-trow"><button type="button" class="btn small" data-auto>${ic('recycle')} وزّع الفرق عشوائي</button><label class="ow-sw"><input type="checkbox" data-pt ${A.phoneTeams()?'checked':''}><i></i><span>كل لاعب يختار فريقه</span></label></div>`;
-      const au=tb.querySelector('[data-auto]'); if(au) au.onclick=()=>{ vibe(10); A.autoTeams(); setTimeout(()=>renderOwnerPanel(box),120); };
-      const pt=tb.querySelector('[data-pt]'); if(pt) pt.onchange=()=>A.phoneTeams(pt.checked); }
+    const I=st.info||{players:[],teams:[]}, P=(I.players||[]).filter(p=>p.on), nRd=P.filter(p=>p.rd).length, wait=A.waiting();
+    $('#ow-n').textContent=P.length; $('#ow-nl').textContent = `${P.length===1?'لاعب متصل':'لاعبين متصلين'} · ${nRd} مستعد`;
+    $$('.ow [data-pub]').forEach(b=>{ const on=(b.dataset.pub==='1')===!!A.pub(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    { const r=$('#ow-rules'); if(r && r.dataset.g!==g){ r.dataset.g=g; r.innerHTML=rulesBtn(g); bindRoster(r); } }
+    { const sb=$('.ow [data-start]'), sl=$('#ow-start-l'); if(sb && sl){ sb.classList.toggle('is-wait', wait.length>0); sl.textContent = wait.length ? `ننتظر ${wait.length===1?'لاعب واحد':wait.length+' لاعبين'} يضغطون مستعد` : `ابدأ ${G.name}`; } }
+    const tb=$('#ow-teams'); if(tb){
+      const sig2=JSON.stringify([I.players,I.teams,solo,A.phoneTeams(),I.canCreate]);
+      if(tb.dataset.sig!==sig2){ tb.dataset.sig=sig2;
+        tb.innerHTML = rosterHTML(Object.assign({}, I, { mode: solo?'solo':'teams' }), !solo) + (solo ? '' : `
+          <div class="ow-trow"><button type="button" class="btn small" data-auto>${ic('recycle')} وزّع الفرق عشوائي</button><label class="ow-sw"><input type="checkbox" data-pt ${A.phoneTeams()?'checked':''}><i></i><span>اللاعبين يقدرون يسوون فرق جديدة</span></label></div>`);
+        bindRoster(tb);
+        const au=tb.querySelector('[data-auto]'); if(au) au.onclick=()=>{ vibe(10); A.autoTeams(); setTimeout(()=>renderOwnerPanel(box),160); };
+        const pt=tb.querySelector('[data-pt]'); if(pt) pt.onchange=()=>A.phoneTeams(pt.checked); } }
     F.forEach(f=>{ const el=box.querySelector(`[data-f="${f.id}"]`); if(el && document.activeElement!==el){ if(f.type==='checkbox') el.checked=!!f.on; else el.value=f.value; }
       const c=box.querySelector(`[data-c="${f.id}"]`); if(c){ c.classList.toggle('on', !!f.on); c.setAttribute('aria-pressed', !!f.on); } });
     return true;
   }
   if(OWNER) setInterval(()=>{ if(!$('#r-wait').classList.contains('r-hide') && OWN()) renderOwnerPanel($('#r-wait')); }, 2500);
+  // ---------- قائمة الانتظار: الفرق واللاعبين وحالة «مستعد» (للاعب ولصاحب الجلسة) ----------
+  function rosterHTML(I, canJoin){
+    const m=me()||{}, P=I.players||[], solo=I.mode==='solo';
+    const pl = p => `<li class="rr-p ${p.rd?'rd':''} ${p.on?'':'off'} ${p.id===m.pid?'me':''}"><img src="${avSrc(p.avatar)}" alt="">
+      <span class="rr-n">${esc(p.name)}${p.own?` <em class="rr-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</span>
+      <span class="rr-st">${!p.on?'<span>مو متصل</span>':p.rd?`${ic('check')}<span>مستعد</span>`:'<span>ينتظر</span>'}</span></li>`;
+    if(solo) return P.length ? `<ul class="rr-list">${P.map(pl).join('')}</ul>` : '<p class="rr-empty">ما فيه لاعبين للحين — أرسلوا رابط الدعوة</p>';
+    const myT=(P.find(p=>p.id===m.pid)||{}).tid;
+    let h=(I.teams||[]).map(t=>{ const mem=P.filter(p=>p.tid===t.id), mine=!!myT && t.id===myT;
+      return `<div class="rr-team ${mine?'mine':''}" style="--c:${t.color}"><div class="rr-th"><i></i><b>${esc(t.name)}</b><small>${mem.length}</small>
+        ${mine?'<span class="rr-mine">فريقك</span>':(!I.locked && canJoin && m.pid?`<button type="button" class="btn small rr-join" data-join="${esc(t.id)}">${myT?'انتقل له':'انضم'}</button>`:'')}</div>
+        <ul class="rr-list">${mem.map(pl).join('')||'<li class="rr-empty">فاضي</li>'}</ul></div>`; }).join('');
+    const loose=P.filter(p=>!p.tid);
+    if(loose.length) h+=`<div class="rr-team loose"><div class="rr-th"><i></i><b>بدون فريق</b><small>${loose.length}</small></div><ul class="rr-list">${loose.map(pl).join('')}</ul></div>`;
+    if(!(I.teams||[]).length) h+='<p class="rr-empty">ما فيه فرق للحين</p>';
+    if(canJoin && m.pid && I.canCreate && !I.locked && (I.teams||[]).length<(I.maxTeams||6)) h+=`<button type="button" class="btn ghost small rr-new" data-newteam>${ic('plus')} فريق جديد</button>`;
+    return `<div class="rr-teams">${h}</div>`;
+  }
+  function bindRoster(root){
+    if(!root) return;
+    $$('[data-join]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'team', id:b.dataset.join}); });
+    const nt=root.querySelector('[data-newteam]'); if(nt) nt.onclick=()=>{ const n=prompt('اسم الفريق؟'); if(n===null) return; vibe(15); send({t:'newteam', name:n}); };
+    $$('[data-rules]', root).forEach(b=>b.onclick=()=>{ vibe(8); const g=b.dataset.rules; if(window.DahoomRules && g) window.DahoomRules.open(g); });
+  }
+  const rulesBtn = g => g && window.DahoomRules ? `<button type="button" class="btn ghost small rr-rules" data-rules="${esc(g)}">${ic('book')} طريقة اللعب</button>` : '';
   function renderWait(){
     if(OWNER && renderOwnerPanel($('#r-wait'))) return;
-    const I=st.info||{}, m=me()||{}, t=(st.teams||[]).find(x=>x.id===st.teamId);
-    $('#r-wait').innerHTML=`<div class="rw-me"><img src="${avSrc(m.avatar||'doge')}" alt=""><div><small>أهلًا</small><b>${esc(m.name||'')}</b>${t&&st.mode!=='solo'?`<span class="r-teamchip" style="--c:${t.color}">${esc(t.name)}</span>`:''}</div></div>
-      <div class="rw-status"><span class="rw-dot"></span>${esc((I.where&&I.where.x)||'بانتظار المضيف يبدأ')}</div>
-      ${I.gameName?`<p class="muted">اللعبة: <b>${esc(I.gameName)}</b> · صاحب الجلسة: <b>${esc(I.host||'—')}</b></p>`:''}
-      <div class="row center">${!I.locked?'<button class="btn btn-hype" data-edit>عدّل اسمك وصورتك</button>':''}</div>
-      <p class="muted small center">أول ما يبدأ صاحب الجلسة تطلع لك اللعبة هنا. قائمة اللاعبين في خانة الجلسة.</p>`;
-    const e=$('#r-wait [data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
+    const I=st.info||{players:[],teams:[]}, m=me()||{}, P=I.players||[], mine=P.find(p=>p.id===m.pid);
+    const rd=!!(mine && mine.rd), solo=I.mode==='solo', needTeam=!solo && !I.locked && !!mine && !mine.tid;
+    const nRd=P.filter(p=>p.on && p.rd).length, nOn=P.filter(p=>p.on).length;
+    $('#r-wait').innerHTML=`<section class="rw">
+      <div class="rw-top"><div class="rw-game"><small>اللعبة</small><b>${esc(I.gameName||'ما انختارت للحين')}</b></div>${rulesBtn(I.game)}</div>
+      <div class="rw-status"><span class="rw-dot"></span>${esc((I.where&&I.where.x)||'بانتظار صاحب الجلسة')}</div>
+      ${I.locked ? '<p class="rw-note">المباراة شغالة — تنضم للجولة الجاية</p>' : `
+      <button type="button" class="rw-ready ${rd?'on':''}" data-ready aria-pressed="${rd}" ${needTeam||!mine?'disabled':''}>
+        <span class="rw-tick">${ic('check')}</span><span class="rw-rt"><b>${rd?'أنا مستعد':'اضغط إذا مستعد'}</b><small>${needTeam?'اختر فريقك أول':rd?'اضغط مرة ثانية لو تبي تلغي':'اللعبة ما تبدأ إلا لما الكل يكون مستعد'}</small></span>
+      </button>
+      <div class="rw-count">${nRd} من ${nOn} مستعدين</div>`}
+      ${needTeam?'<p class="rw-pick">اختر فريقك من القائمة تحت</p>':''}
+      ${rosterHTML(I, true)}
+      <div class="rw-acts">${!I.locked?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
+    </section>`;
+    const w=$('#r-wait'); bindRoster(w);
+    const e=w.querySelector('[data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
+    const r=w.querySelector('[data-ready]'); if(r) r.onclick=()=>{ vibe(rd?10:[20,30,20]); sfx(rd?'tick':'good'); send({t:'ready', on:!rd}); r.classList.toggle('on', !rd); };
   }
   function renderMe(){
     const m=me()||{}, t=(st.teams||[]).find(x=>x.id===st.teamId)||{};

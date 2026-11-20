@@ -61,16 +61,37 @@ window.DahoomNet = (function(){
       if(pl){ c.pid=pl.id; c.teamId=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar, teamId:pl.id, mode:'solo'}); if(H && H.roster) H.roster(); push(c); refreshUI(); }
       return;
     }
-    // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار)
-    if(d.t==='newteam' && !c.teamId){
+    // مستعد / مو مستعد (قبل البداية بس)
+    if(d.t==='ready'){ if(c.pid && !isLocked()){ if(d.on) RD.add(c.pid); else RD.delete(c.pid); play('tick',{volume:.4}); infoAll(); } return; }
+    // وضع الفرق: اللاعب يسجّل اسمه وصورته أول (بدون فريق)، وبعدها يختار فريقه من شاشة الانتظار
+    if(d.t==='register' && !isSolo() && !c.teamId){
+      const pl=D.joinPlayer({pid:d.pid, name:d.name, avatar:d.avatar});
+      if(pl){ c.pid=pl.id; const home=homeTeamOf(pl.id); c.teamId = home ? home.id : null;
+        c.send(Object.assign(regMsg(pl), { teamId:c.teamId, teamless:!c.teamId })); if(H && H.roster) H.roster(); push(c); refreshUI(); }
+      return; }
+    // يختار فريق أو يبدّل (قبل البداية)
+    if(d.t==='team'){
+      if(isLocked()){ c.send({t:'notice', msg:'تغيير الفريق بعد ما تخلص المباراة'}); return; }
+      const p=c.pid && D.session.players.find(x=>x.id===c.pid), t=D.session.teams.find(x=>x.id===d.id);
+      if(!p || !t || D.session.mode!=='teams'){ c.send(lobbyMsg()); return; }
+      D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id;
+      c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true}); push(c); refreshUI(); return; }
+    // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار) — وينتقل له لو كان مسجّل
+    if(d.t==='newteam' && !isLocked()){
       const t = canCreate() ? D.createTeam(d.name) : null;
-      if(t) seat(c, t.id); else c.send({t:'notice', msg:'إنشاء الفرق مقفل — كلّم المضيف'});
+      if(!t){ c.send({t:'notice', msg:'إنشاء الفرق مقفل — كلّم المضيف'}); return; }
+      const p=c.pid && D.session.players.find(x=>x.id===c.pid);
+      if(p){ D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id; c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true}); push(c); }
+      else seat(c, t.id);
       refreshUI(); return;
     }
     if(d.t==='hello'){
       if(isLocked() && d.pid){ const home=homeTeamOf(d.pid); if(home && d.teamId!==home.id){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${home.name}`}); d.teamId=home.id; } }
       const teams = teamList();
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      const known = d.pid && D.session.players.find(p=>p.id===d.pid);
+      if(known && !isLocked()){ const home=homeTeamOf(known.id); d.teamId = home ? home.id : null; }
+      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams, known:!!known}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      else if(known){ c.pid=known.id; c.teamId=null; c.send(regMsg(known)); push(c); }
       else c.send(lobbyMsg());
       refreshUI(); return;
     }
@@ -107,7 +128,7 @@ window.DahoomNet = (function(){
   const hasPhone = id => phonesOf(id).length>0;
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
-  function push(c){ if(!c.teamId) return; if(!H){ try{ c.send({t:'state', waiting:true, locked:false}); }catch(e){} return; } try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
+  function push(c){ if(!c.teamId){ if(c.pid && c.open){ try{ c.send({t:'state', waiting:true, teamless:true, locked:isLocked()}); }catch(e){} } return; } if(!H){ try{ c.send({t:'state', waiting:true, locked:false}); }catch(e){} return; } try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
   // تحديث كل الجوالات (مجمّع عشان ما نرسل عشرات المرات بنفس اللحظة)
   function pushAll(){ if(pushT) return; pushT=setTimeout(()=>{ pushT=0; conns.forEach(push); }, 60); }
 
@@ -120,7 +141,23 @@ window.DahoomNet = (function(){
   function closeAsk(reqId){ conns.forEach(c=>{ try{ c.send({t:'close', reqId}); }catch(e){} }); }
   function notify(teamId, msg){ send(teamId, msg); }
 
-  function use(handlers){ H=handlers; FEED.length=0; conns.forEach(c=>{ try{ c.send({t:'feedreset'}); }catch(e){} }); pushAll(); refreshUI(); }
+  function use(handlers){ H=handlers; if(handlers) RD.clear(); FEED.length=0; conns.forEach(c=>{ try{ c.send({t:'feedreset'}); }catch(e){} }); pushAll(); refreshUI(); }
+
+  // ---------- مستعد ----------
+  // كل لاعب متصل لازم يضغط «مستعد» قبل ما تبدأ اللعبة (صاحب الجلسة مستعد دايماً — هو اللي يبدأ)
+  const RD=new Set(); let rdGame=null;
+  const onlinePids = () => new Set([...conns].filter(c=>c.open && c.pid).map(c=>c.pid));
+  const isReady = pid => RD.has(pid) || (ownerConn() && ownerConn().pid===pid);
+  // اللي ننتظرهم: لاعبين متصلين وما ضغطوا مستعد
+  const waitingFor = () => { const on=onlinePids(); return D.session.players.filter(p=>on.has(p.id) && !isReady(p.id)); };
+  const regMsg = p => ({t:'registered', pid:p.id, name:p.name, avatar:p.avatar, teamId:null, teamless:true, mode:D.session.mode});
+  // المضيف وزّع الفرق أو حرّك لاعب: جوال كل لاعب ينتقل لفريقه الجديد بدون ما يسوي شي
+  function seatSync(){
+    if(isLocked() || isSolo()) return;
+    conns.forEach(c=>{ if(!c.open || !c.pid) return; const p=D.session.players.find(x=>x.id===c.pid); if(!p) return;
+      const home=homeTeamOf(c.pid), tid=home ? home.id : null; if(tid===c.teamId) return;
+      c.teamId=tid; try{ c.send(tid ? {t:'joined', teamId:tid, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true} : regMsg(p)); }catch(e){} push(c); });
+  }
 
   // ---------- معلومات الجلسة: اللعبة والمضيف واللاعبين (تنرسل لكل الجوالات) ----------
   const GAME_AR = { alf:'ألف نقطة', khaliya:'خلية الحروف', rasm:'ارسم وخمّن', hawamir:'هوامير', sadq:'ما أصدقك' };
@@ -148,15 +185,17 @@ window.DahoomNet = (function(){
   }
   function infoMsg(){
     const ss=D.session, solo=ss.mode==='solo' && ss.game!=='khaliya';
-    const online=new Set([...conns].filter(c=>c.open && c.pid).map(c=>c.pid));
+    if(rdGame!==ss.game+':'+ss.mode){ rdGame=ss.game+':'+ss.mode; RD.clear(); }   // تغيّرت اللعبة أو الطريقة = الكل يعيد «مستعد»
+    const online=onlinePids();
     const teamOf=pid=>ss.teams.find(t=>t.members.includes(pid));
     return { t:'info', code, game:ss.game, gameName:GAME_AR[ss.game]||'', host:hostName(), mode:solo?'solo':'teams', where:where(), locked:isLocked(),
-      players: ss.players.map(p=>{ const tm=solo?null:teamOf(p.id); const oc=ownerConn(); return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:tm?tm.name:null, tc:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id) }; }),
-      teams: solo ? [] : ss.teams.map(t=>({ id:t.id, name:t.name, color:t.color, n:t.members.length })), phones:[...conns].filter(c=>c.open).length };
+      players: ss.players.map(p=>{ const tm=solo?null:teamOf(p.id); const oc=ownerConn(); return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:tm?tm.name:null, tid:tm?tm.id:null, tc:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id), rd:isReady(p.id) }; }),
+      teams: solo ? [] : ss.teams.map(t=>({ id:t.id, name:t.name, color:t.color, n:t.members.length })), phones:[...conns].filter(c=>c.open).length,
+      canCreate:canCreate(), maxTeams: ss.game==='khaliya' ? 2 : 6, pub:isPublic(), wait:waitingFor().map(p=>p.name) };
   }
   function sendInfo(c){ try{ c.send(infoMsg()); if(FEED.length) c.send({t:'feedall', list:FEED}); }catch(e){} }
   let infoT=0;
-  function infoAll(){ if(infoT) return; infoT=setTimeout(()=>{ infoT=0; const m=infoMsg(); conns.forEach(c=>{ if(c.open){ try{ c.send(m); }catch(e){} } }); publishRoom(); if(window.DahoomOwner) window.DahoomOwner.render(); }, 150); }
+  function infoAll(){ if(infoT) return; infoT=setTimeout(()=>{ infoT=0; seatSync(); const m=infoMsg(); conns.forEach(c=>{ if(c.open){ try{ c.send(m); }catch(e){} } }); publishRoom(); if(window.DahoomOwner) window.DahoomOwner.render(); }, 150); }
   document.addEventListener('dahoom:screen', ()=>{ infoAll(); });
   document.addEventListener('dahoom:session', ()=>{ infoAll(); });
   // سجل الأحداث: آخر 60 حدث، ينرسل للجوالات أول بأول
@@ -179,7 +218,7 @@ window.DahoomNet = (function(){
   // ---------- واجهة الشاشة ----------
   function refreshUI(){
     // الجوالات اللي بشاشة اختيار الفريق تشوف العدد والصور يتحدثون مباشرة
-    const lm=lobbyMsg(); conns.forEach(c=>{ if(c.open && !c.teamId){ try{ c.send(lm); }catch(e){} } });
+    const lm=lobbyMsg(); conns.forEach(c=>{ if(c.open && !c.teamId && !c.pid){ try{ c.send(lm); }catch(e){} } });
     $$('.net-dot').forEach(el=>el.classList.toggle('on', ready));
     const box=$('#net-panel-body'); if(box) box.innerHTML=panelBody();
     if(H && H.onPhones) H.onPhones();
@@ -213,5 +252,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, waitingFor:()=>waitingFor().map(p=>p.name), isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

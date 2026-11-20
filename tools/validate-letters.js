@@ -1,7 +1,7 @@
 // يفحص بنك الحروف: الجواب يبدأ بالحرف (متجاهلين ال)، وما فيه نصوص مسودة
 global.window={};
 const fs=require('fs');
-for(const f of fs.readdirSync('data').filter(f=>/^letters-.*\.js$/.test(f))) require('./data/'+f);
+for(const f of fs.readdirSync('data').filter(f=>/^letters-.*\.js$/.test(f))) require('../data/'+f);   // التشغيل من جذر المشروع: node tools/validate-letters.js
 const list=window.DAHOOM_DATA.letters;
 const norm=s=>s.replace(/^[\s"«(]+/,'').replace(/^(ال|الْ)/,'').replace(/^[\s]+/,'');
 const first=s=>{ let c=norm(s)[0]; if('إأآا'.includes(c)) c='أ'; return c; };

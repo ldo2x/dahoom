@@ -1,8 +1,11 @@
-/* ===== دحوم — الحسابات والملف الشخصي والربع والإنجازات =====
+/* ===== دحوم — الحسابات والملف الشخصي والأصدقاء والإنجازات =====
    window.DahoomAccount — يشتغل بأي صفحة فيها js/config.js + css/style.css + js/account.js.
 
    الفكرة:
-   - اللاعب يا يسجّل بقوقل (ملفه ينحفظ في Firestore)، يا يلعب كضيف (كل شي بجهازه في localStorage).
+   - اللاعب يا يسجّل بقوقل أو بيوزرنيم وكلمة سر (ملفه ينحفظ في Firestore)، يا يلعب كضيف (كل شي بجهازه في localStorage).
+   - كل حساب له يوزرنيم ما يتكرر (هو معرّف الحساب): ينحجز بوثيقة usernames/{اليوزرنيم}، ويتغيّر مرة كل ساعتين.
+     الدخول باليوزرنيم: Firebase يبي إيميل، فنسوي لكل حساب «إيميل دخول» داخلي وهمي (ما يوصله شي) ونحفظه بوثيقة اليوزرنيم.
+   - الحالة: presence/{uid} = متصل / بجلسة / يلعب لعبة كذا (تتحدث كل دقيقة والصفحة مفتوحة).
    - الضيف لما يسجّل دخول: أرقامه وإنجازاته تنتقل لحسابه مرة وحدة (وتتصفّر عند الضيف عشان ما تنحسب مرتين).
    - كل شي "أوفلاين أول": الملف ينعرض من النسخة المحفوظة بالجهاز فورًا، والمباريات تنحط بطابور
      وتنرسل للسحابة أول ما يرجع النت. لو Firebase ما حمّل أبد، اللعب ما يتأثر.
@@ -98,7 +101,7 @@ window.DahoomAccount = (function(){
     { id:'days_30',    name:'من أهل البيت',   desc:'العب في 30 يوم مختلف',                 icon:'acc-calendar', rarity:'epic',      goal:30,  val:S=>S.days },
     { id:'level_10',   name:'مستوى عشرة',     desc:'وصّل المستوى 10',                      icon:'star',         rarity:'epic',      goal:10,  val:S=>S.level },
     { id:'level_25',   name:'أسطورة دحوم',    desc:'وصّل المستوى 25',                      icon:'acc-award',    rarity:'legendary', goal:25,  val:S=>S.level },
-    { id:'friend_1',   name:'ربعك معك',       desc:'ضيف أول صديق',                         icon:'acc-user-plus',rarity:'common',    goal:1,   val:S=>S.friends },
+    { id:'friend_1',   name:'أخوياك معك',       desc:'ضيف أول صديق',                         icon:'acc-user-plus',rarity:'common',    goal:1,   val:S=>S.friends },
     { id:'friend_10',  name:'الشلة كاملة',    desc:'ضيف 10 أصدقاء',                        icon:'acc-users',    rarity:'rare',      goal:10,  val:S=>S.friends },
     // ألف نقطة
     { id:'alf_win',    name:'أبو ألف',        desc:'افز بألف نقطة',                        icon:'brain',        rarity:'common',    goal:1,   val:S=>per(S,'alf').w,  game:'alf' },
@@ -202,11 +205,28 @@ window.DahoomAccount = (function(){
     if(!/^#[0-9a-f]{6}$/i.test(p.color||'')) p.color=COLORS[0];
     if(typeof p.bio!=='string') p.bio='';
     if(!Array.isArray(p.merged)) p.merged=[];
+    if(typeof p.username!=='string' || !UNAME_RE.test(p.username)) p.username='';
+    p.unameAt = Number(p.unameAt)||0;
     return p;
   }
   // الحقول اللي تنكتب بالسحابة (لازم تطابق firestore.rules)
-  const DOC_KEYS = ['name','nameLower','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak','podiums','lasts','maxOf','night','days','lastDay','friends','per','ach','recent','merged','created','updated'];
+  const DOC_KEYS = ['name','nameLower','username','unameAt','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak','podiums','lasts','maxOf','night','days','lastDay','friends','per','ach','recent','merged','created','updated'];
   function toDoc(p){ const d={}; p.nameLower=normName(p.name); for(const k of DOC_KEYS) d[k]=clone(p[k]); return d; }
+
+  // ---------- اليوزرنيم ----------
+  // حروف إنجليزية صغيرة وأرقام و _ و . (من 3 إلى 20) — لازم تطابق firestore.rules
+  const UNAME_RE = /^[a-z0-9_.]{3,20}$/;
+  const UNAME_GAP = 2*3600*1000;   // تغيير اليوزرنيم: مرة كل ساعتين
+  const LOGIN_DOMAIN = 'login.dahoom.invalid';   // نطاق محجوز ما يستقبل بريد — للإيميل الداخلي حق الدخول باليوزرنيم
+  const cleanUname = s => String(s||'').trim().replace(/^@/,'').toLowerCase();
+  function unameProblem(u){
+    if(!u) return 'اكتب يوزرنيم';
+    if(u.length<3) return 'اليوزرنيم لازم 3 حروف أو أكثر';
+    if(u.length>20) return 'اليوزرنيم أقصاه 20 حرف';
+    if(!UNAME_RE.test(u)) return 'استخدم حروف إنجليزية صغيرة وأرقام و _ و . بس';
+    if(/^[._]|[._]$/.test(u) || /\.\./.test(u)) return 'لا تبدأ ولا تنتهي بنقطة أو شرطة، ولا نقطتين ورا بعض';
+    return '';
+  }
 
   // ---------- الأسماء ----------
   const BAD_CH = /[\u0000-\u001F\u007F​-‏‪-‮⁦-⁩<>]/g;
@@ -308,11 +328,21 @@ window.DahoomAccount = (function(){
         }
       },
       signOut: () => A.signOut(auth),
+      async signUpPw(em, pw){ const r=await A.createUserWithEmailAndPassword(auth, em, pw); return { uid:r.user.uid, name:'' }; },
+      async signInPw(em, pw){ const r=await A.signInWithEmailAndPassword(auth, em, pw); return { uid:r.user.uid, name:r.user.displayName||'' }; },
+      hasPw(){ const u=auth.currentUser; return !!(u && u.providerData.some(x=>x.providerId==='password')); },
+      pwEmail(){ const u=auth.currentUser, x=u && u.providerData.find(x=>x.providerId==='password'); return x ? x.email : ''; },
+      async setPw(em, pw){
+        const u=auth.currentUser; if(!u) throw new Error('no-user');
+        if(u.providerData.some(x=>x.providerId==='password')) await A.updatePassword(u, pw);
+        else await A.linkWithCredential(u, A.EmailAuthProvider.credential(em, pw));
+      },
       async get(p){ const s=await withTimeout(F.getDoc(ref(p)), T); return s.exists() ? s.data() : null; },
       set: (p, d, merge) => withTimeout(F.setDoc(ref(p), d, merge ? { merge:true } : {}), T),
       async list(p, n=100){ const s=await withTimeout(F.getDocs(F.query(col(p), F.limit(n))), T); return s.docs.map(d=>Object.assign({ id:d.id }, d.data())); },
-      async search(pre, n){
-        const q=F.query(col('users'), F.where('nameLower','>=',pre), F.where('nameLower','<=',pre+''), F.orderBy('nameLower'), F.limit(n));
+      async search(pre, n, field){
+        const k=field||'nameLower';
+        const q=F.query(col('users'), F.where(k,'>=',pre), F.where(k,'<=',pre+''), F.orderBy(k), F.limit(n));
         const s=await withTimeout(F.getDocs(q), T); return s.docs.map(d=>Object.assign({ id:d.id }, d.data()));
       },
       async batch(ops){ const b=F.writeBatch(db); ops.forEach(o=>o.del ? b.delete(ref(o.path)) : b.set(ref(o.path), o.data, o.merge?{ merge:true }:{})); await withTimeout(b.commit(), T); },
@@ -330,10 +360,15 @@ window.DahoomAccount = (function(){
       onAuth(f){ cb=f; setTimeout(()=>f(ls.get(AUK, null)), 5); },
       async signIn(){ await lag(); fail(); const u=window.DAHOOM_ACC_STUB_USER || { uid:'stub_'+rid(8), name:'لاعب تجريبي' }; ls.set(AUK, u); if(cb) cb(u); return u; },
       async signOut(){ ls.del(AUK); if(cb) cb(null); },
+      async signUpPw(em, pw){ await lag(); fail(); const pws=ls.get('stub_pw',{}); if(pws[em]) throw { code:'auth/email-already-in-use' }; const u={ uid:'stub_'+rid(8), name:'' }; pws[em]={ pw, uid:u.uid }; ls.set('stub_pw',pws); ls.set(AUK,u); if(cb) cb(u); return u; },
+      async signInPw(em, pw){ await lag(); fail(); const x=ls.get('stub_pw',{})[em]; if(!x || x.pw!==pw) throw { code:'auth/invalid-credential' }; const u={ uid:x.uid, name:'' }; ls.set(AUK,u); if(cb) cb(u); return u; },
+      hasPw(){ const u=ls.get(AUK,null), pws=ls.get('stub_pw',{}); return !!(u && Object.values(pws).some(x=>x.uid===u.uid)); },
+      pwEmail(){ const u=ls.get(AUK,null), pws=ls.get('stub_pw',{}); return (u && Object.keys(pws).find(k=>pws[k].uid===u.uid)) || ''; },
+      async setPw(em, pw){ await lag(); fail(); const u=ls.get(AUK,null); if(!u) throw new Error('no-user'); const pws=ls.get('stub_pw',{}); const k=Object.keys(pws).find(k=>pws[k].uid===u.uid)||em; pws[k]={ pw, uid:u.uid }; ls.set('stub_pw',pws); },
       async get(p){ await lag(); fail(); const v=db()[p]; return v ? clone(v) : null; },
       async set(p, d, merge){ await lag(); fail(); const x=db(); x[p] = merge ? Object.assign(x[p]||{}, clone(d)) : clone(d); save(x); },
       async list(p, n=100){ await lag(); fail(); const x=db(), pre=p+'/'; return Object.keys(x).filter(k=>k.startsWith(pre) && !k.slice(pre.length).includes('/')).slice(0,n).map(k=>Object.assign({ id:k.slice(pre.length) }, clone(x[k]))); },
-      async search(pre, n){ await lag(); fail(); const x=db(); return Object.keys(x).filter(k=>/^users\/[^/]+$/.test(k) && String(x[k].nameLower||'').startsWith(pre)).sort((a,b)=>x[a].nameLower<x[b].nameLower?-1:1).slice(0,n).map(k=>Object.assign({ id:k.slice(6) }, clone(x[k]))); },
+      async search(pre, n, field){ await lag(); fail(); const f=field||'nameLower', x=db(); return Object.keys(x).filter(k=>/^users\/[^/]+$/.test(k) && String(x[k][f]||'').startsWith(pre)).sort((a,b)=>x[a][f]<x[b][f]?-1:1).slice(0,n).map(k=>Object.assign({ id:k.slice(6) }, clone(x[k]))); },
       async batch(ops){ await lag(); fail(); const x=db(); ops.forEach(o=>{ if(o.del) delete x[o.path]; else x[o.path] = o.merge ? Object.assign(x[o.path]||{}, clone(o.data)) : clone(o.data); }); save(x); },
     };
   }
@@ -358,7 +393,7 @@ window.DahoomAccount = (function(){
 
   function pub(p, uid, guest){
     if(!p) return null; const L=levelInfo(p.xp);
-    return { uid, guest:!!guest, name:p.name, avatar:p.avatar, banner:p.banner, frame:p.frame, color:p.color, bio:p.bio, title:p.title, titleName:titleName(p.title),
+    return { uid, guest:!!guest, name:p.name, username:p.username||'', unameAt:p.unameAt||0, avatar:p.avatar, banner:p.banner, frame:p.frame, color:p.color, bio:p.bio, title:p.title, titleName:titleName(p.title),
       level:L.level, xp:p.xp, levelInfo:L, games:p.games, wins:p.wins, offline: !guest && st.offline && uid===st.uid };
   }
   function full(p, uid, guest){ if(!p) return null; return Object.assign(clone(p), pub(p, uid, guest)); }
@@ -428,6 +463,7 @@ window.DahoomAccount = (function(){
       }
     }
     st.mode='user'; st.uid=uid; st.prof=cache; saveCache(uid, cache); emit();
+    setTimeout(()=>beat(true), 1500);
     return sync();
   }
   function enterGuestOrNone(){
@@ -483,7 +519,7 @@ window.DahoomAccount = (function(){
   async function signOut(){
     try{
       const uid=st.uid;
-      if(st.mode==='user'){ try{ if(cloudOk) await cloud.signOut(); }catch(e){} }
+      if(st.mode==='user'){ try{ if(cloudOk){ ACT.s='off'; await beat(true).catch(()=>{}); await cloud.signOut(); } }catch(e){} }
       ls.del('last');
       // نمسح نسخة الحساب من الجهاز (جهاز مشترك) إلا لو فيه شي ما انرسل
       if(uid && queueEmpty(queue(uid))){ ls.del('u_'+uid); ls.del('q_'+uid); ls.del('sent_'+uid); }
@@ -544,16 +580,156 @@ window.DahoomAccount = (function(){
       const p=full(normProfile(d), uid, false); profCache.set(uid, p); return p;
     }catch(e){ return profCache.get(uid) || null; }
   }
+  // البحث: بالاسم، أو باليوزرنيم (يبدأ بـ @ أو مكتوب بحروف إنجليزية) — نجمع الاثنين بدون تكرار
   async function searchUsers(prefix){
     try{
-      const p=normName(prefix); if(!p) return [];
+      const raw=String(prefix||'').trim(); if(!raw) return [];
       if(!await bootCloud()) return [];
-      const l=await cloud.search(p, 10);
-      return l.filter(d=>d.id!==st.uid).map(d=>{ const x=normProfile(d); return { uid:d.id, name:x.name, avatar:x.avatar, frame:x.frame, color:x.color, level:x.level, title:x.title, titleName:titleName(x.title) }; });
+      const un=cleanUname(raw), byU=/^@/.test(raw) || /^[a-z0-9_.]+$/i.test(raw), byN=!/^@/.test(raw) && normName(raw);
+      const [a, b] = await Promise.all([ byU && un ? cloud.search(un, 10, 'username').catch(()=>[]) : [], byN ? cloud.search(normName(raw), 10).catch(()=>[]) : [] ]);
+      const seen=new Set(), out=[];
+      for(const d of a.concat(b)){ if(d.id===st.uid || seen.has(d.id)) continue; seen.add(d.id); const x=normProfile(d);
+        out.push({ uid:d.id, name:x.name, username:x.username, avatar:x.avatar, frame:x.frame, color:x.color, level:x.level, title:x.title, titleName:titleName(x.title) }); }
+      return out.slice(0, 12);
+    }catch(e){ return []; }
+  }
+  // صاحب يوزرنيم معيّن (أو null)
+  async function findByUsername(u){
+    try{ u=cleanUname(u); if(unameProblem(u)) return null; if(!await bootCloud()) return null;
+      const d=await cloud.get('usernames/'+u); return d && d.uid ? d.uid : null; }catch(e){ return null; }
+  }
+  // هل اليوزرنيم متاح؟ { ok, why }
+  async function checkUsername(u){
+    u=cleanUname(u); const bad=unameProblem(u); if(bad) return { ok:false, why:bad };
+    if(st.prof && st.prof.username===u) return { ok:true, why:'', same:true };
+    try{ if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
+      const d=await cloud.get('usernames/'+u); return d ? { ok:false, why:'اليوزرنيم مأخوذ، جرّب غيره' } : { ok:true, why:'' };
+    }catch(e){ return { ok:false, why:'ما قدرنا نتأكد، جرّب مرة ثانية' }; }
+  }
+  // كم باقي لين يقدر يغيّر اليوزرنيم (ملي ثانية، 0 = يقدر الحين)
+  const unameWait = () => { const p=st.prof; if(!p || !p.username || !p.unameAt) return 0; return Math.max(0, p.unameAt + UNAME_GAP - Date.now()); };
+  // يحجز يوزرنيم جديد ويفك القديم (عملية وحدة). يرجع { ok, why }
+  async function setUsername(u){
+    try{
+      if(!signedIn()) return { ok:false, why:'سجّل دخول أول' };
+      u=cleanUname(u); const bad=unameProblem(u); if(bad) return { ok:false, why:bad };
+      const p=st.prof, old=p.username||'';
+      if(old===u) return { ok:true, why:'' };
+      const w=unameWait(); if(w>0) return { ok:false, why:`تقدر تغيّره بعد ${Math.ceil(w/60000)} دقيقة` };
+      if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
+      // نتأكد إن وثيقة الحساب موجودة ومحدّثة (لو فيه مزامنة شغالة ننتظرها)
+      let synced=false; for(let i=0;i<12 && !synced;i++){ synced=await sync(); if(!synced){ if(!st.syncing && st.offline) break; await new Promise(r=>setTimeout(r,500)); } }
+      if(!synced) return { ok:false, why:'ما قدرنا نحفظ، جرّب مرة ثانية' };
+      const taken=await cloud.get('usernames/'+u); if(taken && taken.uid!==st.uid) return { ok:false, why:'اليوزرنيم مأخوذ، جرّب غيره' };
+      const oldDoc = old ? await cloud.get('usernames/'+old).catch(()=>null) : null;
+      const em = (oldDoc && oldDoc.em) || (cloud.pwEmail ? cloud.pwEmail() : '') || '';
+      const now=Date.now();
+      const ops=[ { path:'users/'+st.uid, data:{ username:u, unameAt:now }, merge:true }, { path:'usernames/'+u, data: em ? { uid:st.uid, em, at:now } : { uid:st.uid, at:now } } ];
+      if(old) ops.push({ path:'usernames/'+old, del:true });
+      await cloud.batch(ops);
+      p.username=u; p.unameAt=now; saveCache(st.uid, p); emit();
+      return { ok:true, why:'' };
+    }catch(e){ console.warn('[DahoomAccount] setUsername', e && (e.code||e.message)); return { ok:false, why:'ما قدرنا نحجزه — يمكن أحد سبقك عليه، جرّب مرة ثانية' }; }
+  }
+  // ---------- الدخول باليوزرنيم وكلمة السر ----------
+  const pwProblem = pw => !pw ? 'اكتب كلمة السر' : String(pw).length<6 ? 'كلمة السر لازم 6 حروف أو أكثر' : String(pw).length>64 ? 'كلمة السر طويلة مرة' : '';
+  const authWhy = e => { const c=(e && e.code)||''; return /invalid-credential|wrong-password|user-not-found|invalid-login/.test(c) ? 'اليوزرنيم أو كلمة السر غلط'
+    : /too-many-requests/.test(c) ? 'محاولات كثيرة — انتظر شوي وجرّب' : /operation-not-allowed/.test(c) ? 'الدخول بكلمة السر مو مفعّل للحين'
+    : /weak-password/.test(c) ? 'كلمة السر ضعيفة، خلها 6 حروف أو أكثر' : /requires-recent-login/.test(c) ? 'لأمانك: اطلع وادخل مرة ثانية وبعدها غيّر كلمة السر'
+    : /network|timeout/.test(c+String(e&&e.message)) ? 'ما قدرنا نوصل، تأكد من النت' : 'صار خطأ، جرّب مرة ثانية'; };
+  // حساب جديد: يوزرنيم + كلمة سر (+ اسم وصورة). يرجع { ok, why }
+  async function signUpWithPassword(u, pw, o={}){
+    try{
+      u=cleanUname(u); const bad=unameProblem(u)||pwProblem(pw); if(bad) return { ok:false, why:bad };
+      if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
+      hookAuth();
+      const free=await cloud.get('usernames/'+u); if(free) return { ok:false, why:'اليوزرنيم مأخوذ، جرّب غيره' };
+      const em='u'+rid(14)+'@'+LOGIN_DOMAIN;
+      const user=await cloud.signUpPw(em, pw);
+      if(o.name || o.avatar) continueAsGuest({ name:o.name, avatar:o.avatar });   // الاسم والصورة يمشون مع الحساب الجديد
+      await enterUser(user);
+      const r=await setUsername(u);
+      if(!r.ok) return { ok:true, why:'انفتح حسابك، بس اليوزرنيم ما انحجز: '+r.why };
+      return { ok:true, why:'' };
+    }catch(e){ console.warn('[DahoomAccount] signUp', e && (e.code||e.message)); return { ok:false, why:authWhy(e) }; }
+  }
+  async function signInWithPassword(u, pw){
+    try{
+      u=cleanUname(u); if(unameProblem(u) || !pw) return { ok:false, why:'اكتب اليوزرنيم وكلمة السر' };
+      if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
+      hookAuth();
+      const d=await cloud.get('usernames/'+u);
+      if(!d || !d.em) return { ok:false, why:'اليوزرنيم أو كلمة السر غلط' };
+      const user=await cloud.signInPw(d.em, pw);
+      if(st.mode!=='user' || st.uid!==user.uid) await enterUser(user);
+      return { ok:true, why:'' };
+    }catch(e){ return { ok:false, why:authWhy(e) }; }
+  }
+  // كلمة سر للحساب الحالي (حساب قوقل يقدر يضيف كلمة سر عشان يدخل باليوزرنيم بعد)
+  const hasPassword = () => { try{ return signedIn() && cloudOk && cloud.hasPw ? cloud.hasPw() : false; }catch(e){ return false; } };
+  async function setPassword(pw){
+    try{
+      if(!signedIn()) return { ok:false, why:'سجّل دخول أول' };
+      const bad=pwProblem(pw); if(bad) return { ok:false, why:bad };
+      const p=st.prof; if(!p.username) return { ok:false, why:'اختر يوزرنيم أول' };
+      if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
+      const ud=await cloud.get('usernames/'+p.username);
+      const em=(ud && ud.em) || cloud.pwEmail() || ('u'+rid(14)+'@'+LOGIN_DOMAIN);
+      await cloud.setPw(em, pw);
+      if(!ud || ud.em!==em) await cloud.set('usernames/'+p.username, { uid:st.uid, em, at:Date.now() });
+      return { ok:true, why:'' };
+    }catch(e){ return { ok:false, why:authWhy(e) }; }
+  }
+
+  // ---------- الحالة: متصل / في جلسة / يلعب ----------
+  // s: 'on' متصل بالموقع، 'lobby' بجلسة ينتظر، 'play' يلعب الحين، 'off' طلع. g: اللعبة
+  const ACT = { s:'on', g:'' }; let actT=0, actSent='';
+  const ONLINE_MS = 150*1000;
+  function setActivity(s, g){
+    ACT.s = ['on','lobby','play','off'].includes(s) ? s : 'on'; ACT.g = GAMES[g] ? g : '';
+    clearTimeout(actT); actT=setTimeout(beat, 400);
+  }
+  async function beat(force){
+    clearTimeout(actT);
+    try{
+      if(!signedIn() || !cloudOk){ actT=setTimeout(beat, 60000); return; }
+      if(document.visibilityState==='hidden' && ACT.s!=='off' && !force){ actT=setTimeout(beat, 60000); return; }
+      const key=ACT.s+'|'+ACT.g, now=Date.now();
+      if(force || key!==actSent || now-(beat.last||0)>55000){ await cloud.set('presence/'+st.uid, { s:ACT.s, g:ACT.g, at:now }); actSent=key; beat.last=now; }
+    }catch(e){}
+    if(ACT.s!=='off') actT=setTimeout(beat, 60000);
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') beat(true); });
+  // حالة لاعب: { on, s, g, at, text }
+  const GAME_AR = g => (GAMES[g]||{}).name || '';
+  function presenceText(x){
+    if(!x || !x.at) return { on:false, text:'' };
+    const on = x.s!=='off' && Date.now()-x.at < ONLINE_MS;
+    if(on){
+      const t = x.s==='play' ? (x.g ? 'يلعب '+GAME_AR(x.g)+' الحين' : 'يلعب الحين') : x.s==='lobby' ? (x.g ? 'بجلسة '+GAME_AR(x.g) : 'بجلسة') : 'متصل';
+      return { on:true, s:x.s, g:x.g, at:x.at, text:t };
+    }
+    const m=Math.round((Date.now()-x.at)/60000);
+    const ago = m<60 ? `قبل ${Math.max(1,m)} دقيقة` : m<1440 ? `قبل ${Math.round(m/60)} ساعة` : `قبل ${Math.round(m/1440)} يوم`;
+    return { on:false, s:'off', at:x.at, text:'آخر ظهور '+ago };
+  }
+  async function getPresence(uid){
+    try{ if(!uid || /^g_/.test(uid) || !await bootCloud()) return { on:false, text:'' }; return presenceText(await cloud.get('presence/'+uid)); }catch(e){ return { on:false, text:'' }; }
+  }
+
+  // أصدقاء أي لاعب (للعرض بملفه) + المشتركين معي
+  async function listFriendsOf(uid){
+    try{
+      if(!uid || uid===st.uid) return listFriends();
+      if(!signedIn() || !await bootCloud()) return [];
+      const l=await cloud.list(`users/${uid}/friends`, 300);
+      const mine=new Set(((await cloud.list(`users/${st.uid}/friends`, 300).catch(()=>[]))||[]).map(f=>f.id));
+      return l.map(f=>({ uid:f.id, name:cleanName(f.name)||'لاعب', avatar:AVATARS.includes(f.avatar)?f.avatar:AVATARS[0], mutual:mine.has(f.id), me:f.id===st.uid }))
+        .sort((a,b)=>(b.mutual-a.mutual) || a.name.localeCompare(b.name,'ar'));
     }catch(e){ return []; }
   }
 
-  // ---------- الربع ----------
+  // ---------- الأصدقاء ----------
   const signedIn = () => st.mode==='user' && !!st.uid;
   const sentSet = () => new Set(signedIn() ? ls.get('sent_'+st.uid, []) : []);
   function markSent(uid, on){ const s=sentSet(); if(on) s.add(uid); else s.delete(uid); ls.set('sent_'+st.uid, [...s].slice(-100)); }
@@ -611,15 +787,15 @@ window.DahoomAccount = (function(){
       }
     }catch(e){}
   }
-  // الربع مع آخر بياناتهم (أول 40 نجيب ملفهم الحالي، الباقي من النسخة المحفوظة مع الصداقة)
+  // الأصدقاء مع آخر بياناتهم وحالتهم (أول 40 نجيب ملفهم الحالي، الباقي من النسخة المحفوظة مع الصداقة)
   async function listFriends(){
     try{
       if(!signedIn() || !await bootCloud()) return [];
       const l=await cloud.list(`users/${st.uid}/friends`, 300);
       refreshFriendCount(l);
-      const fresh=await Promise.all(l.slice(0,40).map(f=>getProfile(f.id).catch(()=>null)));
-      return l.map((f,i)=>{ const x=fresh[i]; return { uid:f.id, name:(x&&x.name)||f.name||'لاعب', avatar:(x&&x.avatar)||f.avatar, frame:(x&&x.frame)||'color', color:(x&&x.color)||COLORS[0], level:(x&&x.level)||1, titleName:x?x.titleName:'', at:f.at||0 }; })
-        .sort((a,b)=>b.level-a.level || a.name.localeCompare(b.name,'ar'));
+      const [fresh, pres] = await Promise.all([ Promise.all(l.slice(0,40).map(f=>getProfile(f.id).catch(()=>null))), Promise.all(l.slice(0,40).map(f=>getPresence(f.id).catch(()=>null))) ]);
+      return l.map((f,i)=>{ const x=fresh[i], pr=pres[i]||{ on:false, text:'' }; return { uid:f.id, name:(x&&x.name)||f.name||'لاعب', username:(x&&x.username)||'', avatar:(x&&x.avatar)||f.avatar, frame:(x&&x.frame)||'color', color:(x&&x.color)||COLORS[0], level:(x&&x.level)||1, titleName:x?x.titleName:'', at:f.at||0, pres:pr }; })
+        .sort((a,b)=>(b.pres.on-a.pres.on) || b.level-a.level || a.name.localeCompare(b.name,'ar'));
     }catch(e){ return []; }
   }
   async function listRequests(){
@@ -737,6 +913,9 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
     // الأساس
     init, current, onChange, signInGoogle, signOut, continueAsGuest, saveProfile, recordMatch,
     getProfile, searchUsers, sendFriendRequest, respondFriendRequest, listFriends, listRequests, removeFriend,
+    // اليوزرنيم وكلمة السر والحالة
+    checkUsername, setUsername, unameWait, findByUsername, signUpWithPassword, signInWithPassword, setPassword, hasPassword,
+    setActivity, getPresence, listFriendsOf, unameProblem, UNAME_GAP,
     // الكتالوجات
     ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, COLORS,
     // أدوات للعرض
