@@ -661,7 +661,7 @@
       const tile=b.querySelector(`[data-i="${p.pos}"]`); if(!tile) return;
       const grp=by[p.pos], k=grp.indexOf(p), n=grp.length, w=el.offsetWidth||20;
       const spread=Math.min(w*0.7, (tile.offsetWidth-w)/Math.max(1,n-1));
-      const x=tile.offsetLeft+tile.offsetWidth/2-w/2+(k-(n-1)/2)*spread, y=tile.offsetTop+tile.offsetHeight-w*0.84;
+      const x=tile.offsetLeft+tile.offsetWidth/2-w/2+(k-(n-1)/2)*spread, y=tile.offsetTop+tile.offsetHeight-w*(hm.pt?0.55:0.84);
       el.style.transform=`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; el.style.zIndex=String(5+k);
       el.classList.toggle('me', p.turn); el.classList.toggle('mine', p.id===H.me); el.classList.toggle('jail', !!p.jail); });
   }
@@ -788,6 +788,9 @@
     const h=$('#rg-hint'); if(h && R.hint!=null) h.innerHTML=hintHTML(R);
     const pg=$('#rg-prog'); if(pg){ const P=R.prog;
       pg.innerHTML = P ? `<span class="rg-prog-n"><b>${P.n}</b> من ${P.of} خمّنوها</span>${P.list.map(s=>`<span class="rg-prog-p" style="--c:${s.c||'var(--line)'}">${esc(s.n)}</span>`).join('')}` : ''; }
+    { const mine=(me()||{}).name, L0=R.feed||[], last=L0[L0.length-1];
+      if(last && mine && last.n===mine && !last.ok && st.rgLast!==L0.length){ st.rgLast=L0.length; const inp=$('#rg-in');
+        if(inp){ inp.classList.toggle('rg-bad', false); void inp.offsetWidth; inp.classList.add('rg-bad'); if(!last.close) sfx('tick'); } } }
     const f=$('#rg-feed'); if(f){ const L=(R.feed||[]).slice().reverse();
       const k=L.map(x=>x.n+x.x+x.close+x.ok).join('|');
       if(f.dataset.k!==k){ const fresh=f.dataset.k!=null && f.dataset.k!==''; f.dataset.k=k;

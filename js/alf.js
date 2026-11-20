@@ -50,11 +50,13 @@
       let done=false, rid=null, m=null;
       const finish=v=>{ if(done) return; done=true; if(m) m.remove(); if(rid) NET().cancel(rid); pushAll(); res(v); };
       const tvHTML=()=>`<div class="eyebrow">${esc(team.name)}</div><h3>${spec.title}</h3>${spec.text?`<p class="muted">${spec.text}</p>`:''}
-        <div class="${spec.options.some(o=>o.card)?'choice-row':'row center'} mt-s">${spec.options.map((o,i)=>o.card
+        ${spec.options.some(o=>o.card)?'<div class="covered" data-cov>':''}<div class="${spec.options.some(o=>o.card)?'choice-row':'row center'} mt-s">${spec.options.map((o,i)=>o.card
           ? `<div data-o="${i}">${cardHTML(o.card,{size:spec.big?'':'mini',anim:!!spec.big,flag:o.flag||''})}</div>`
           : `<button class="btn ${o.color?'team big':(o.cls||'btn-hype')}" ${o.color?`style="--c:${o.color}"`:''} data-o="${i}">${esc(o.label)}</button>`).join('')}</div>
+        ${spec.options.some(o=>o.card)?`<div class="cover"><span>${ic('eye')} أوراقكم سرية — اضغطوا لما يكون الفريق بس قدام الشاشة</span></div></div>`:''}
         ${spec.cancel?`<div class="row center mt-s"><button class="btn ghost" data-o="-1">${esc(spec.cancel)}</button></div>`:''}`;
-      const bind=()=>$$('[data-o]',m).forEach(b=>b.onclick=()=>{ const i=+b.dataset.o; finish(i<0?null:spec.options[i].v); });
+      const bind=()=>{ $$('[data-o]',m).forEach(b=>b.onclick=()=>{ const i=+b.dataset.o; finish(i<0?null:spec.options[i].v); });
+        const cv=m.querySelector('[data-cov] .cover'); if(cv) cv.onclick=e=>{ e.stopPropagation(); cv.style.display='none'; }; };
       if(phoneOf(team)){
         rid=NET().ask(team.id, { title:strip(spec.title), text:strip(spec.text), cancel:spec.cancel||null, big:!!spec.big,
           options:spec.options.map(o=>({label:o.label||'', card:o.card?o.card.id:null, color:o.color||null, cls:o.cls||'', flag:o.flag||''})) },

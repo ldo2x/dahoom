@@ -19,10 +19,8 @@
   }
 
   // ---------- تشغيل الأصوات ----------
-  const DEF = { correct:'game:g_ding', wrong:'game:g_feudx', steal:'game:g_mgs', coin:'game:g_mariocoin', bonus:'game:g_oneup',
-    win:'game:g_ffwin', applause:'meme:passed', clockloop:'game:g_jeopardy', cheer:'game:g_mkcount', levelup:'game:g_mclevel',
-    unlock:'meme:discord', bling:'game:g_sonic', fail:'game:g_mariodeath', card:'game:g_swoosh', drumroll:'file:drumroll',
-    buzzer:'file:buzzer', tick:'file:tick', pop:'syn', jingle:'syn', drums:'syn' };
+  // الأصلي الحين = نغمات دحوم المولّدة (core.js) لكل الأحداث
+  const DEF = new Proxy({}, { get:()=>'syn' });
   const SYN = { pop:[[520,0,60,'sine',.2,760]], drums:[[300,0,220,'sine',.12,900]],
     jingle:[[659,0,100,'triangle',.17],[784,95,100,'triangle',.17],[988,190,100,'triangle',.17],[1319,285,300,'triangle',.19]] };
   const EVENTS = [
@@ -35,7 +33,7 @@
     ['win','الفوز','شاشة الفايز'], ['applause','تصفيق النهاية','بعد إعلان الفايز'],
   ];
   const srcOf = n => n.startsWith('meme:') ? 'assets/sfx/meme/'+n.slice(5)+'.mp3' : n.startsWith('game:') ? 'assets/sfx/game/'+n.slice(5)+'.mp3' : 'assets/sfx/'+n.replace(/^file:/,'')+'.mp3';
-  const nice = k => !k ? '' : k==='syn' ? 'نغمة بسيطة' : k==='none' ? 'بدون صوت' : k.replace(/^(game:[gc]_|game:|meme:sa_|meme:|file:)/,'');
+  const nice = k => !k ? '' : k==='syn' ? 'نغمة دحوم' : k==='none' ? 'بدون صوت' : k.replace(/^(game:[gc]_|game:|meme:sa_|meme:|file:)/,'');
   let AC=null, cur=null, stopT=0;
   function synth(name){
     try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
@@ -48,7 +46,7 @@
   function play(key, name){
     if(cur){ cur.pause(); cur=null; } clearTimeout(stopT);
     if(!key || key==='none') return;
-    if(key==='syn') return synth(name);
+    if(key==='syn'){ if(window.Dahoom && window.Dahoom.play) return window.Dahoom.play('syn:'+name, { raw:true }); return synth(name); }
     cur = new Audio(srcOf(key)); cur.volume=.6; cur.play().catch(()=>{});
     const a=cur; stopT=setTimeout(()=>{ if(cur===a){ a.pause(); cur=null; } }, 6000);
   }
@@ -87,7 +85,7 @@
     $('#pk-main').onclick=null;
     $('#pk-main').innerHTML = `<p class="pk-note">كل سطر صوت يطلع بلحظة معينة. اضغط «اسمع»، ولو ما عجبك اختر غيره من القائمة.</p><div class="pk-rows">${EVENTS.map(([n,label,when])=>{
       const v=P.snd[n]||''; return `<div class="pk-row ${v?'changed':''}" data-ev="${n}"><button class="pk-play">اسمع</button><b>${label}</b><span class="muted">${when}</span>
-        <select><option value="">الأصلي (${esc(nice(DEF[n]))})</option>${SYN[n]&&DEF[n]!=='syn'?`<option value="syn"${v==='syn'?' selected':''}>نغمة بسيطة</option>`:''}<option value="none"${v==='none'?' selected':''}>بدون صوت</option>${libOpts(v)}</select></div>`; }).join('')}</div>`;
+        <select><option value="">الأصلي (${esc(nice(DEF[n]))})</option><option value="none"${v==='none'?' selected':''}>بدون صوت</option>${libOpts(v)}</select></div>`; }).join('')}</div>`;
     $$('#pk-main [data-ev]').forEach(r=>{ const n=r.dataset.ev, s=r.querySelector('select');
       const now = () => P.snd[n] || DEF[n];
       r.querySelector('.pk-play').onclick=()=>play(now(), n);
