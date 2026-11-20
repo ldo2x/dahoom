@@ -1,0 +1,210 @@
+/* ===== دحوم — صفحة الملف الشخصي =====
+   نفس رموز style.css (الألوان والزوايا والخطوط). الإطارات والشارة والتنبيهات تجي من account.js.
+   الترتيب: الجوال أول (عمود واحد)، وفوق 900px عمودين: الأرقام والإنجازات + الربع وآخر المباريات.
+*/
+.pf-page{padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+
+/* ---------- الشريط العلوي ---------- */
+.pf-bar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 0}
+.pf-logo{font-family:var(--display);font-size:1.35rem;line-height:1;display:inline-flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;border-radius:var(--r-s)}
+.pf-logo .brand-mark{width:34px;height:34px;font-size:1.2rem;border-radius:9px}
+.pf-nav{display:flex;gap:6px;align-items:center}
+.pf-logo:focus-visible,.pf-main a:focus-visible,.pf-pick:focus-visible,.pf-seg button:focus-visible,textarea:focus-visible,input[type=search]:focus-visible{outline:3px solid var(--info);outline-offset:3px}
+
+.pf-main{max-width:1180px;margin:0 auto;padding:14px 16px 40px;display:flex;flex-direction:column;gap:16px}
+
+/* ---------- البطاقات العامة ---------- */
+.pf-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:18px;box-shadow:var(--shadow);min-width:0}
+.pf-h{font-family:var(--body);font-weight:700;font-size:1.1rem;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.pf-h .ic{color:var(--brand-ink)}
+.pf-h-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.pf-h-row .pf-h{margin:0}
+.pf-h-row.small{margin:4px 0 8px}
+.pf-empty{margin:6px 0 2px}
+.pf-err{color:var(--bad-ink);font-weight:700;margin:0;font-size:.92rem}
+.pf-err:empty{display:none}
+.pf-wide{width:100%}
+.center{text-align:center}
+textarea{font-family:var(--body);font-size:1rem;font-weight:500;padding:10px 14px;width:100%;resize:vertical;min-height:72px;line-height:1.5;
+  background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-s)}
+[data-theme="day"] textarea,[data-theme="day"] input[type=search]{background:var(--surface-2)}
+input[type=search]{font-family:var(--body);font-size:1rem;font-weight:600;padding:9px 14px;width:100%;min-width:0;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-s)}
+.pf-icon{padding:7px 9px}
+.pf-icon .ic{width:1.2em;height:1.2em}
+
+/* ---------- الواجهة العلوية: الخلفية والصورة والاسم والمستوى ---------- */
+.pf-hero{--pc:var(--brand);position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;box-shadow:var(--shadow)}
+.pf-banner{position:relative;height:132px;background-color:var(--surface-3)}
+.pf-banner-sadu{position:absolute;inset:auto 0 0 0;height:14px;background:var(--sadu-band) 0 0/32px 14px repeat-x;opacity:.95}
+.pf-id{position:relative;display:flex;align-items:flex-end;gap:14px;padding:0 18px;margin-top:-46px;flex-wrap:wrap}
+.pf-avatar{box-shadow:0 0 0 5px var(--surface)}
+.pf-who{flex:1 1 180px;min-width:0;padding-bottom:4px}
+.pf-name{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,6vw,2.5rem);line-height:1.1;margin:0;overflow-wrap:anywhere}
+.pf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pf-tags .pill{padding:2px 12px;font-size:.85rem}
+.pf-title{background:color-mix(in srgb,var(--pc) 22%,var(--surface-2));border-color:color-mix(in srgb,var(--pc) 55%,var(--line))}
+.pf-actions{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:6px;flex:1 1 100%}
+.pf-bio{margin:12px 18px 0;color:var(--text);white-space:pre-line;overflow-wrap:anywhere;max-width:62ch}
+.pf-bio.muted{color:var(--mute)}
+.pf-lvl{display:flex;align-items:center;gap:14px;margin:14px 18px 18px}
+.pf-lvl-n{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;height:64px;border-radius:var(--r-m);background:var(--pc);color:var(--ink);line-height:1}
+.pf-lvl-n small{font-weight:700;font-size:.72rem;margin-bottom:2px}
+.pf-lvl-n b{font-family:var(--num);font-weight:900;font-size:1.9rem}
+.pf-lvl-track{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.pf-lvl-track small{color:var(--mute);font-weight:600;font-size:.85rem}
+.pf-lvl-bar{height:12px;border-radius:999px;background:var(--surface-3);overflow:hidden;border:1px solid var(--line)}
+.pf-lvl-bar i{display:block;height:100%;background:var(--pc);border-radius:inherit;transition:width .4s ease-out}
+
+/* ---------- دعوة الضيف للتسجيل ---------- */
+.pf-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-inline-start:6px solid var(--gold);border-radius:var(--r-l);padding:14px 16px;box-shadow:var(--shadow)}
+.pf-cta>div{flex:1 1 220px;min-width:0}
+.pf-cta b{font-size:1.08rem}
+.pf-cta p{margin:2px 0 0;color:var(--mute);font-size:.92rem}
+.pf-cta-ic{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--gold);color:var(--ink);flex:none}
+.pf-cta-ic .ic{width:24px;height:24px}
+
+/* ---------- التخطيط ---------- */
+.pf-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+.pf-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (min-width:900px){
+  .pf-grid{grid-template-columns:minmax(0,1fr) 360px}
+  .pf-banner{height:190px}
+  .pf-id{margin-top:-56px;padding:0 24px;flex-wrap:nowrap}
+  .pf-actions{flex:none;justify-content:flex-end}
+  .pf-bio,.pf-lvl{margin-inline:24px}
+  .pf-avatar{--s:120px!important}
+  .pf-card{padding:20px 22px}
+}
+
+/* ---------- الأرقام ---------- */
+.pf-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:600px){.pf-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pf-kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pf-kpi b{font-family:var(--num);font-weight:800;font-size:2rem;line-height:1.05}
+.pf-kpi.txt b{font-family:var(--body);font-weight:700;font-size:1.15rem;line-height:1.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-kpi span{color:var(--mute);font-weight:700;font-size:.85rem}
+.pf-mini{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.pf-mini:empty{display:none}
+.pf-mini .chip{display:inline-flex;align-items:center;gap:6px}
+.pf-games{display:flex;flex-direction:column;gap:2px;margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+.pf-gr{display:grid;grid-template-columns:36px minmax(0,1fr) 70px 42px;align-items:center;gap:10px;padding:7px 0}
+.pf-gr.zero{opacity:.6}
+.pf-gic{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-style:normal;flex:none}
+.pf-gic .ic{width:20px;height:20px}
+.pf-gn{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.pf-gn small{color:var(--mute);font-weight:600;font-size:.82rem}
+.pf-gbar{height:8px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.pf-gbar i{display:block;height:100%;background:var(--ok);border-radius:inherit}
+.pf-gp{font-family:var(--num);font-weight:800;font-size:1.05rem;text-align:end}
+@media (min-width:900px){.pf-gr{grid-template-columns:36px minmax(0,1fr) minmax(90px,32%) 48px}}
+@media (max-width:420px){.pf-gr{grid-template-columns:36px minmax(0,1fr) 48px 40px;gap:8px}}
+.pf-more{width:100%;margin-top:12px;justify-content:center}
+
+/* ---------- الإنجازات ---------- */
+.pf-count{font-weight:700;color:var(--mute)}
+.pf-count b{font-family:var(--num);font-size:1.3rem;color:var(--text)}
+.pf-seg{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-m);padding:3px;margin-bottom:12px;max-width:100%;overflow-x:auto}
+[data-theme="day"] .pf-seg{background:var(--surface-2)}
+.pf-seg button{border:0;background:none;padding:6px 14px;border-radius:var(--r-s);cursor:pointer;font-weight:700;color:var(--mute);font-size:.92rem;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pf-seg button.on{background:var(--text);color:var(--bg)}
+.pf-seg .count{font-size:.8rem}
+.pf-ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:10px}
+.pf-ach{--rc:var(--mute);display:flex;gap:12px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-m);padding:12px;min-width:0;position:relative}
+.pf-ach.done{border-color:color-mix(in srgb,var(--rc) 60%,var(--line))}
+.pf-ach.done::before{content:'';position:absolute;inset-block:10px;inset-inline-start:-1px;width:4px;border-radius:4px;background:var(--rc)}
+.pf-ach-ic{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--rc);color:var(--ink);flex:none;font-style:normal}
+.pf-ach-ic .ic{width:24px;height:24px}
+.pf-ach.locked .pf-ach-ic{background:var(--surface-3);color:var(--mute)}
+.pf-ach.locked .pf-ach-t b{color:var(--mute)}
+.pf-ach-t{min-width:0;flex:1}
+.pf-ach-t b{display:block;line-height:1.3}
+.pf-ach-t p{margin:2px 0 6px;color:var(--mute);font-size:.86rem;line-height:1.4}
+.pf-ach-r{font-weight:700;font-size:.8rem;color:var(--text)}
+.pf-ach-p{display:flex;align-items:center;gap:8px}
+.pf-ach-p small{font-weight:700;font-size:.8rem;color:var(--mute);white-space:nowrap}
+.pf-ach-bar{flex:1;height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.pf-ach-bar i{display:block;height:100%;background:var(--mute);border-radius:inherit}
+
+/* ---------- آخر المباريات ---------- */
+.pf-recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.pf-recent li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.pf-recent li:last-child{border-bottom:0}
+.pf-rn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.pf-rn small{color:var(--mute);font-weight:600;font-size:.82rem}
+.pf-rank{display:inline-flex;align-items:baseline;gap:4px;flex:none;border:1px solid var(--line);border-radius:var(--r-s);padding:2px 10px;background:var(--surface-2)}
+.pf-rank b{font-family:var(--num);font-weight:800;font-size:1.25rem;line-height:1.2}
+.pf-rank small{color:var(--mute);font-weight:700;font-size:.78rem}
+.pf-recent li.win .pf-rank{background:var(--gold);border-color:transparent;color:var(--ink)}
+.pf-recent li.win .pf-rank small{color:var(--ink)}
+.pf-rank .ic{align-self:center;width:1em;height:1em}
+
+/* ---------- الربع ---------- */
+.pf-search{display:flex;gap:8px;margin-bottom:12px}
+.pf-people{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.pf-person{display:flex;align-items:center;gap:10px;padding:6px 0}
+.pf-pn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3;color:var(--text);text-decoration:none;border-radius:var(--r-xs)}
+.pf-pn b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-pn:hover b{text-decoration:underline}
+.pf-pn small{color:var(--mute);font-weight:600;font-size:.82rem}
+.pf-pa{display:flex;gap:6px;flex:none;align-items:center}
+
+/* ---------- بدون هوية / غير موجود ---------- */
+.pf-gate{max-width:520px;width:100%;margin:12px auto 0;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:stretch;padding-top:0;overflow:hidden}
+.pf-gate h1{font-size:clamp(2rem,7vw,2.6rem)}
+.pf-gate>p{margin:0}
+.pf-gate-top{height:84px;margin:0 -18px 26px;background:linear-gradient(90deg,rgba(13,11,20,.5),rgba(13,11,20,.1)),var(--sadu-weave) 0 0/28px 28px;position:relative}
+.pf-gate-mark{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);display:grid;place-items:center;width:60px;height:60px;border-radius:18px;background:var(--brand);color:var(--ink);box-shadow:0 0 0 5px var(--surface)}
+.pf-gate-mark .ic{width:32px;height:32px}
+.pf-gate .btn{align-self:stretch}
+.pf-gate a.btn{align-self:center}
+.pf-or{display:flex;align-items:center;gap:12px;color:var(--mute);font-weight:700}
+.pf-or::before,.pf-or::after{content:'';flex:1;height:1px;background:var(--line)}
+.pf-gform{display:flex;flex-direction:column;gap:12px;text-align:start}
+.pf-gform .field>span{font-weight:700;color:var(--mute);font-size:.92rem}
+
+/* ---------- اختيار (صور، ألوان، خلفيات، إطارات، ألقاب) ---------- */
+.pf-pick{position:relative;border:2px solid transparent;background:var(--surface-2);border-radius:var(--r-m);cursor:pointer;padding:0;color:var(--text);font-family:inherit}
+.pf-pick:hover:not([disabled]){border-color:var(--line)}
+.pf-pick.sel{border-color:var(--text)}
+.pf-pick[disabled]{cursor:not-allowed;opacity:.55}
+.pf-avs{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;max-height:340px;overflow-y:auto;padding:4px;margin:-4px}
+.pf-avs.compact{max-height:196px}
+.pf-avs .pf-pick{aspect-ratio:1;border-radius:50%;overflow:hidden}
+.pf-avs img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-avs .pf-pick.sel{border-color:var(--brand);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brand)}
+.pf-sws{display:flex;flex-wrap:wrap;gap:8px}
+.pf-sw{width:38px;height:38px;border-radius:50%;background:var(--sw);border:3px solid var(--surface)}
+.pf-sw.sel{box-shadow:0 0 0 3px var(--text)}
+.pf-tts{display:flex;flex-wrap:wrap;gap:6px}
+.pf-tt{padding:6px 12px;border-radius:999px;font-weight:700;font-size:.9rem;display:inline-flex;align-items:center;gap:6px;border-color:var(--line)}
+.pf-tt.sel{background:var(--text);color:var(--bg)}
+.pf-bns{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pf-bn{display:flex;flex-direction:column;align-items:stretch;overflow:hidden;text-align:start}
+.pf-bn-art{display:block;height:56px;background-color:var(--surface-3)}
+.pf-bn .pf-pl,.pf-fr .pf-pl{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.9rem;padding:6px 10px 0}
+.pf-bn small,.pf-fr small{display:block;color:var(--mute);font-size:.75rem;font-weight:600;padding:0 10px 6px;line-height:1.3}
+.pf-bn .pf-pl:last-child{padding-bottom:8px}
+.pf-frs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.pf-fr{display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;text-align:center}
+.pf-fr .pf-pl{padding:6px 4px 0;justify-content:center}
+.pf-fr small{padding:0 4px 2px}
+
+/* ---------- التعديل ---------- */
+.pf-edit-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){.pf-edit-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pf-span{grid-column:1/-1}}
+.pf-edit-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pf-fs{border:0;margin:0;padding:0;min-width:0}
+.pf-fs legend{font-weight:700;color:var(--mute);font-size:.92rem;margin-bottom:8px;padding:0}
+.pf-cnt{align-self:flex-end;font-weight:600;font-size:.8rem;color:var(--mute);font-family:var(--num);letter-spacing:.02em}
+.pf-edit-bar{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px -18px -18px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 var(--r-l) var(--r-l);z-index:2}
+@media (min-width:900px){.pf-edit-bar{margin:20px -22px -20px;padding-inline:22px}}
+
+/* ---------- التحميل ---------- */
+.pf-skel{display:flex;flex-direction:column;gap:12px}
+.pf-skel-b{height:220px;border-radius:var(--r-l);background:var(--surface)}
+.pf-skel-l{height:18px;width:60%;border-radius:8px;background:var(--surface)}
+.pf-skel-l.s{width:35%}
+.pf-skel>*{animation:pfPulse 1.2s ease-in-out infinite alternate}
+@keyframes pfPulse{from{opacity:.55}to{opacity:1}}
+
+@media (prefers-reduced-motion:reduce){.pf-lvl-bar i{transition:none}.pf-skel>*{animation:none}}
