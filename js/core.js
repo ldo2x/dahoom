@@ -210,7 +210,7 @@ window.Dahoom = (function(){
   function stopAll(){ Object.keys(audio.loops).forEach(stop); }
   function toggleSound(){ audio.on=!audio.on; store.set('sound',audio.on); if(!audio.on) stopAll(); updateSoundBtn(); }
   function setVolume(v){ audio.vol=Math.max(0,Math.min(1,v)); store.set('volume',audio.vol); Object.values(audio.loops).forEach(a=>a.volume=Math.min(1,.35*audio.vol)); }
-  function updateSoundBtn(){ $$('.btn-sound').forEach(b=>b.innerHTML = audio.on ? ic('sound')+' الصوت' : ic('mute')+' مكتوم'); $$('.vol-slider').forEach(s=>s.value=Math.round(audio.vol*100)); }
+  function updateSoundBtn(){ $$('.btn-sound').forEach(b=>b.innerHTML = audio.on ? ic('sound')+' الصوت' : ic('mute')+' مكتوم'); $$('.sw-sound').forEach(c=>c.checked=audio.on); $$('.vol-slider').forEach(s=>{ s.value=Math.round(audio.vol*100); s.disabled=!audio.on; }); }
   // صوت ميم للحظة معينة (من data/memes.js)
   function memeSound(kind, opts={}){
     const M=(window.DAHOOM_DATA||{}).memes||{}; const l=((M.sounds&&M.sounds[kind])||[]).filter(x=>!picks.off.includes('meme:'+x));
@@ -226,6 +226,8 @@ window.Dahoom = (function(){
     play('pop',{volume:.4});
   }
   document.addEventListener('click', e => { const t = e.target.closest('[data-go]'); if(t) go(t.dataset.go); });
+  // الشعار «دحوم» (div بدور رابط) يشتغل بالكيبورد بعد
+  document.addEventListener('keydown', e => { if(e.key!=='Enter' && e.key!==' ') return; const t=e.target.closest && e.target.closest('[data-go][role="link"]'); if(t && e.target===t){ e.preventDefault(); go(t.dataset.go); } });
 
   // ---------- Toast / Modal ----------
   function toast(msg, ms=2400){
@@ -490,14 +492,13 @@ window.Dahoom = (function(){
   function decorate(){
     const C=window.DAHOOM_DATA.cards; if(!C) return;
     const pickIds=['R4','G6','N11','R1','R8','G9','N17','R2'];
+    // البداية: يدّين ورق متقابلة على جنبين الشاشة (مثل اللي قاعدين بالمجلس) — الشكل كله من CSS
     const sc=$('#splash-cards'); if(sc){
-      const spots=[[6,12,-14],[80,8,12],[3,62,10],[84,60,-10],[18,82,-6],[70,84,8]];
-      sc.innerHTML=spots.map(([x,y,r],i)=>{ const c=C.find(k=>k.id===pickIds[i]); return `<div style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%) rotate(${r}deg);animation:fadeUp .8s ${.3+i*.12}s both">${cardHTML(c,{size:'mini'})}</div>`; }).join('');
-      $$('.tcg',sc).forEach(t=>t.style.width='150px');
+      const hand=ids=>`<div class="sp-hand">${ids.map(id=>{ const c=C.find(k=>k.id===id); return c?cardHTML(c,{size:'mini'}):''; }).join('')}</div>`;
+      sc.innerHTML=hand(pickIds.slice(0,3))+hand(pickIds.slice(3,6));
     }
-    const fan=$('#home-fan'); if(fan){
-      fan.innerHTML=['G6','R4','N11'].map(id=>cardHTML(C.find(k=>k.id===id),{size:'mini'})).join('');
-      const t=$$('.tcg',fan); t[0].style.transform='rotate(-14deg)'; t[2].style.transform='rotate(14deg)'; t[1].style.zIndex=2;
+    const fan=$('#hero-fan'); if(fan){
+      fan.innerHTML=['G6','R4','N11'].map(id=>{ const c=C.find(k=>k.id===id); return c?cardHTML(c,{size:'mini'}):''; }).join('');
     }
   }
 
@@ -515,10 +516,28 @@ window.Dahoom = (function(){
   function updateThemeBtns(){
     const day=getTheme()==='day';
     $$('.btn-theme').forEach(b=>{ b.innerHTML = day ? ic('moon')+' ليلي' : ic('sun')+' نهاري'; b.setAttribute('aria-label', day?'الوضع الليلي':'الوضع النهاري'); b.title=b.getAttribute('aria-label'); });
+    $$('input[name="theme-pick"]').forEach(r=>r.checked = r.value===(day?'day':'night'));
   }
+  document.addEventListener('change', e=>{ const r=e.target; if(r.name==='theme-pick' && r.checked){ applyTheme(r.value, true); play('tick',{volume:.4}); } });
   function toggleTheme(){ applyTheme(getTheme()==='day'?'night':'day', true); play('tick',{volume:.4}); }
   document.addEventListener('click', e=>{ if(e.target.closest('.btn-theme')) toggleTheme(); });
   try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{ if(!savedTheme()) applyTheme(e.matches?'day':'night', false); }); }catch(e){}
+
+  // ---------- قائمة الإعدادات بالرئيسية (الصوت، الوضع، تصفير المحتوى، ملفي) ----------
+  function closeSettingsMenu(focusBtn){
+    const b=$('#btn-settings'), m=$('#set-menu'); if(!b || !m || m.hidden) return;
+    m.hidden=true; b.setAttribute('aria-expanded','false'); if(focusBtn) b.focus();
+  }
+  function initSettingsMenu(){
+    const b=$('#btn-settings'), m=$('#set-menu'); if(!b || !m) return;
+    b.onclick=e=>{ e.stopPropagation(); if(!m.hidden){ closeSettingsMenu(); return; }
+      m.hidden=false; b.setAttribute('aria-expanded','true'); updateSoundBtn(); updateThemeBtns(); play('tick',{volume:.4});
+      const f=m.querySelector('a,button,input'); if(f) f.focus({preventScroll:true}); };
+    document.addEventListener('click', e=>{ if(!m.hidden && !m.contains(e.target) && e.target!==b) closeSettingsMenu(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !m.hidden) closeSettingsMenu(true); });
+    m.addEventListener('focusout', e=>{ if(e.relatedTarget && !m.contains(e.relatedTarget) && e.relatedTarget!==b) closeSettingsMenu(); });
+    document.addEventListener('dahoom:screen', ()=>closeSettingsMenu());
+  }
 
   // ---------- تهيئة ----------
   function init(){
@@ -526,17 +545,26 @@ window.Dahoom = (function(){
     renderPickers(); renderPlayers(); renderTeams(); updateSoundBtn(); updateThemeBtns(); decorate();
     $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
+    $$('.sw-sound').forEach(c=>c.onchange=()=>{ if(c.checked!==audio.on) toggleSound(); if(audio.on) play('tick',{volume:.5}); });
     $$('.vol-slider').forEach(sl=>{ sl.oninput=()=>setVolume(sl.value/100); sl.onchange=()=>play('pop'); });
+    initSettingsMenu();
     // اختيار لعبة = تسوي جلسة: تفتح الغرفة وتدخلها كلاعب من نفس الجهاز (تقدر تخليه شاشة عرض بس من الشريط)
-    const openGame=g=>{ session.game=g; renderTeams(); go('lobby'); if(window.DahoomOwner) window.DahoomOwner.enter(); };
-    { const hm=$('#hub-make'); if(hm) hm.onclick=()=>{ const g=$('.games'); if(g) g.scrollIntoView({behavior:'smooth', block:'start'}); play('pop',{volume:.4}); }; }
+    const openGame=g=>{ closeSettingsMenu(); session.game=g; renderTeams(); go('lobby'); if(window.DahoomOwner) window.DahoomOwner.enter(); };
+    // «سوّ جلسة»: ينزل لقسم الألعاب ويوقف على أول لعبة — اختيار اللعبة هو اللي يفتح الجلسة
+    { const hm=$('#hub-make'); if(hm) hm.onclick=()=>{
+      const sec=$('#games'); if(!sec) return;
+      const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      sec.scrollIntoView({behavior: still?'auto':'smooth', block:'start'});
+      const t=$('.game-tile', sec); if(t) setTimeout(()=>t.focus({preventScroll:true}), still?0:450);
+      sec.classList.remove('cue'); void sec.offsetWidth; sec.classList.add('cue'); setTimeout(()=>sec.classList.remove('cue'), 1800);
+      play('pop',{volume:.4}); }; }
     { const hj=$('#hub-join'); if(hj) hj.onclick=()=>window.DahoomOwner && window.DahoomOwner.joinModal(); }
     $('#card-alf').onclick=()=>openGame('alf');
     $('#card-khaliya').onclick=()=>openGame('khaliya');
     $('#card-rasm').onclick=()=>openGame('rasm');
     { const hm=$('#card-hawamir'); if(hm) hm.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('hawamir'); }; }
     { const sq=$('#card-sadq'); if(sq) sq.onclick=()=>{ session.mode='solo'; session.save(); $$('input[name=mode]').forEach(r=>r.checked=r.value==='solo'); openGame('sadq'); }; }
-    $$('.game-tile').forEach(t=>t.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target===t) t.click(); }));
+    $$('.game-tile').forEach(t=>t.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target===t){ e.preventDefault(); t.click(); } }));
     $('#btn-add-player').onclick=addPlayer;
     $('#p-name').addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });
     $('#btn-add-team').onclick=addTeam;
@@ -545,6 +573,7 @@ window.Dahoom = (function(){
     $$('input[name=mode]').forEach(r=>r.onchange=()=>{ session.mode=r.value; session.save(); renderTeams(); });
     $('#btn-to-settings').onclick=()=>{ if(validateLobby()) go(session.game==='khaliya' ? 'khaliya-settings' : session.game==='rasm' ? 'rasm-settings' : session.game==='hawamir' ? 'hawamir-settings' : session.game==='sadq' ? 'sadq-settings' : 'settings'); };
     $('#btn-reset-used').onclick=async ()=>{
+      closeSettingsMenu();
       if(await confirmBox('<h3>تصفير المحتوى المستخدم؟</h3><p class="muted">يرجع كل الأسئلة والعبارات والتحديات اللي انلعبت قبل.</p>','صفّر','إلغاء')){
         store.del('used'); store.del('used_letters'); store.del('used_words'); toast('رجع كل المحتوى جديد'); play('bling'); }
     };

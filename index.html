@@ -32,22 +32,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611200654">
+<link rel="stylesheet" href="css/style.css?v=202611201200">
 <link rel="stylesheet" href="css/draw.css?v=202611200654">
-<link rel="stylesheet" href="css/hawamir.css?v=202611200654">
-<link rel="stylesheet" href="css/sadq.css?v=202611200654">
+<link rel="stylesheet" href="css/hawamir.css?v=202611201200">
+<link rel="stylesheet" href="css/sadq.css?v=202611201200">
 </head>
 <body>
 
-<!-- ===== شاشة البداية ===== -->
+<!-- ===== شاشة البداية: دعوة المجلس (ضغطة «ادخل» تفتح الصوت) ===== -->
 <section id="splash" class="screen active">
   <div class="splash-in">
+    <p class="sp-kicker">حيّاكم الله</p>
     <div class="logo-plat" aria-label="دحوم">
       <span class="lp-word" data-text="دحوم">دحوم</span>
-      <span class="lp-tag">منصة ألعاب الجَمعة</span>
+      <span class="lp-tag">ألعاب الجَمعة والسوالف</span>
     </div>
-    <button class="btn btn-hype big" id="btn-enter"><i class="ic" style="--i:url(../assets/icons/next.svg)"></i> ادخل</button>
-    <p class="hint">الصوت يشتغل أول ما تدخل</p>
+    <button class="btn btn-hype big" id="btn-enter">ادخل المجلس <i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></button>
+    <p class="hint"><i class="ic" style="--i:url(../assets/icons/ui-volume.svg)"></i> الصوت يشتغل أول ما تدخل</p>
   </div>
   <div class="splash-cards" aria-hidden="true" id="splash-cards"></div>
   <div class="splash-corner"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button></div>
@@ -55,88 +56,151 @@
 
 <!-- ===== الرئيسية ===== -->
 <section id="home" class="screen">
-  <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
-    <div class="acc-slot" id="acc-badge"></div>
-    <div class="row">
-      <button class="btn ghost small btn-sound"></button>
-      <input type="range" class="vol-slider" min="0" max="100" value="35" aria-label="مستوى الصوت">
-      <button class="btn ghost small" id="btn-reset-used"><i class="ic" style="--i:url(../assets/icons/broom.svg)"></i> تصفير المحتوى المستخدم</button>
-      <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
+  <header class="topbar home-top">
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
+    <div class="home-tools">
+      <div class="acc-slot" id="acc-badge"></div>
+      <div class="set-wrap">
+        <button class="btn ghost icon-btn" id="btn-settings" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="set-menu" aria-label="الإعدادات" title="الإعدادات"><i class="ic" style="--i:url(../assets/icons/ui-settings.svg)"></i></button>
+        <div class="set-menu" id="set-menu" role="dialog" aria-label="الإعدادات" hidden>
+          <a class="sm-row sm-link" id="hub-me" href="profile.html">
+            <span class="sm-ic"><i class="ic" style="--i:url(../assets/icons/ui-user.svg)"></i></span>
+            <span class="sm-t"><b>ملفي</b><small>إنجازاتك وإحصائياتك وأصدقاؤك</small></span>
+            <i class="ic sm-chev" style="--i:url(../assets/icons/ui-arrow.svg)"></i>
+          </a>
+          <div class="sm-group">
+            <label class="sm-row">
+              <span class="sm-ic"><i class="ic" style="--i:url(../assets/icons/ui-volume.svg)"></i></span>
+              <span class="sm-t"><b>الصوت</b></span>
+              <input type="checkbox" class="sw-sound" role="switch"><span class="sm-sw" aria-hidden="true"></span>
+            </label>
+            <div class="sm-vol">
+              <input type="range" class="vol-slider" min="0" max="100" value="35" aria-label="مستوى الصوت">
+            </div>
+          </div>
+          <div class="sm-row" role="group" aria-label="الوضع">
+            <span class="sm-ic"><i class="ic" style="--i:url(../assets/icons/ui-palette.svg)"></i></span>
+            <span class="sm-t"><b>الوضع</b></span>
+            <div class="seg sm-seg">
+              <label><input type="radio" name="theme-pick" value="night"><span>ليلي</span></label>
+              <label><input type="radio" name="theme-pick" value="day"><span>نهاري</span></label>
+            </div>
+          </div>
+          <button class="sm-row sm-link" id="btn-reset-used" type="button">
+            <span class="sm-ic"><i class="ic" style="--i:url(../assets/icons/ui-refresh.svg)"></i></span>
+            <span class="sm-t"><b>صفّر المحتوى المستخدم</b><small>ترجع الأسئلة والتحديات اللي انلعبت</small></span>
+          </button>
+        </div>
+      </div>
     </div>
   </header>
-  <h1 class="page-title">وش نلعب الليلة؟</h1>
-  <div class="hub">
-    <button class="hub-card make" id="hub-make"><span class="hub-ic"><i class="ic" style="--i:url(../assets/icons/plus.svg)"></i></span><span><b>سوّ جلسة</b><small>اختر لعبة تحت، وتفتح جلستك وتلعب منها مثل الباقين</small></span></button>
-    <button class="hub-card join" id="hub-join"><span class="hub-ic"><i class="ic" style="--i:url(../assets/icons/door.svg)"></i></span><span><b>ادخل جلسة</b><small>شوف الجلسات المفتوحة أو ادخل بالكود</small></span></button>
-    <a class="hub-card me" id="hub-me" href="profile.html"><span class="hub-ic"><i class="ic" style="--i:url(../assets/icons/person.svg)"></i></span><span><b>ملفي</b><small>إنجازاتك وإحصائياتك وأصدقاؤك</small></span></a>
-  </div>
-  <div class="games">
-    <article class="game-tile alf" id="card-alf" tabindex="0">
-      <div class="gt-art">
-        <div class="alf-logo"><span class="n">1000</span><span class="w">ألف نقطة</span></div>
-        <div class="gt-fan" id="home-fan"></div>
+
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="hero-kicker"><span class="hk-sadu" aria-hidden="true"></span>ليلة ألعاب بالمجلس</p>
+      <h1 class="hero-title">وش نلعب الليلة؟</h1>
+      <p class="hero-sub">الشاشة الكبيرة للكل، وكل واحد يلعب من جواله. خمس ألعاب للجمعات والسوالف.</p>
+      <div class="hero-cta">
+        <button class="btn btn-hype big" id="hub-make" type="button"><i class="ic" style="--i:url(../assets/icons/ui-plus.svg)"></i> سوّ جلسة</button>
+        <button class="btn big hero-join" id="hub-join" type="button"><i class="ic" style="--i:url(../assets/icons/ui-door.svg)"></i> ادخل جلسة</button>
       </div>
-      <div class="gt-body">
-        <h3>ألف نقطة</h3>
-        <p>أسئلة، تمثيل بدون كلام، تحديات… و50 بطاقة تقلب الطاولة، منها بطاقات تحدي فريق ضد فريق. أول فريق يوصل ألف يفوز.</p>
-        <div class="row">
-          <span class="chip">فرق أو أفراد</span><span class="chip">بطاقات هجوم ورد فعل</span><span class="chip">المضيف هو الحكم</span>
-        </div>
-        <div class="row mt-s">
-          <button class="btn small" id="btn-guide-alf"><i class="ic" style="--i:url(../assets/icons/book.svg)"></i> الشرح ومعرض البطاقات</button>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="ha-tv">
+        <div class="ha-screen">
+          <span class="ha-sc" style="--c:#38B6FF"><i></i>الصقور <b>750</b></span>
+          <span class="ha-sc" style="--c:#FFC23A"><i></i>الذيابة <b>600</b></span>
+          <div class="ha-fan" id="hero-fan"></div>
         </div>
       </div>
-    </article>
-    <article class="game-tile kh" id="card-khaliya" tabindex="0">
-      <div class="gt-art">
-        <div class="kh-logo"><svg viewBox="0 0 120 104" aria-hidden="true"><polygon points="30,2 90,2 118,52 90,102 30,102 2,52"/></svg><span>خ</span></div>
-        <div class="kh-logo-w">خلية الحروف</div>
+      <div class="ha-rug"></div>
+      <div class="ha-phones">
+        <span class="ha-ph" style="--c:#38B6FF"><span class="ha-av"><img src="assets/avatars/doge.webp" alt="" width="96" height="96"></span><i></i><i class="s"></i></span>
+        <span class="ha-ph buzz" style="--c:#FF3D81"><b>بز</b><i class="s"></i></span>
+        <span class="ha-ph" style="--c:#FFC23A"><span class="ha-av"><img src="assets/avatars/gigachad.webp" alt="" width="96" height="96"></span><i></i><i class="s"></i></span>
       </div>
-      <div class="gt-body">
-        <h3>خلية الحروف</h3>
-        <p>شبكة سداسية، حرف في كل خلية، وسباق مين يوصل الطرف الثاني أول. 1800 سؤال بالحروف.</p>
-        <div class="row"><span class="chip">فريقين بالضبط</span><span class="chip">اللي يبز أول يجاوب</span></div>
-      </div>
-    </article>
-    <article class="game-tile hm" id="card-hawamir" tabindex="0">
-      <div class="gt-art">
-        <div class="hm-logo"><span class="hm-logo-deeds"><i style="--g:#D9483B"></i><i style="--g:#E3A43A"></i><i style="--g:#2478C8"></i></span><span class="hm-logo-w">هوامير</span></div>
-      </div>
-      <div class="gt-body">
-        <h3>هوامير</h3>
-        <p>لوحة عقار وتجارة: اجمع مدن الدولة كلها وابنِ فيها من بيت لين برج، وزايد وسوِّ صفقات. أغنى واحد لما يخلص الوقت يفوز.</p>
-        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">ثلاث خرائط</span><span class="chip">القرارات من الجوال</span></div>
-      </div>
-    </article>
-    <article class="game-tile sq" id="card-sadq" tabindex="0">
-      <div class="gt-art">
-        <div class="sq-logo"><span class="sq-logo-cards"><i style="--rc:#D5489A"></i><i class="b"></i><i style="--rc:#2478C8"></i></span><span class="sq-logo-w">ما أصدقك</span></div>
-      </div>
-      <div class="gt-body">
-        <h3>ما أصدقك</h3>
-        <p>كل واحد معه ورقتين شخصيات سرية. ادّعِ اللي تبيه واكذب لو تقدر، والباقين يقولون «ما أصدقك». آخر واحد يبقى بالمجلس يفوز.</p>
-        <div class="row"><span class="chip">أفراد · 2 إلى 6</span><span class="chip">كل لاعب بجواله</span><span class="chip">كذب وكشف</span></div>
-      </div>
-    </article>
-    <article class="game-tile rs" id="card-rasm" tabindex="0">
-      <div class="gt-art">
-        <div class="rs-logo"><svg viewBox="0 0 200 120" aria-hidden="true"><path d="M18 92 C 46 30, 70 30, 88 70 S 132 112, 150 52 S 176 18, 186 34" fill="none" stroke-width="9" stroke-linecap="round"/></svg><span>ارسم وخمّن</span></div>
-      </div>
-      <div class="gt-body">
-        <h3>ارسم وخمّن</h3>
-        <p>واحد يرسم بجواله والرسمة تطلع على الشاشة، والكل يخمّن من جواله. 300 كلمة من الأكل للأنمي.</p>
-        <div class="row"><span class="chip">فرق أو أفراد</span><span class="chip">الرسم من الجوال</span><span class="chip">أسرع تخمين ياخذ أكثر</span></div>
-      </div>
-    </article>
+    </div>
   </div>
-  <nav class="legal-links small muted" aria-label="روابط"><a href="privacy.html">الخصوصية</a> · <a href="terms.html">الشروط</a></nav>
+
+  <section class="games-sec" id="games" aria-labelledby="games-h">
+    <div class="sec-head">
+      <h2 id="games-h" tabindex="-1">اختر لعبة وتبدأ جلستك</h2>
+      <p>تختار اللعبة وتنفتح جلستك، والشباب يدخلون من جوالاتهم بالكود.</p>
+    </div>
+    <div class="games">
+      <article class="game-tile alf" id="card-alf" tabindex="0" aria-labelledby="gt-alf">
+        <div class="gt-art"><div class="gt-mark mk-alf"><span class="mk-backs"><i></i><i></i><i></i></span><span class="mk-num">1000</span></div></div>
+        <span class="gt-play" aria-hidden="true"><i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></span>
+        <div class="gt-body">
+          <h3 id="gt-alf">ألف نقطة</h3>
+          <p>أسئلة وتمثيل وتحديات، وبطاقات تقلب الطاولة.</p>
+          <ul class="gt-facts">
+            <li><i class="ic" style="--i:url(../assets/icons/ui-users.svg)"></i>فرق أو أفراد</li>
+            <li><i class="ic" style="--i:url(../assets/icons/ui-cards.svg)"></i>بطاقات هجوم</li>
+          </ul>
+          <button class="gt-guide" id="btn-guide-alf" type="button"><i class="ic" style="--i:url(../assets/icons/ui-book.svg)"></i> الشرح ومعرض البطاقات</button>
+        </div>
+      </article>
+      <article class="game-tile kh" id="card-khaliya" tabindex="0" aria-labelledby="gt-kh">
+        <div class="gt-art"><div class="gt-mark mk-kh"><svg viewBox="0 0 120 104" aria-hidden="true"><polygon points="30,2 90,2 118,52 90,102 30,102 2,52"/></svg><span>خ</span></div></div>
+        <span class="gt-play" aria-hidden="true"><i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></span>
+        <div class="gt-body">
+          <h3 id="gt-kh">خلية الحروف</h3>
+          <p>سباق حروف على شبكة سداسية، واللي يبز أول يجاوب.</p>
+          <ul class="gt-facts">
+            <li><i class="ic" style="--i:url(../assets/icons/ui-users.svg)"></i>فريقين</li>
+            <li><i class="ic" style="--i:url(../assets/icons/ui-hexagon.svg)"></i>1800 سؤال</li>
+          </ul>
+        </div>
+      </article>
+      <article class="game-tile hm" id="card-hawamir" tabindex="0" aria-labelledby="gt-hm">
+        <div class="gt-art"><div class="gt-mark mk-hm"><i style="--h:44%;--b:#2478C8"></i><i style="--h:70%;--b:#D9483B"></i><i class="t" style="--h:100%;--b:#E3A43A"></i><i style="--h:58%;--b:#F6EEDC"></i><i style="--h:34%;--b:#2EA37A"></i></div></div>
+        <span class="gt-play" aria-hidden="true"><i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></span>
+        <div class="gt-body">
+          <h3 id="gt-hm">هوامير</h3>
+          <p>اشترِ مدن وابنِ فيها وزايد، والأغنى يفوز.</p>
+          <ul class="gt-facts">
+            <li><i class="ic" style="--i:url(../assets/icons/ui-user.svg)"></i>2 إلى 6 لاعبين</li>
+            <li><i class="ic" style="--i:url(../assets/icons/ui-map.svg)"></i>ثلاث خرائط</li>
+          </ul>
+        </div>
+      </article>
+      <article class="game-tile sq" id="card-sadq" tabindex="0" aria-labelledby="gt-sq">
+        <div class="gt-art"><div class="gt-mark mk-sq"><i style="--rc:#D5489A"></i><i class="b"></i><i style="--rc:#2478C8"></i></div></div>
+        <span class="gt-play" aria-hidden="true"><i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></span>
+        <div class="gt-body">
+          <h3 id="gt-sq">ما أصدقك</h3>
+          <p>ادّعِ واكذب لو تقدر، وآخر واحد بالمجلس يفوز.</p>
+          <ul class="gt-facts">
+            <li><i class="ic" style="--i:url(../assets/icons/ui-user.svg)"></i>2 إلى 6 لاعبين</li>
+            <li><i class="ic" style="--i:url(../assets/icons/ui-phone.svg)"></i>أوراق سرية</li>
+          </ul>
+        </div>
+      </article>
+      <article class="game-tile rs" id="card-rasm" tabindex="0" aria-labelledby="gt-rs">
+        <div class="gt-art"><div class="gt-mark mk-rs"><svg viewBox="0 0 200 120" aria-hidden="true"><path d="M18 92 C 46 30, 70 30, 88 70 S 132 112, 150 52 S 176 18, 186 34" fill="none" stroke-width="9" stroke-linecap="round"/></svg></div></div>
+        <span class="gt-play" aria-hidden="true"><i class="ic" style="--i:url(../assets/icons/ui-arrow.svg)"></i></span>
+        <div class="gt-body">
+          <h3 id="gt-rs">ارسم وخمّن</h3>
+          <p>ارسم بجوالك وتطلع رسمتك على الشاشة، والكل يخمّن.</p>
+          <ul class="gt-facts">
+            <li><i class="ic" style="--i:url(../assets/icons/ui-users.svg)"></i>فرق أو أفراد</li>
+            <li><i class="ic" style="--i:url(../assets/icons/ui-brush.svg)"></i>300 كلمة</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="home-foot">
+    <nav class="legal-links" aria-label="روابط"><a href="privacy.html">الخصوصية</a><span aria-hidden="true">·</span><a href="terms.html">الشروط</a></nav>
+  </footer>
 </section>
 
 <!-- ===== شرح ألف نقطة + معرض البطاقات ===== -->
 <section id="guide-alf" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button></div>
   </header>
   <h1 class="page-title">كيف تنلعب ألف نقطة</h1>
@@ -173,7 +237,7 @@
 <!-- ===== اللاعبين والفرق ===== -->
 <section id="lobby" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="home"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع</button></div>
   </header>
   <h1 class="page-title">مين بيلعب؟</h1>
@@ -222,7 +286,7 @@
 <!-- ===== إعدادات ألف نقطة ===== -->
 <section id="settings" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات المباراة</h1>
@@ -311,7 +375,7 @@
 <!-- ===== إعدادات خلية الحروف ===== -->
 <section id="khaliya-settings" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات خلية الحروف</h1>
@@ -367,7 +431,7 @@
 <!-- ===== إعدادات ارسم وخمّن ===== -->
 <section id="rasm-settings" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات ارسم وخمّن</h1>
@@ -422,7 +486,7 @@
 <!-- ===== لعبة هوامير ===== -->
 <section id="hawamir-settings" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات هوامير</h1>
@@ -485,7 +549,7 @@
 <!-- ===== لعبة ما أصدقك ===== -->
 <section id="sadq-settings" class="screen">
   <header class="topbar">
-    <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="brand" data-go="home" role="link" tabindex="0" aria-label="دحوم، الرئيسية"><span class="brand-mark">د</span> دحوم</div>
     <div class="row"><button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button><button class="btn ghost small" data-go="lobby"><i class="ic" style="--i:url(../assets/icons/back.svg)"></i> رجوع للاعبين</button></div>
   </header>
   <h1 class="page-title">إعدادات ما أصدقك</h1>
@@ -589,7 +653,7 @@
 <script src="js/vendor/peerjs.min.js?v=202611200654"></script>
 <script src="js/ice.js?v=202611200654"></script>
 <script src="js/vendor/qrcode.min.js?v=202611200654"></script>
-<script src="js/core.js?v=202611200654"></script>
+<script src="js/core.js?v=202611201200"></script>
 <script src="js/config.js?v=202611200654"></script>
 <script src="js/account.js?v=202611200654"></script>
 <script src="js/telemetry.js?v=202611200654"></script>
