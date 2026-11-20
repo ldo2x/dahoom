@@ -47,6 +47,9 @@
   const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], teams:[], info:null, feed:[] };
   const teamKey = () => 'dahoom_team_'+st.room;
   const meKey = 'dahoom_me';   // الاسم والصورة يتذكرهم الجوال لكل الغرف
+  // صاحب الجلسة يلعب من نفس جهاز الطاولة (صفحة اللاعب داخلها) — ما يحتاج شريطنا العلوي ولا «اطلع من الغرفة»
+  const OWNER = new URLSearchParams(location.search).get('owner')==='1';
+  if(OWNER) document.body.classList.add('is-owner');
   const me = () => { try{ return JSON.parse(localStorage.getItem(meKey)||'null'); }catch(e){ return null; } };
   const avSrc = a => 'assets/avatars/'+a+'.webp';
   // نسخة احتياطية من قائمة الصور لو الشاشة ما أرسلتها
@@ -64,7 +67,7 @@
     peer.on('open', ()=>{
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
       const to = setTimeout(()=>{ if(!conn.open) fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); }, 9000);
-      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid}); });
+      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); });
       conn.on('data', onData);
       conn.on('close', lost);
       conn.on('error', lost);
@@ -249,7 +252,7 @@
     const m=me()||{}, n=I.players.length, on=I.players.filter(p=>p.on).length;
     const host = I.host || 'المضيف';
     $('#r-sess-sum').innerHTML=`<span class="rs-game">${esc(I.gameName||'دحوم')}</span><span class="rs-code">${esc(I.code||st.room||'')}</span><span class="rs-n">${n} ${n===1?'لاعب':'لاعبين'}</span>`;
-    const pl = p => `<div class="rs-p ${p.on?'on':''} ${p.id===m.pid?'me':''}" style="--c:${p.tc||p.color}"><img src="${avSrc(p.avatar)}" alt=""><span><b>${esc(p.name)}${p.id===m.pid?' <i>(انت)</i>':''}</b>${p.team&&I.mode!=='solo'?`<small>${esc(p.team)}</small>`:''}</span><em title="${p.on?'متصل':'مو متصل'}"></em></div>`;
+    const pl = p => `<div class="rs-p ${p.on?'on':''} ${p.id===m.pid?'me':''}" style="--c:${p.tc||p.color}"><img src="${avSrc(p.avatar)}" alt=""><span><b>${esc(p.name)}${p.own?` <em class="rs-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</b>${p.team&&I.mode!=='solo'?`<small>${esc(p.team)}</small>`:''}</span><em title="${p.on?'متصل':'مو متصل'}"></em></div>`;
     let list='';
     if(I.mode==='solo' || !I.teams.length) list = I.players.map(pl).join('');
     else { list = I.teams.map(t=>{ const mem=I.players.filter(p=>p.team===t.name); return `<div class="rs-team" style="--c:${t.color}"><div class="rs-th"><i></i>${esc(t.name)} <small>${mem.length}</small></div>${mem.map(pl).join('')||'<p class="muted small">فاضي</p>'}</div>`; }).join('');
@@ -261,9 +264,9 @@
         <div><span>متصلين</span><b>${on} من ${n}</b></div></div>
       <div class="rs-where k-${esc(I.where.k)}"><i></i>${esc(I.where.x)}</div>
       <div class="rs-list">${list||'<p class="muted small">ما فيه لاعبين للحين</p>'}</div>
-      <div class="rs-acts">${!I.locked && st.teamId?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}<button class="btn ghost small" data-leave>اطلع من الغرفة</button></div>`;
+      <div class="rs-acts">${!I.locked && st.teamId?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}${OWNER?'':'<button class="btn ghost small" data-leave>اطلع من الغرفة</button>'}</div>`;
     const e=$('#r-sess-body [data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
-    $('#r-sess-body [data-leave]').onclick=()=>{ if(!confirm('تطلع من الغرفة؟')) return; try{ send({t:'leave'}); }catch(err){} st.room=null; try{ st.peer && st.peer.destroy(); }catch(err){} localStorage.removeItem('dahoom_last_room'); localStorage.removeItem(teamKey()); history.replaceState(null,'','remote.html'); show('r-join'); };
+    const lv=$('#r-sess-body [data-leave]'); if(lv) lv.onclick=()=>{ if(!confirm('تطلع من الغرفة؟')) return; try{ send({t:'leave'}); }catch(err){} st.room=null; try{ st.peer && st.peer.destroy(); }catch(err){} localStorage.removeItem('dahoom_last_room'); localStorage.removeItem(teamKey()); history.replaceState(null,'','remote.html'); show('r-join'); };
     // وسط المباراة بالجوال نطوي القائمة عشان اللعب ياخذ الشاشة (إلا لو اللاعب فتحها بنفسه)
     const det=$('#r-sess'), wide=matchMedia('(min-width:900px)').matches;
     if(!st.sessTouched) det.open = (wide && !(st.S && st.S.game==='hawamir')) || !I.locked;   // بهوامير اللوحة أهم
@@ -881,13 +884,23 @@
     code=(code||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if(code.length!==4){ $('#r-err').textContent='الكود 4 حروف/أرقام'; return; }
     $('#r-err').textContent=''; st.room=code; localStorage.setItem('dahoom_last_room', code);
-    history.replaceState(null,'','?room='+code);
+    history.replaceState(null,'','?room='+code+(OWNER?'&owner=1':''));
     connect();
   }
   $('#r-go').onclick=()=>join($('#r-code').value);
   $('#r-code').addEventListener('keydown', e=>{ if(e.key==='Enter') join(e.target.value); });
   $('#r-newteam').onsubmit=e=>{ e.preventDefault(); vibe(20); send({t:'newteam', name:$('#r-newteam-name').value.trim(), pid:(me()||{}).pid}); $('#r-newteam-name').value=''; };
   $('#r-switch').onclick=()=>{ localStorage.removeItem(teamKey()); st.teamId=null; send({t:'leave'}); };
+  // الجلسات المفتوحة (اللوبي العام) — تتحدث كل شوي وأنت بشاشة الدخول
+  const GIC = { alf:'cards', khaliya:'hive', rasm:'pencil', hawamir:'hm-building-bank', sadq:'masks' };
+  async function loadRooms(){
+    const el=$('#r-rooms'); if(!el || $('#r-join').classList.contains('hidden')) return;
+    const L=window.DahoomLobby, list=L ? await L.list() : [];
+    el.innerHTML = list.length ? list.map(r=>`<button class="jl-room" data-room="${esc(r.code)}"><span class="jl-gic">${ic(GIC[r.game]||'star')}</span><span class="jl-t"><b>${esc(r.gameName||'جلسة')}</b><small>${ic('person')} ${esc(r.host||'بدون اسم')}</small></span><span class="jl-n">${ic('users')} ${r.players} من ${r.max}</span><span class="jl-ph ${r.phase==='play'?'live':''}">${r.phase==='play'?'شغالة':'بالانتظار'}</span><span class="jl-go">ادخل</span></button>`).join('')
+      : `<div class="jl-empty">${ic('door')}<b>ما فيه جلسات مفتوحة الحين</b><span>سوّ جلستك وخلّ الشباب يدخلون، أو ادخل بكود من أحد.</span></div>`;
+    $$('#r-rooms [data-room]').forEach(b=>b.onclick=()=>{ vibe(15); join(b.dataset.room); });
+  }
+  setInterval(loadRooms, 8000);
   const q=new URLSearchParams(location.search).get('room');
-  if(q) join(q); else { const last=localStorage.getItem('dahoom_last_room'); if(last) $('#r-code').value=last; }
+  if(q) join(q); else { const last=localStorage.getItem('dahoom_last_room'); if(last) $('#r-code').value=last; loadRooms(); }
 })();

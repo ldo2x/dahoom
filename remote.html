@@ -26,11 +26,15 @@
 
 <!-- الدخول بالكود -->
 <section id="r-join" class="r-screen">
-  <h1>ادخل كود الغرفة</h1>
-  <p class="muted">الكود ظاهر على الشاشة تحت زر "الجوالات"</p>
-  <input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" inputmode="text">
-  <button class="btn btn-hype big" id="r-go">دخول</button>
+  <h1>ادخل جلسة</h1>
+  <p class="muted">اكتب كود الجلسة اللي وصلك، أو اختر من الجلسات المفتوحة تحت</p>
+  <div class="r-codebox"><input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" inputmode="text" aria-label="كود الجلسة">
+  <button class="btn btn-hype big" id="r-go">دخول</button></div>
   <p class="r-err" id="r-err"></p>
+  <section class="r-lobby">
+    <div class="r-lobby-h"><b>الجلسات المفتوحة</b><a class="btn small" href="index.html">سوّ جلستك</a></div>
+    <div class="jl-list" id="r-rooms"><p class="muted small">نجيب الجلسات…</p></div>
+  </section>
 </section>
 
 <!-- اختيار الفريق -->
@@ -111,6 +115,8 @@
 
 <script src="js/vendor/peerjs.min.js?v=202611200620"></script>
 <script src="data/cards.js?v=202611200620"></script>
+<script src="js/config.js?v=1"></script>
+<script src="js/lobby.js?v=1"></script>
 <script src="js/telemetry.js?v=202611200620"></script>
 <script src="js/draw.js?v=202611200620"></script>
 <script src="js/remote.js?v=202611200620"></script>

@@ -408,7 +408,10 @@ window.Dahoom = (function(){
     $('#btn-enter').onclick=()=>{ play('jingle',{volume:.9}); go('home'); };
     $$('.btn-sound').forEach(b=>b.onclick=toggleSound);
     $$('.vol-slider').forEach(sl=>{ sl.oninput=()=>setVolume(sl.value/100); sl.onchange=()=>play('pop'); });
-    const openGame=g=>{ session.game=g; renderTeams(); go('lobby'); };
+    // اختيار لعبة = تسوي جلسة: تفتح الغرفة وتدخلها كلاعب من نفس الجهاز (تقدر تخليه شاشة عرض بس من الشريط)
+    const openGame=g=>{ session.game=g; renderTeams(); go('lobby'); if(window.DahoomOwner) window.DahoomOwner.enter(); };
+    { const hm=$('#hub-make'); if(hm) hm.onclick=()=>{ const g=$('.games'); if(g) g.scrollIntoView({behavior:'smooth', block:'start'}); play('pop',{volume:.4}); }; }
+    { const hj=$('#hub-join'); if(hj) hj.onclick=()=>window.DahoomOwner && window.DahoomOwner.joinModal(); }
     $('#card-alf').onclick=()=>openGame('alf');
     $('#card-khaliya').onclick=()=>openGame('khaliya');
     $('#card-rasm').onclick=()=>openGame('rasm');

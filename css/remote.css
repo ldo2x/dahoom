@@ -794,3 +794,18 @@ body.remote::before{height:10px;background-size:23px 10px}
 .r-tbx{color:var(--mute)}.r-tbx .ic{width:22px;height:22px}
 .r-tbd{grid-column:1/-1;margin:0;text-align:center;font-weight:800}
 .r-tbd.up{color:var(--ok-ink)}.r-tbd.dn{color:var(--bad-ink)}
+
+/* ===== شاشة الدخول: الكود + الجلسات المفتوحة ===== */
+.r-codebox{display:flex;gap:8px;align-items:stretch;width:100%;max-width:420px}
+.r-codebox .r-code-in{flex:1;min-width:0;margin:0}
+.r-lobby{width:100%;max-width:640px;margin-top:18px;text-align:start}
+.r-lobby-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.r-lobby-h b{font-size:1.1rem}
+.r-lobby .jl-room{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);width:100%}
+.r-lobby .jl-room:hover{border-color:var(--brand)}
+.r-lobby .jl-room:focus-visible{outline:2px solid var(--brand)}
+@media (max-width:560px){ .r-lobby .jl-room{grid-template-columns:auto minmax(0,1fr) auto} .r-lobby .jl-n,.r-lobby .jl-ph{display:none} }
+/* صاحب الجلسة داخل الطاولة: بدون الشريط العلوي (فوقه شريط الجلسة) */
+body.is-owner .r-bar{display:none}
+
+.rs-own{font-style:normal;color:var(--gold);display:inline-grid;vertical-align:-.15em}.rs-own .ic{width:15px;height:15px}

@@ -851,3 +851,56 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 
 /* ارسم وخمّن: عدّاد الدور الجاي على زر المضيف */
 .rs-cd{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;border-radius:99px;background:rgba(0,0,0,.25);font-family:var(--num);font-weight:900;margin-inline-start:6px}
+
+/* ===== الرئيسية: سوّ جلسة / ادخل جلسة / ملفي ===== */
+.hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:6px 0 26px}
+.hub-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;color:var(--text)}
+.hub-card:hover{transform:translateY(-2px)}
+.hub-card:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.hub-card b{display:block;font-size:1.2rem;font-weight:800}
+.hub-card small{display:block;color:var(--mute);font-weight:600;line-height:1.5}
+.hub-ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;color:#fff;background:var(--brand)}
+.hub-ic .ic{width:26px;height:26px}
+.hub-card.join .hub-ic{background:var(--sky,#2478C8)}
+.hub-card.me .hub-ic{background:var(--gold);color:var(--ink)}
+/* ادخل جلسة */
+.jl-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto;margin:10px 0}
+.jl-room{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);text-decoration:none}
+.jl-room:hover{border-color:var(--brand)}
+.jl-gic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface);color:var(--brand)}
+.jl-gic .ic{width:22px;height:22px}
+.jl-t{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.jl-t small{color:var(--mute);display:flex;gap:4px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.jl-t small .ic,.jl-n .ic{width:14px;height:14px}
+.jl-n{display:inline-flex;gap:4px;align-items:center;font-family:var(--num);font-weight:800;color:var(--mute)}
+.jl-ph{font-size:.75rem;font-weight:800;border-radius:99px;padding:2px 9px;background:color-mix(in srgb,var(--ok) 20%,var(--surface));color:var(--ok-ink)}
+.jl-ph.live{background:color-mix(in srgb,var(--gold) 22%,var(--surface));color:var(--text)}
+.jl-go{font-weight:800;color:var(--brand)}
+.jl-empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:22px;border:1.5px dashed var(--line);border-radius:16px;color:var(--mute)}
+.jl-empty .ic{width:30px;height:30px}
+.jl-empty b{color:var(--text)}
+.jl-code{display:flex;gap:8px}
+.jl-code input{flex:1;min-width:0;font-family:var(--num);font-weight:900;font-size:1.4rem;letter-spacing:.3em;text-align:center;direction:ltr;text-transform:uppercase;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--text)}
+@media (max-width:560px){ .jl-room{grid-template-columns:auto minmax(0,1fr) auto} .jl-n,.jl-ph{display:none} }
+/* ===== صاحب الجلسة: شريط الجلسة + شاشتي فوق الطاولة ===== */
+.own{position:fixed;inset:0;z-index:80;pointer-events:none}
+.own.hidden{display:none}
+.own-dock{pointer-events:auto;position:fixed;top:0;left:0;right:0;height:48px;z-index:82;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);box-shadow:0 6px 18px -12px rgba(0,0,0,.5)}
+.own-l,.own-r{display:flex;align-items:center;gap:6px;min-width:0}
+.own-code{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:10px;padding:4px 10px;font-weight:800}
+.own-code b{font-family:var(--num);font-size:1.15rem;letter-spacing:.12em;direction:ltr}
+.own-code .ic{width:16px;height:16px;color:var(--brand)}
+.own-b{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:10px;font-weight:700;font-size:.88rem;border:1px solid var(--line);background:var(--surface);color:var(--text);white-space:nowrap}
+.own-b .ic{width:16px;height:16px}
+.own-b:hover{border-color:var(--brand)}
+.own-b:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.own-b.on{background:color-mix(in srgb,var(--ok) 16%,var(--surface));border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
+.own-b.hot{background:var(--brand);color:#fff;border-color:transparent}
+.own-b.sw{background:var(--text);color:var(--bg);border-color:transparent}
+.own-b.ghost{background:transparent}
+.own-frame{pointer-events:auto;position:fixed;top:48px;left:0;width:100%;height:calc(100% - 48px);border:0;background:var(--bg);z-index:81;display:none}
+body.own-me .own-frame{display:block}
+body.own-on{padding-top:48px}
+body.own-me{overflow:hidden}
+@media (max-width:720px){ .own-b span{display:none} .own-b.hot span,.own-b.sw span{display:inline} .own-b{padding:6px 9px} }

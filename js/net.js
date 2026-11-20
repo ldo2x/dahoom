@@ -22,7 +22,7 @@ window.DahoomNet = (function(){
     if(peer || !window.Peer) return;
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, {debug:0});
-    peer.on('open', ()=>{ ready=true; tries=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); });
+    peer.on('open', ()=>{ ready=true; tries=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
     peer.on('connection', c=>{
       c.cid='c'+(++cidSeq);
       c.on('open', ()=>{ conns.add(c); });
@@ -52,7 +52,7 @@ window.DahoomNet = (function(){
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
-    if(d.t==='hello'){ c.pid = c.pid || d.pid || null; sendInfo(c); }
+    if(d.t==='hello'){ c.pid = c.pid || d.pid || null; if(d.owner) c.owner=true; sendInfo(c); }
     if(isSolo() && (d.t==='hello' || d.t==='register')){
       const known = d.pid && D.session.players.find(p=>p.id===d.pid);
       if(d.t==='hello'){ if(known){ c.pid=known.id; seat(c, known.id); } else c.send(lobbyMsg()); refreshUI(); return; }
@@ -124,7 +124,18 @@ window.DahoomNet = (function(){
 
   // ---------- معلومات الجلسة: اللعبة والمضيف واللاعبين (تنرسل لكل الجوالات) ----------
   const GAME_AR = { alf:'ألف نقطة', khaliya:'خلية الحروف', rasm:'ارسم وخمّن', hawamir:'هوامير', sadq:'ما أصدقك' };
-  const hostName = () => { try{ return localStorage.getItem('dahoom_host')||''; }catch(e){ return ''; } };
+  const ownerConn = () => [...conns].find(c=>c.open && c.owner && c.pid);
+  const ownerP = () => { const c=ownerConn(); return c ? D.session.players.find(p=>p.id===c.pid) : null; };
+  const hostName = () => { const o=ownerP(); if(o) return o.name; try{ return localStorage.getItem('dahoom_host')||''; }catch(e){ return ''; } };
+  const isPublic = () => { try{ return localStorage.getItem('dahoom_public')!=='0'; }catch(e){ return true; } };
+  const setPublic = v => { try{ localStorage.setItem('dahoom_public', v?'1':'0'); }catch(e){} publishRoom(); };
+  const MAXP = { hawamir:6, sadq:6, khaliya:12, rasm:12, alf:12 };
+  // اللوبي العام: نحدّث بيانات الجلسة (اللعبة وصاحبها وعدد اللاعبين ووش مرحلتها)
+  function publishRoom(){
+    const L=window.DahoomLobby; if(!L || !ready || !code) return;
+    const players=new Set([...conns].filter(c=>c.open && c.pid).map(c=>c.pid)).size, o=ownerP();
+    L.publish({ code, game:D.session.game||'', host:hostName()||'جلسة بدون اسم', hostAv:o?o.avatar:'', players, max:MAXP[D.session.game]||12, phase:isLocked()?'play':'lobby', pub:isPublic() });
+  }
   function where(){
     const id=(document.querySelector('.screen.active')||{}).id||'';
     if(isLocked()) return { k:'play', x:'المباراة شغالة' };
@@ -138,12 +149,12 @@ window.DahoomNet = (function(){
     const online=new Set([...conns].filter(c=>c.open && c.pid).map(c=>c.pid));
     const teamOf=pid=>ss.teams.find(t=>t.members.includes(pid));
     return { t:'info', code, game:ss.game, gameName:GAME_AR[ss.game]||'', host:hostName(), mode:solo?'solo':'teams', where:where(), locked:isLocked(),
-      players: ss.players.map(p=>{ const tm=solo?null:teamOf(p.id); return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:tm?tm.name:null, tc:tm?tm.color:null, on:online.has(p.id) }; }),
+      players: ss.players.map(p=>{ const tm=solo?null:teamOf(p.id); const oc=ownerConn(); return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:tm?tm.name:null, tc:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id) }; }),
       teams: solo ? [] : ss.teams.map(t=>({ id:t.id, name:t.name, color:t.color, n:t.members.length })), phones:[...conns].filter(c=>c.open).length };
   }
   function sendInfo(c){ try{ c.send(infoMsg()); if(FEED.length) c.send({t:'feedall', list:FEED}); }catch(e){} }
   let infoT=0;
-  function infoAll(){ if(infoT) return; infoT=setTimeout(()=>{ infoT=0; const m=infoMsg(); conns.forEach(c=>{ if(c.open){ try{ c.send(m); }catch(e){} } }); }, 150); }
+  function infoAll(){ if(infoT) return; infoT=setTimeout(()=>{ infoT=0; const m=infoMsg(); conns.forEach(c=>{ if(c.open){ try{ c.send(m); }catch(e){} } }); publishRoom(); if(window.DahoomOwner) window.DahoomOwner.render(); }, 150); }
   document.addEventListener('dahoom:screen', ()=>{ infoAll(); });
   document.addEventListener('dahoom:session', ()=>{ infoAll(); });
   // سجل الأحداث: آخر 60 حدث، ينرسل للجوالات أول بأول
@@ -153,6 +164,7 @@ window.DahoomNet = (function(){
   // ---------- تجديد الجلسة ----------
   // كود جديد: كل الأجهزة تنفصل ولازم يدخلون الكود الجديد. جلسة جديدة: نفس الشي + نمسح اللاعبين
   function newCode(){
+    if(window.DahoomLobby) window.DahoomLobby.close();
     conns.forEach(c=>{ try{ c.send({t:'ended', msg:'المضيف جدّد الجلسة — ادخل الكود الجديد'}); }catch(e){} });
     setTimeout(()=>{ try{ peer && peer.destroy(); }catch(e){} peer=null; ready=false; conns.clear(); sessionStorage.removeItem('dahoom_room'); code=null; refreshUI(); start(); }, 300);
   }
@@ -199,5 +211,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();
