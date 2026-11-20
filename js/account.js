@@ -82,7 +82,12 @@ window.DahoomAccount = (function(){
   const per = (S, g) => (S.per && S.per[g]) || { g:0, w:0, best:0, s:{} };
   const pstat = (S, g, k) => (per(S,g).s || {})[k] || 0;
   const countGames = (S, f) => GAME_IDS.filter(g=>per(S,g)[f]>0).length;
+  // نسخة تجريبية: اللي يلعب 5 مباريات قبل الإصدار الكامل ياخذ لقب «عتيق». يوم الإصدار الكامل خلّه false
+  // (اللي فتحوه قبل يبقى عندهم — الإنجاز ينحفظ بتاريخه)
+  const BETA = true;
   const ACHIEVEMENTS = [
+    // نسخة تجريبية
+    { id:'og',         name:'عتيق',           desc:'العب 5 مباريات قبل الإصدار الكامل — من أوائل أهل دحوم', icon:'acc-award', rarity:'legendary', goal:5, val:S=>BETA ? S.games : 0, special:true },
     // عامة
     { id:'first_game', name:'أول طلعة',       desc:'العب أول مباراة',                     icon:'acc-rocket',   rarity:'common',    goal:1,   val:S=>S.games },
     { id:'first_win',  name:'أول فوز',        desc:'فز بأي لعبة',                         icon:'trophy',       rarity:'common',    goal:1,   val:S=>S.wins },
@@ -105,22 +110,43 @@ window.DahoomAccount = (function(){
     { id:'level_25',   name:'أسطورة دحوم',    desc:'وصّل المستوى 25',                      icon:'acc-award',    rarity:'legendary', goal:25,  val:S=>S.level },
     { id:'friend_1',   name:'أخوياك معك',       desc:'ضيف أول صديق',                         icon:'acc-user-plus',rarity:'common',    goal:1,   val:S=>S.friends },
     { id:'friend_10',  name:'الشلة كاملة',    desc:'ضيف 10 أصدقاء',                        icon:'acc-users',    rarity:'rare',      goal:10,  val:S=>S.friends },
+    { id:'games_100',  name:'ما عندك دوام؟',  desc:'العب 100 مباراة',                      icon:'hourglass',    rarity:'epic',      goal:100, val:S=>S.games },
+    { id:'wins_100',   name:'وش ذا الظلم',    desc:'فز 100 مرة — ارحمهم شوي',              icon:'crown',        rarity:'legendary', goal:100, val:S=>S.wins },
+    { id:'streak_10',  name:'اعتزل يا شيخ',   desc:'فز 10 مرات ورا بعض',                   icon:'flame',        rarity:'legendary', goal:10,  val:S=>S.bestStreak },
+    { id:'last_20',    name:'زبون الطيحة',    desc:'اطلع الأخير 20 مرة وللحين تلعب — نحترم الإصرار', icon:'skull', rarity:'rare', goal:20, val:S=>S.lasts },
+    { id:'podium_50',  name:'مشترك بالمنصة',  desc:'خلّص بالمراكز الثلاث الأولى 50 مرة',   icon:'podium',       rarity:'epic',      goal:50,  val:S=>S.podiums },
+    { id:'night_10',   name:'خفّاش',          desc:'العب 10 مباريات بين 2 و5 الفجر',        icon:'moon',         rarity:'epic',      goal:10,  val:S=>S.night },
+    { id:'days_100',   name:'ساكن هنا',       desc:'العب في 100 يوم مختلف',                icon:'acc-calendar', rarity:'legendary', goal:100, val:S=>S.days },
+    { id:'room_12',    name:'معزّب العزايم',  desc:'العب مباراة فيها 12 منافس وفوق',        icon:'acc-users',    rarity:'epic',      goal:12,  val:S=>S.maxOf },
+    { id:'level_50',   name:'شيبة دحوم',      desc:'وصّل المستوى 50',                      icon:'acc-award',    rarity:'legendary', goal:50,  val:S=>S.level },
+    { id:'friend_25',  name:'رئيس الاستراحة', desc:'ضيف 25 صديق',                          icon:'acc-users',    rarity:'epic',      goal:25,  val:S=>S.friends },
     // ألف نقطة
     { id:'alf_win',    name:'أبو ألف',        desc:'فز بألف نقطة',                        icon:'brain',        rarity:'common',    goal:1,   val:S=>per(S,'alf').w,  game:'alf' },
     { id:'alf_10',     name:'ملك الأسئلة',    desc:'فز بألف نقطة 10 مرات',                icon:'brain',        rarity:'epic',      goal:10,  val:S=>per(S,'alf').w,  game:'alf' },
     { id:'alf_steals', name:'حرامي النقاط',   desc:'اسرق 25 مرة بألف نقطة',                icon:'ninja',        rarity:'rare',      goal:25,  val:S=>pstat(S,'alf','steals'), game:'alf' },
+    { id:'alf_thief',  name:'أبو سروقات',     desc:'اسرق 100 مرة بألف نقطة — الشرطة تدوّر عليك', icon:'ninja',  rarity:'epic',      goal:100, val:S=>pstat(S,'alf','steals'), game:'alf' },
+    { id:'alf_cards',  name:'تاجر بطايق',     desc:'العب 50 بطاقة بألف نقطة',              icon:'cards',        rarity:'rare',      goal:50,  val:S=>pstat(S,'alf','cards'), game:'alf' },
+    { id:'alf_hits',   name:'كيس ملاكمة',     desc:'تجيك 50 ضربة بطاقات بألف نقطة',        icon:'attack',       rarity:'rare',      goal:50,  val:S=>pstat(S,'alf','hits'), game:'alf' },
     // خلية الحروف
     { id:'kh_win',     name:'النحّال',        desc:'فز بخلية الحروف',                     icon:'acc-hexagon',  rarity:'common',    goal:1,   val:S=>per(S,'khaliya').w, game:'khaliya' },
     { id:'kh_10',      name:'ملك الخلية',     desc:'فز بخلية الحروف 10 مرات',             icon:'hive',         rarity:'epic',      goal:10,  val:S=>per(S,'khaliya').w, game:'khaliya' },
+    { id:'kh_20',      name:'دبّور',          desc:'العب خلية الحروف 20 مرة',              icon:'acc-hexagon',  rarity:'rare',      goal:20,  val:S=>per(S,'khaliya').g, game:'khaliya' },
     // ارسم وخمّن
     { id:'rs_win',     name:'فنان الحارة',    desc:'فز بارسم وخمّن',                      icon:'acc-brush',    rarity:'common',    goal:1,   val:S=>per(S,'rasm').w, game:'rasm' },
     { id:'rs_20',      name:'ريشة ذهبية',     desc:'العب ارسم وخمّن 20 مرة',               icon:'acc-palette',  rarity:'rare',      goal:20,  val:S=>per(S,'rasm').g, game:'rasm' },
+    { id:'rs_eye',     name:'عين صقر',        desc:'خمّن صح 50 مرة بارسم وخمّن',           icon:'eye',          rarity:'epic',      goal:50,  val:S=>pstat(S,'rasm','guessed'), game:'rasm' },
+    { id:'rs_picasso', name:'بيكاسو الحارة',  desc:'30 رسمة لك انعرفت',                    icon:'acc-brush',    rarity:'epic',      goal:30,  val:S=>pstat(S,'rasm','drawn'), game:'rasm' },
     // هوامير
     { id:'hm_win',     name:'هامور',          desc:'فز بهوامير',                          icon:'hm-building',  rarity:'common',    goal:1,   val:S=>per(S,'hawamir').w, game:'hawamir' },
     { id:'hm_5',       name:'إمبراطور العقار',desc:'فز بهوامير 5 مرات',                   icon:'hm-building-skyscraper', rarity:'epic', goal:5, val:S=>per(S,'hawamir').w, game:'hawamir' },
+    { id:'hm_jail',    name:'خرّيج سجون',     desc:'انسجن 10 مرات بهوامير — صرت تعرف الحرس بالاسم', icon:'hm-jail', rarity:'rare', goal:10, val:S=>pstat(S,'hawamir','jailed'), game:'hawamir' },
+    { id:'hm_build',   name:'المقاول',        desc:'ابنِ 30 مرة بهوامير',                  icon:'hm-hammer',    rarity:'rare',      goal:30,  val:S=>pstat(S,'hawamir','built'), game:'hawamir' },
+    { id:'hm_trades',  name:'الشريطي',        desc:'خلّص 20 صفقة بهوامير',                 icon:'hm-exchange',  rarity:'rare',      goal:20,  val:S=>pstat(S,'hawamir','trades'), game:'hawamir' },
     // ما أصدقك
     { id:'sq_win',     name:'وجه بوكر',       desc:'فز بما أصدقك',                        icon:'masks',        rarity:'common',    goal:1,   val:S=>per(S,'sadq').w, game:'sadq' },
     { id:'sq_caught',  name:'كاشف الكذب',     desc:'اكشف 15 كذبة صح بما أصدقك',            icon:'eye',          rarity:'rare',      goal:15,  val:S=>pstat(S,'sadq','caught'), game:'sadq' },
+    { id:'sq_liar',    name:'الكذّاب الأشر',  desc:'اكذب 50 مرة بما أصدقك — وجهك ما يتغير',               icon:'masks',        rarity:'epic',      goal:50,  val:S=>pstat(S,'sadq','lies'), game:'sadq' },
+    { id:'sq_witness', name:'شاهد ما شافش حاجة', desc:'20 شهادة صح بما أصدقك',             icon:'whistle',      rarity:'rare',      goal:20,  val:S=>pstat(S,'sadq','wit'), game:'sadq' },
   ];
   const ACH = Object.fromEntries(ACHIEVEMENTS.map(a=>[a.id,a]));
   function achProgress(id, S){
@@ -169,7 +195,30 @@ window.DahoomAccount = (function(){
     { id:'social',   name:'اجتماعي',       unlock:{ ach:'friend_10' } },
     { id:'master',   name:'سيد الألعاب',   unlock:{ ach:'all_wins' } },
     { id:'legend',   name:'أسطورة دحوم',   unlock:{ ach:'level_25' } },
+    { id:'atiq',     name:'عتيق',          unlock:{ ach:'og' }, special:true },   // لقب متحرك — للي لعب بالنسخة التجريبية
+    { id:'nodawam',  name:'ما عنده دوام',   unlock:{ ach:'games_100' } },
+    { id:'unfair',   name:'وش ذا الظلم',    unlock:{ ach:'wins_100' } },
+    { id:'retire',   name:'اعتزل يا شيخ',   unlock:{ ach:'streak_10' } },
+    { id:'falling',  name:'زبون الطيحة',    unlock:{ ach:'last_20' } },
+    { id:'stage',    name:'مشترك بالمنصة',  unlock:{ ach:'podium_50' } },
+    { id:'bat',      name:'الخفّاش',        unlock:{ ach:'night_10' } },
+    { id:'resident', name:'ساكن دحوم',      unlock:{ ach:'days_100' } },
+    { id:'host',     name:'معزّب العزايم',  unlock:{ ach:'room_12' } },
+    { id:'oldman',   name:'شيبة دحوم',      unlock:{ ach:'level_50' } },
+    { id:'boss',     name:'رئيس الاستراحة', unlock:{ ach:'friend_25' } },
+    { id:'thief',    name:'أبو سروقات',     unlock:{ ach:'alf_thief' } },
+    { id:'dealer',   name:'تاجر بطايق',     unlock:{ ach:'alf_cards' } },
+    { id:'boxer',    name:'كيس الملاكمة',   unlock:{ ach:'alf_hits' } },
+    { id:'dabour',   name:'الدبّور',        unlock:{ ach:'kh_20' } },
+    { id:'eagle',    name:'عين صقر',        unlock:{ ach:'rs_eye' } },
+    { id:'picasso',  name:'بيكاسو الحارة',  unlock:{ ach:'rs_picasso' } },
+    { id:'convict',  name:'خرّيج سجون',     unlock:{ ach:'hm_jail' } },
+    { id:'builder',  name:'المقاول',        unlock:{ ach:'hm_build' } },
+    { id:'broker',   name:'الشريطي',        unlock:{ ach:'hm_trades' } },
+    { id:'liar',     name:'الكذّاب الأشر',  unlock:{ ach:'sq_liar' } },
+    { id:'witness',  name:'شاهد ما شافش حاجة', unlock:{ ach:'sq_witness' } },
   ];
+  const isSpecialTitle = id => !!((TITLES.find(t=>t.id===id)||{}).special);
   const CAT = { banner:BANNERS, frame:FRAMES, title:TITLES };
   const findIn = (kind, id) => (CAT[kind]||[]).find(x=>x.id===id) || null;
   function isUnlocked(kind, id, S){
@@ -931,7 +980,7 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
     // الكتالوجات
     ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, AVATAR_GROUPS, COLORS,
     // أدوات للعرض
-    mountBadge, showUnlocks, avatarHTML, ringHTML, avatarSrc, bannerBg, titleName, levelInfo, achProgress, isUnlocked, unlockHint, normName,
+    mountBadge, showUnlocks, avatarHTML, ringHTML, avatarSrc, bannerBg, titleName, isSpecialTitle, levelInfo, achProgress, isUnlocked, unlockHint, normName,
     pendingSentTo: uid => sentSet().has(uid),
     get mode(){ return st.mode; }, get ready(){ return st.ready; }, get offline(){ return st.offline; }, get stub(){ return STUB; },
     // للاختبار فقط

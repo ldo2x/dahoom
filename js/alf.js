@@ -129,6 +129,7 @@
     if(G.ended){ const sorted=[...G.teams].sort((a,b)=>b.score-a.score), o=G.stats.T[id];
       return { game:'alf', team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores:sorted.map(x=>({id:x.id,name:x.name,color:x.color,score:x.score})),
         final:{ rank:sorted.indexOf(t)+1, of:sorted.length, mid:G.log.t0, awards:(G.stats.awards||[]).filter(a=>a.team.id===id).map(a=>({title:a.title,value:a.value})),
+          stats:{ steals:o.steals|0, cards:o.cards|0, hits:o.hits|0 },
           all: finalAll(sorted, id),
           rows:[['أسئلة صح',`${o.ok.q}/${o.tries.q}`],['بدون كلام',`${o.ok.c}/${o.tries.c}`],['تحديات',`${o.ok.t}/${o.tries.t}`],['سرقات',o.steals],['بطاقات لعبتوها',o.cards],['ضربات جتكم',o.hits],['أفضل دور','+'+o.bestTurn],['أطول سلسلة',o.maxCombo]] } }; }
     const mine = cur()===t, can = !!(G.canPlayNow && mine && canPlayCard(t));

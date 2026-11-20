@@ -138,7 +138,7 @@
       ${V.mine && p.guest && !V.editing ? guestCta() : ''}
       ${V.editing ? editorHTML() : `<div class="pf-grid">
         <div class="pf-col">${statsHTML(p)}${achHTML(p)}</div>
-        <aside class="pf-col pf-side">${V.mine && c && !c.guest ? accountHTML(p) : ''}${friendsHTML(c)}${theirsHTML(c)}${recentHTML(p)}</aside></div>`}`;
+        <aside class="pf-col pf-side">${V.mine && c && !c.guest && (!p.username || V.showAcct) ? accountHTML(p) : ''}${friendsHTML(c)}${theirsHTML(c)}${recentHTML(p)}</aside></div>`}`;
     bindHero();
     if(V.editing) bindEditor(); else { bindAch(); bindRecent(); bindFriends(); bindAccount(); bindTheirs(); }
     const cta=$('#pf-cta-in'); if(cta) cta.onclick=signIn;
@@ -152,7 +152,7 @@
     let actions='';
     if(V.mine && !V.editing){
       actions = `<button class="btn small" id="pf-edit">${ic('pencil')} عدّل ملفك</button>`
-        + (p.guest ? '' : `<button class="btn small ghost" id="pf-share">${ic('acc-send')} انسخ رابط ملفك</button><button class="btn small ghost" id="pf-out">${ic('acc-logout')} خروج</button>`);
+        + (p.guest ? '' : `${p.username?`<button class="btn small ghost" id="pf-acct-btn" aria-expanded="${!!V.showAcct}">${ic('gears')} إعدادات الحساب</button>`:''}<button class="btn small ghost" id="pf-share">${ic('acc-send')} انسخ رابط ملفك</button><button class="btn small ghost" id="pf-out">${ic('acc-logout')} خروج</button>`);
     } else if(!V.mine){
       actions = friendAction(p.uid, me) + (c ? `<a class="btn small ghost" href="profile.html">${ic('person')} ملفي</a>` : '');
     }
@@ -164,7 +164,7 @@
           <h1 class="pf-name">${esc(p.name)}</h1>
           <div class="pf-sub">${p.username?`<button type="button" class="pf-uname" id="pf-uname" dir="ltr" title="انسخ اليوزرنيم">@${esc(p.username)}</button>`:''}
           ${!V.mine && V.pres && V.pres.text ? `<span class="pf-pres ${V.pres.on?'on':''}"><i></i>${esc(V.pres.text)}</span>` : (V.mine && !p.guest && !V.editing ? '<span class="pf-pres on"><i></i>متصل</span>' : '')}</div>
-          <div class="pf-tags"><span class="pill pf-title">${esc(A.titleName(p.title))}</span>${p.guest?`<span class="pill dim">${ic('acc-ghost')} ضيف</span>`:''}${p.offline?`<span class="pill dim">${ic('acc-cloud-off')} بدون نت</span>`:''}</div>
+          <div class="pf-tags"><span class="pill pf-title ${A.isSpecialTitle && A.isSpecialTitle(p.title)?'t-special':''}">${A.isSpecialTitle && A.isSpecialTitle(p.title)?ic('sparkles'):''}${esc(A.titleName(p.title))}</span>${p.guest?`<span class="pill dim">${ic('acc-ghost')} ضيف</span>`:''}${p.offline?`<span class="pill dim">${ic('acc-cloud-off')} بدون نت</span>`:''}</div>
         </div>
         ${actions ? `<div class="pf-actions">${actions}</div>` : ''}
       </div>
@@ -191,6 +191,7 @@
       const url = new URL(profUrl(A.current().uid), location.href).href;
       try{ await navigator.clipboard.writeText(url); toast('نسخنا الرابط، أرسله لأخوياك'); }catch(e){ prompt('انسخ الرابط:', url); }
     };
+    const ab=$('#pf-acct-btn'); if(ab) ab.onclick=()=>{ V.showAcct=!V.showAcct; render(); const s=$('#pf-acct'); if(s){ s.scrollIntoView({behavior:'smooth', block:'center'}); const f=$('#ac-un'); if(f && !f.disabled) f.focus(); } };
     const un=$('#pf-uname'); if(un) un.onclick=async()=>{ try{ await navigator.clipboard.writeText('@'+V.prof.username); toast('نسخنا اليوزرنيم'); }catch(e){} };
     bindFriendButtons($('#pf-hero-slot'));
   }
@@ -204,10 +205,10 @@
     const fav = games.filter(g=>p.per[g] && p.per[g].g).sort((a,b)=>p.per[b].g-p.per[a].g)[0];
     const kpi = (v, l, cls='') => `<div class="pf-kpi ${cls}"><b>${v}</b><span>${l}</span></div>`;
     const rows = games.map(g=>{ const x=p.per[g]||{ g:0, w:0, best:0 }, G=A.GAMES[g], r=pct(x.w,x.g);
-      return `<div class="pf-gr ${x.g?'':'zero'}"><i class="pf-gic">${ic(G.icon)}</i><span class="pf-gn"><b>${G.name}</b><small>${x.g ? `${x.g} مباراة · ${x.w} فوز${x.best?` · أعلى نتيجة ${x.best}`:''}` : 'ما لعبتها للحين'}</small></span>
+      return `<div class="pf-gr ${x.g?'':'zero'}"><i class="pf-gic">${ic(G.icon)}</i><span class="pf-gn"><b>${G.name}</b><small>${x.g ? `${x.g} مباراة · ${x.w} فوز${x.best?` · أعلى نتيجة ${x.best}`:''}` : (V.mine?'ما لعبتها للحين':'ما لعبها للحين')}</small></span>
         <span class="pf-gbar" aria-hidden="true"><i style="width:${r}%"></i></span><span class="pf-gp">${x.g?r+'%':'—'}</span></div>`; }).join('');
     return `<section class="pf-card"><h2 class="pf-h">${ic('acc-chart')} الأرقام</h2>
-      <div class="pf-kpis">${kpi(p.games,'مباراة')}${kpi(p.wins,'فوز')}${kpi(p.games?pct(p.wins,p.games)+'%':'—','نسبة الفوز')}${kpi(fav?A.GAMES[fav].name:'—','لعبتك المفضلة','txt')}</div>
+      <div class="pf-kpis">${kpi(p.games,'مباراة')}${kpi(p.wins,'فوز')}${kpi(p.games?pct(p.wins,p.games)+'%':'—','نسبة الفوز')}${kpi(fav?A.GAMES[fav].name:'—', V.mine?'لعبتك المفضلة':'لعبته المفضلة','txt')}</div>
       <div class="pf-mini">${p.bestStreak?`<span class="chip">${ic('flame')} أطول سلسلة فوز ${p.bestStreak}</span>`:''}${p.podiums?`<span class="chip">${ic('podium')} على المنصة ${p.podiums}</span>`:''}${p.days?`<span class="chip">${ic('acc-calendar')} لعب في ${p.days} يوم</span>`:''}</div>
       <div class="pf-games">${rows}</div></section>`;
   }
@@ -223,7 +224,7 @@
     return `<section class="pf-card" id="pf-ach"><div class="pf-h-row"><h2 class="pf-h">${ic('trophy')} الإنجازات</h2><span class="pf-count"><b>${got}</b> من ${all.length}</span></div>
       <div class="pf-seg" role="tablist" aria-label="فلترة الإنجازات">${seg('all','الكل')}${seg('done','المفتوحة')}${seg('left','الباقية')}</div>
       <div class="pf-ach-grid">${shown.map(({a,pr})=>{ const R=A.RARITY[a.rarity];
-        return `<article class="pf-ach ${pr.done?'done':'locked'}" style="--rc:${R.color}" aria-label="${esc(a.name)}${pr.done?'، مفتوح':'، مقفل'}">
+        return `<article class="pf-ach ${pr.done?'done':'locked'} ${a.special?'special':''}" style="--rc:${R.color}" aria-label="${esc(a.name)}${pr.done?'، مفتوح':'، مقفل'}">
           <i class="pf-ach-ic">${ic(pr.done?a.icon:'acc-lock')}</i>
           <div class="pf-ach-t"><b>${esc(a.name)}</b><p>${esc(a.desc)}</p>
           ${pr.done ? `<small class="pf-ach-r">${R.name}${pr.at?' · '+fmtWhen(pr.at):''}</small>`
@@ -302,7 +303,7 @@
     const w=A.unameWait(), mins=Math.ceil(w/60000), hasPw=A.hasPassword();
     const hrs=Math.floor(mins/60), rest=mins%60, hTxt = hrs===2 ? 'ساعتين' : 'ساعة';
     const waitTxt = w>0 ? (mins>=60 ? `تقدر تغيّره بعد ${hTxt}${rest?` و${rest} دقيقة`:''}` : `تقدر تغيّره بعد ${mins} دقيقة`) : 'تقدر تغيّره مرة كل ساعتين';
-    return `<section class="pf-card pf-acct" id="pf-acct"><h2 class="pf-h">${ic('acc-user-check')} حسابك</h2>
+    return `<section class="pf-card pf-acct" id="pf-acct"><div class="pf-h-row"><h2 class="pf-h">${ic('gears')} إعدادات الحساب</h2>${p.username?`<button type="button" class="btn small ghost pf-icon" id="ac-close" aria-label="سكّر الإعدادات">${ic('cancel')}</button>`:''}</div>
       ${!p.username ? `<p class="pf-need">${ic('star')} اختر يوزرنيم — هو معرّفك اللي يضيفك فيه أخوياك، وتدخل فيه مع كلمة السر.</p>` : ''}
       <form class="pf-gform" id="ac-u" novalidate>
         <label class="field">اليوزرنيم<span class="pf-at"><b>@</b><input type="text" id="ac-un" maxlength="20" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(p.username||'')}" ${w>0?'disabled':''}></span>
@@ -318,6 +319,7 @@
   }
   function bindAccount(){
     const s=$('#pf-acct'); if(!s) return;
+    const cl=$('#ac-close', s); if(cl) cl.onclick=()=>{ V.showAcct=false; render(); const b=$('#pf-acct-btn'); if(b) b.focus(); };
     const fu=$('#ac-u', s), inp=$('#ac-un', s), h=$('#ac-uh', s); let ck=0;
     if(inp) inp.oninput=()=>{ clearTimeout(ck); const v=inp.value.trim().toLowerCase(); const bad=A.unameProblem(v);
       if(v===V.prof.username){ h.textContent='هذا يوزرنيمك الحالي'; h.className='pf-hint'; return; }
@@ -325,10 +327,10 @@
       h.textContent='نتأكد…'; h.className='pf-hint'; ck=setTimeout(async()=>{ const r=await A.checkUsername(v); if(inp.value.trim().toLowerCase()===v){ h.textContent=r.ok?'متاح':r.why; h.className='pf-hint '+(r.ok?'ok':'bad'); } }, 450); };
     if(fu) fu.onsubmit=async e=>{ e.preventDefault(); const b=$('button',fu); b.disabled=true;
       const r=await busy(A.setUsername(inp.value), 'نحجز اليوزرنيم…'); b.disabled=false;
-      if(r.ok){ toast('صار يوزرنيمك @'+inp.value.trim().toLowerCase()); V.prof=await A.getProfile(); render(); } else { h.textContent=r.why; h.className='pf-hint bad'; } };
+      if(r.ok){ toast('صار يوزرنيمك @'+inp.value.trim().toLowerCase()); V.showAcct=!A.hasPassword(); V.prof=await A.getProfile(); render(); } else { h.textContent=r.why; h.className='pf-hint bad'; } };
     const fp=$('#ac-p', s); if(fp) fp.onsubmit=async e=>{ e.preventDefault(); const b=$('button',fp); b.disabled=true; $('#ac-perr').textContent='';
       const r=await busy(A.setPassword($('#ac-pw').value), 'نحفظ كلمة السر…'); b.disabled=false;
-      if(r.ok){ toast('انحفظت كلمة السر — تقدر تدخل باليوزرنيم'); $('#ac-pw').value=''; render(); } else $('#ac-perr').textContent=r.why; };
+      if(r.ok){ toast('انحفظت كلمة السر — تقدر تدخل باليوزرنيم'); V.showAcct=false; render(); } else $('#ac-perr').textContent=r.why; };
   }
   // أصدقاء لاعب ثاني + المشتركين معك
   function theirsHTML(c){
@@ -361,7 +363,7 @@
     const frames = A.FRAMES.map(f=>{ const lk=lockOf('frame', f.id);
       return `<button type="button" role="radio" aria-checked="${f.id===d.frame}" class="pf-pick pf-fr ${f.id===d.frame?'sel':''}" data-v="${f.id}" ${lk?'aria-disabled="true" disabled':''} title="${esc(lk||f.name)}">${A.avatarHTML({ avatar:d.avatar, color:d.color, frame:f.id }, 44)}<span class="pf-pl">${lk?ic('acc-lock'):''}${esc(f.name)}</span>${lk?`<small>${esc(lk)}</small>`:''}</button>`; }).join('');
     const titles = A.TITLES.map(t=>{ const lk=lockOf('title', t.id);
-      return `<button type="button" role="radio" aria-checked="${t.id===d.title}" class="pf-pick pf-tt ${t.id===d.title?'sel':''}" data-v="${t.id}" ${lk?'aria-disabled="true" disabled':''} title="${esc(lk||t.name)}">${lk?ic('acc-lock'):''}${esc(t.name)}</button>`; }).join('');
+      return `<button type="button" role="radio" aria-checked="${t.id===d.title}" class="pf-pick pf-tt ${t.id===d.title?'sel':''} ${t.special?'t-special':''}" data-v="${t.id}" ${lk?'aria-disabled="true" disabled':''} title="${esc(lk||t.name)}">${lk?ic('acc-lock'):''}${esc(t.name)}</button>`; }).join('');
     const colors = A.COLORS.map(c=>`<button type="button" role="radio" aria-checked="${c===d.color}" class="pf-pick pf-sw ${c.toUpperCase()===String(d.color).toUpperCase()?'sel':''}" data-v="${c}" style="--sw:${c}" aria-label="لون ${c}"></button>`).join('');
     return `<section class="pf-card pf-edit" aria-label="تعديل الملف"><div class="pf-h-row"><h2 class="pf-h">${ic('pencil')} عدّل ملفك</h2><span class="muted small">التغييرات تبان فوق على طول</span></div>
       <div class="pf-edit-grid">

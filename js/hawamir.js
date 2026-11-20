@@ -737,7 +737,7 @@ window.DahoomHawamir = (function(){
       phase: G.over ? '' : p.out ? 'أفلست — تابع من الشاشة' : cur()===p ? 'دورك — القرارات تجيك هنا' : `دور ${cur().name}`,
       fx: owned(p).map(i=>({ n:T[i].name+(G.level[i]?` · ${LV[G.level[i]-1].name}`:''), bad:false })),
       scores: rank.map(x=>({ id:x.id, name:x.name, color:x.color, score:money(worth(x)), turn:!G.over && x===cur() })), hm: hmBoard(p, cid) };
-    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, mid:G.t0, awards:[], all:finalAll(p), rows:[['الثروة',money(worth(p))],['الكاش',money(p.cash)],['العقارات',String(owned(p).length)],['إيجار دخل',money(p.stats.rentIn)],['إيجار دفعته',money(p.stats.rentOut)]] }; }
+    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, mid:G.t0, awards:[], all:finalAll(p), stats:{ jailed:p.stats.jailed|0, built:p.stats.built|0, trades:p.stats.trades|0, bought:p.stats.bought|0 }, rows:[['الثروة',money(worth(p))],['الكاش',money(p.cash)],['العقارات',String(owned(p).length)],['إيجار دخل',money(p.stats.rentIn)],['إيجار دفعته',money(p.stats.rentOut)]] }; }
     return st;
   }
 

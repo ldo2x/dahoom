@@ -355,7 +355,7 @@
       const sorted=[...G.teams].sort((a,b)=>b.score-a.score);
       return { game:'rasm', team:{id:t.id,name:t.name,color:t.color,score:t.score}, scores,
         final:{ rank:sorted.indexOf(t)+1, of:sorted.length, mid:G.log.t0, awards:(G.awards||[]).filter(a=>a.team&&a.team.id===id).map(a=>({title:a.title,value:a.value})),
-          rows:[['نقاطكم',t.score],['تخمينات صح',t.guessedOk],['رسماتكم اللي انعرفت',t.drawnOk]], all:finalAll(sorted, id) } };
+          rows:[['نقاطكم',t.score],['تخمينات صح',t.guessedOk],['رسماتكم اللي انعرفت',t.drawnOk]], all:finalAll(sorted, id), stats:{ guessed:t.guessedOk|0, drawn:t.drawnOk|0 } } };
     }
     const mine = !!(G.drawer && !G.drawer.tv && G.drawer.cid===cid);
     const myTurn = cur().id===id, mySolve = G.phase==='draw' && !mine ? solvedBy(id) : null;

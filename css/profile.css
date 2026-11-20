@@ -243,3 +243,24 @@ input[type=search]{font-family:var(--body);font-size:1rem;font-weight:600;paddin
 .pf-sub{display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .pf-sub .pf-uname{margin:0}
 .pf-who .pf-sub .pf-pres{margin:0}
+
+/* ===== لقب «عتيق» المتحرك (النسخة التجريبية) ===== */
+.t-special{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:5px;color:#2A1600!important;font-weight:900!important;
+  border-color:#F5B83D!important;background:linear-gradient(110deg,#B9780F 0%,#FFD978 22%,#FFF3C4 34%,#F5B83D 48%,#B9780F 70%,#FFD978 100%)!important;background-size:250% 100%!important;
+  box-shadow:0 0 0 1px rgba(255,214,120,.5),0 0 18px -2px rgba(245,184,61,.75);animation:tShine 3.2s linear infinite,tGlow 2.4s ease-in-out infinite}
+.t-special .ic{width:14px;height:14px;color:#5A3300;animation:tTwinkle 1.6s ease-in-out infinite}
+.t-special::after{content:'';position:absolute;inset:-40% auto -40% -30%;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);transform:skewX(-20deg);animation:tSweep 2.8s ease-in-out infinite}
+@keyframes tShine{to{background-position:-250% 0}}
+@keyframes tGlow{50%{box-shadow:0 0 0 1px rgba(255,214,120,.8),0 0 28px 2px rgba(245,184,61,.95)}}
+@keyframes tTwinkle{50%{transform:scale(1.25) rotate(18deg);opacity:.7}}
+@keyframes tSweep{0%,55%{left:-40%}100%{left:130%}}
+.pf-ach.special{border-color:#F5B83D;box-shadow:0 0 0 1px rgba(245,184,61,.45),0 10px 30px -14px rgba(245,184,61,.8)}
+.pf-ach.special.done .pf-ach-ic{background:linear-gradient(135deg,#FFD978,#B9780F);color:#2A1600;animation:tGlow 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){ .t-special,.t-special .ic,.t-special::after,.pf-ach.special .pf-ach-ic{animation:none!important} .t-special::after{display:none} }
+
+/* الاسم واليوزرنيم تحت الخلفية (ما يركبون على شريط السدو) */
+.pf-id{align-items:flex-start}
+.pf-who{padding-top:54px;padding-bottom:0}
+.pf-actions{padding-top:6px}
+@media (min-width:900px){ .pf-who{padding-top:64px} .pf-actions{padding-top:64px} }
+.pf-sub .pf-uname{font-size:1rem;color:var(--mute);font-weight:700;letter-spacing:.2px}
