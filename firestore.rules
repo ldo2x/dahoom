@@ -1,0 +1,164 @@
+rules_version = '2';
+
+// ===== دحوم — قوانين Firestore =====
+// انسخها كاملة في Firebase Console > Firestore Database > Rules ثم Publish.
+// التفاصيل في docs/accounts.md
+//
+//   reports/{id}                     بلاغات (js/telemetry.js عن طريق REST بدون تسجيل): إنشاء للكل، الباقي لصاحب المشروع
+//   matches/{id}                     سجل المباريات (نفس الشي)
+//   rooms/{code}                     اللوبي العام (REST بدون تسجيل): قراءة وإنشاء وتحديث للكل بشروط، بدون حذف
+//   users/{uid}                      الملف العام: يقراه الكل، يكتبه صاحبه بس
+//   users/{uid}/requests/{fromUid}   طلبات الصداقة: ينشئها المرسل بس
+//   users/{uid}/friends/{friendUid}  الربع: صاحب القائمة، أو الصديق نفسه وقت قبول الطلب أو الحذف
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    //  !!! صاحب المشروع: حط إيميل حساب قوقل حقك هنا (نفس اللي تدخل فيه admin.html) !!!
+    // ============================================================
+    function adminEmail() { return 'ADMIN_EMAIL'; }
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == adminEmail()
+        && request.auth.token.email_verified == true;
+    }
+    function isStr(v, max) { return v is string && v.size() <= max; }
+    function isNum(v, lo, hi) { return (v is int || v is float) && v >= lo && v <= hi; }
+    function isInt(v, lo, hi) { return v is int && v >= lo && v <= hi; }
+    function optStr(d, k, max) { return !(k in d) || isStr(d[k], max); }
+
+    // ---------------- البلاغات (telemetry.js) ----------------
+    match /reports/{id} {
+      allow create: if request.resource.data.size() <= 20
+        && optStr(request.resource.data, 'kind', 10)
+        && optStr(request.resource.data, 'item', 20)
+        && optStr(request.resource.data, 'text', 400)
+        && optStr(request.resource.data, 'answer', 200)
+        && optStr(request.resource.data, 'tag', 40)
+        && optStr(request.resource.data, 'reason', 60)
+        && optStr(request.resource.data, 'note', 400)
+        && optStr(request.resource.data, 'by', 30)
+        && optStr(request.resource.data, 'dev', 20)
+        && (!('status' in request.resource.data) || request.resource.data.status == 'open');
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ---------------- سجل المباريات (telemetry.js) ----------------
+    match /matches/{id} {
+      allow create: if request.resource.data.size() <= 20
+        && optStr(request.resource.data, 'game', 12)
+        && optStr(request.resource.data, 'dev', 20)
+        && (!('teams' in request.resource.data) || (request.resource.data.teams is list && request.resource.data.teams.size() <= 40));
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+
+    // ---------------- اللوبي العام (REST بدون تسجيل؛ الضيف يقدر يستضيف) ----------------
+    // الكود 4 حروف من [A-Z2-9]. الحقول بالضبط هذي. updatedAt لازم يكون قريب من وقت السيرفر (±5 دقايق)
+    // لأن REST يرسل timestampValue من ساعة الجهاز وما يقدر يطابق request.time بالضبط.
+    function validRoom(code) {
+      let d = request.resource.data;
+      return code.matches('^[A-Z2-9]{4}$')
+        && d.keys().hasAll(['code','game','gameName','host','hostAv','players','max','phase','pub','updatedAt','v'])
+        && d.keys().hasOnly(['code','game','gameName','host','hostAv','players','max','phase','pub','updatedAt','v'])
+        && d.code is string && d.code.size() <= 4 && d.code == code
+        && isStr(d.game, 12)
+        && isStr(d.gameName, 24)
+        && isStr(d.host, 24)
+        && isStr(d.hostAv, 24)
+        && isInt(d.players, 0, 20)
+        && isInt(d.max, 0, 20)
+        && isStr(d.phase, 12)
+        && d.pub is bool
+        && d.updatedAt is timestamp
+        && d.updatedAt > request.time - duration.value(5, 'm')
+        && d.updatedAt < request.time + duration.value(5, 'm')
+        && d.v is int;
+    }
+    match /rooms/{code} {
+      allow get: if true;
+      allow list: if request.query.limit <= 50;
+      allow create, update: if validRoom(code);
+      allow delete: if false;
+    }
+
+    // ---------------- الحسابات ----------------
+    function perGame(p, g) {
+      return !(g in p) || (p[g] is map && p[g].size() <= 4 && (!('s' in p[g]) || (p[g].s is map && p[g].s.size() <= 8)));
+    }
+    function validUser(d) {
+      return d.keys().hasOnly(['name','nameLower','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak',
+                               'podiums','lasts','maxOf','night','days','lastDay','friends','per','ach','recent','merged','created','updated'])
+        && d.keys().hasAll(['name','nameLower','avatar','xp','level','games','wins'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 20
+        && isStr(d.nameLower, 40)
+        && isStr(d.avatar, 40)
+        && optStr(d, 'banner', 24)
+        && optStr(d, 'frame', 24)
+        && optStr(d, 'title', 24)
+        && optStr(d, 'bio', 120)
+        && optStr(d, 'lastDay', 12)
+        && (!('color' in d) || (d.color is string && d.color.matches('^#[0-9A-Fa-f]{6}$')))
+        && isInt(d.xp, 0, 100000000)
+        && isInt(d.level, 1, 99)
+        && isInt(d.games, 0, 10000000)
+        && isInt(d.wins, 0, 10000000) && d.wins <= d.games
+        && (!('per' in d) || (d.per is map && d.per.keys().hasOnly(['alf','khaliya','rasm','hawamir','sadq'])
+              && perGame(d.per, 'alf') && perGame(d.per, 'khaliya') && perGame(d.per, 'rasm') && perGame(d.per, 'hawamir') && perGame(d.per, 'sadq')))
+        && (!('ach' in d) || (d.ach is map && d.ach.size() <= 64))
+        && (!('recent' in d) || (d.recent is list && d.recent.size() <= 20))
+        && (!('merged' in d) || (d.merged is list && d.merged.size() <= 10));
+    }
+
+    match /users/{uid} {
+      allow get: if true;                                   // الملف عام
+      allow list: if request.query.limit <= 20;             // البحث بالاسم (limit 10)
+      allow create, update: if signedIn() && request.auth.uid == uid && validUser(request.resource.data);
+      allow delete: if signedIn() && request.auth.uid == uid;
+
+      // طلب صداقة من fromUid إلى uid
+      match /requests/{fromUid} {
+        allow read: if signedIn() && (request.auth.uid == uid || request.auth.uid == fromUid);
+        allow create: if signedIn() && request.auth.uid == fromUid && fromUid != uid
+          && exists(/databases/$(database)/documents/users/$(fromUid))
+          && request.resource.data.keys().hasOnly(['from','name','avatar','level','at'])
+          && request.resource.data.from == fromUid
+          && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+          && isStr(request.resource.data.avatar, 40)
+          && isInt(request.resource.data.level, 1, 99)
+          && isNum(request.resource.data.at, 0, 9999999999999);
+        allow update: if false;
+        allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == fromUid);
+      }
+
+      // صديق friendUid في قائمة uid.
+      // الإنشاء مسموح لما يكون فيه طلب معلّق بين الاثنين:
+      //   - صاحب القائمة يقبل طلب جاه:        users/uid/requests/friendUid موجود
+      //   - القابل يكتب نفسه بقائمة المرسل:   users/friendUid/requests/uid موجود
+      // (exists يشوف الحالة قبل الـ batch، فحذف الطلب بنفس الـ batch ما يأثر)
+      match /friends/{friendUid} {
+        function validFriend() {
+          return request.resource.data.keys().hasOnly(['uid','name','avatar','at'])
+            && request.resource.data.uid == friendUid
+            && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+            && isStr(request.resource.data.avatar, 40)
+            && isNum(request.resource.data.at, 0, 9999999999999);
+        }
+        allow read: if signedIn() && (request.auth.uid == uid || request.auth.uid == friendUid);
+        allow create: if signedIn() && friendUid != uid && validFriend() && (
+            (request.auth.uid == uid && exists(/databases/$(database)/documents/users/$(uid)/requests/$(friendUid)))
+         || (request.auth.uid == friendUid && exists(/databases/$(database)/documents/users/$(friendUid)/requests/$(uid))));
+        allow update: if signedIn() && request.auth.uid == uid && validFriend();
+        allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == friendUid);
+      }
+    }
+
+    // أي شي ثاني: مقفل
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
