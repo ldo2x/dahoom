@@ -213,7 +213,8 @@ window.DahoomAccount = (function(){
   }
   // الحقول اللي تنكتب بالسحابة (لازم تطابق firestore.rules)
   const DOC_KEYS = ['name','nameLower','username','unameAt','avatar','banner','frame','color','bio','title','xp','level','games','wins','streak','bestStreak','podiums','lasts','maxOf','night','days','lastDay','friends','per','ach','recent','merged','created','updated'];
-  function toDoc(p){ const d={}; p.nameLower=normName(p.name); for(const k of DOC_KEYS) d[k]=clone(p[k]); return d; }
+  // اليوزرنيم ما ينكتب هنا إلا لو موجود (حجزه وتغييره بـ setUsername) — كذا الملفات بدون يوزرنيم تمشي حتى مع القوانين القديمة
+  function toDoc(p){ const d={}; p.nameLower=normName(p.name); for(const k of DOC_KEYS){ if((k==='username' && !p.username) || (k==='unameAt' && !p.unameAt)) continue; d[k]=clone(p[k]); } return d; }
 
   // ---------- اليوزرنيم ----------
   // حروف إنجليزية صغيرة وأرقام و _ و . (من 3 إلى 20) — لازم تطابق firestore.rules
