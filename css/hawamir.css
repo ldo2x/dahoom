@@ -277,3 +277,60 @@
 .hm-pn small{display:inline-flex;align-items:center;gap:.3cqw}
 .hm-pn small .ic{width:.95cqw;height:.95cqw}
 .hm-dbt{font-style:normal;color:#C0392B;font-weight:800;display:inline-flex;align-items:center;gap:.3cqw;animation:rwPulse 1.4s ease-in-out infinite}
+
+/* ---------- النرد الفخم: مكعبات ثلاثية الأبعاد ---------- */
+.hm-dice3{--s:5.4cqw;display:inline-flex;gap:calc(var(--s)*.55);direction:ltr;perspective:calc(var(--s)*9);padding:calc(var(--s)*.25) 0}
+.hm-d3w{position:relative;width:var(--s);height:var(--s);flex:none}
+.hm-d3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--rx)) rotateY(var(--ry))}
+.hm-d3w.roll .hm-d3{animation:hmD3 1.2s cubic-bezier(.17,.67,.24,1) var(--dl) both}
+.hm-d3w.roll .hm-d3s{animation:hmD3s 1.2s cubic-bezier(.17,.67,.24,1) var(--dl) both}
+@keyframes hmD3{
+  0%{transform:translate3d(0,calc(var(--s)*-2.2),0) rotateX(0) rotateY(0) rotateZ(0) scale(.55);opacity:0}
+  12%{opacity:1}
+  38%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.55)) rotateY(calc(var(--ry)*.55)) rotateZ(calc(var(--rz)*.6)) scale(1.05)}
+  55%{transform:translate3d(0,calc(var(--s)*-.45),0) rotateX(calc(var(--rx)*.82)) rotateY(calc(var(--ry)*.82)) rotateZ(calc(var(--rz)*.3)) scale(1)}
+  72%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.96)) rotateY(calc(var(--ry)*.96)) rotateZ(calc(var(--rz)*.08))}
+  84%{transform:translate3d(0,calc(var(--s)*-.1),0) rotateX(var(--rx)) rotateY(var(--ry))}
+  100%{transform:translate3d(0,0,0) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(0)}}
+@keyframes hmD3s{0%{opacity:0;transform:scale(.3)}38%{opacity:.55;transform:scale(1)}55%{opacity:.25;transform:scale(.7)}72%,100%{opacity:.55;transform:scale(1)}}
+.hm-d3 .f{position:absolute;inset:0;border-radius:calc(var(--s)*.2);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:calc(var(--s)*.14);backface-visibility:hidden;
+  background:radial-gradient(120% 120% at 25% 20%,#FFFFFF 0%,#F7F1E4 45%,#E4D8BF 100%);box-shadow:inset 0 0 0 calc(var(--s)*.02) rgba(0,0,0,.08),inset 0 calc(var(--s)*-.08) calc(var(--s)*.14) rgba(120,90,40,.22),inset 0 calc(var(--s)*.05) calc(var(--s)*.08) rgba(255,255,255,.9)}
+.hm-d3 .f1{transform:translateZ(calc(var(--s)/2))}
+.hm-d3 .f6{transform:rotateY(180deg) translateZ(calc(var(--s)/2))}
+.hm-d3 .f2{transform:rotateY(90deg) translateZ(calc(var(--s)/2))}
+.hm-d3 .f5{transform:rotateY(-90deg) translateZ(calc(var(--s)/2))}
+.hm-d3 .f3{transform:rotateX(90deg) translateZ(calc(var(--s)/2))}
+.hm-d3 .f4{transform:rotateX(-90deg) translateZ(calc(var(--s)/2))}
+.hm-d3 .f i{display:block;margin:auto;width:calc(var(--s)*.17);height:calc(var(--s)*.17);border-radius:50%}
+.hm-d3 .f i.on{background:radial-gradient(circle at 35% 30%,#5A5048,#151210 70%);box-shadow:inset 0 calc(var(--s)*.012) calc(var(--s)*.02) rgba(0,0,0,.6),0 calc(var(--s)*.01) 0 rgba(255,255,255,.7)}
+.hm-d3 .f1 i.on{width:calc(var(--s)*.26);height:calc(var(--s)*.26);background:radial-gradient(circle at 35% 30%,#E5574A,#8E1B12 72%)}
+.hm-d3s{position:absolute;left:8%;right:8%;bottom:calc(var(--s)*-.22);height:calc(var(--s)*.2);border-radius:50%;background:rgba(0,0,0,.45);filter:blur(calc(var(--s)*.08));z-index:-1}
+.r-hmboard .hm-dice3{--s:7.2cqw}
+.r-hmboard.pt .hm-dice3{--s:12.5cqw}
+@media (prefers-reduced-motion:reduce){ .hm-d3w.roll .hm-d3,.hm-d3w.roll .hm-d3s{animation:none} }
+/* نافذة الصفقة على الشاشة: أزرار الكاش */
+.hm-bst{display:flex;flex-wrap:wrap;gap:4px}
+.hm-bst .btn{flex:1 1 30%;font-family:var(--num);padding:4px 6px}
+/* المنظور على كل مكعب لحاله (عشان ما يطلع مسطح وهو يتدحرج) + ميلان بسيط يبيّن جوانب المكعب */
+.hm-dice3{perspective:none}
+.hm-d3w{perspective:calc(var(--s)*6)}
+.hm-d3{transform:rotateX(-14deg) rotateY(18deg) rotateX(var(--rx)) rotateY(var(--ry))}
+.hm-d3w:nth-child(2) .hm-d3{transform:rotateX(-14deg) rotateY(-18deg) rotateX(var(--rx)) rotateY(var(--ry))}
+@keyframes hmD3{
+  0%{transform:translate3d(0,calc(var(--s)*-2.2),0) rotateX(0) rotateY(0) rotateZ(0) scale(.55);opacity:0}
+  12%{opacity:1}
+  38%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.55)) rotateY(calc(var(--ry)*.55)) rotateZ(calc(var(--rz)*.6)) scale(1.05)}
+  55%{transform:translate3d(0,calc(var(--s)*-.45),0) rotateX(calc(var(--rx)*.82)) rotateY(calc(var(--ry)*.82)) rotateZ(calc(var(--rz)*.3)) scale(1)}
+  72%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.96 - 10deg)) rotateY(calc(var(--ry)*.96 + 12deg)) rotateZ(calc(var(--rz)*.08))}
+  84%{transform:translate3d(0,calc(var(--s)*-.1),0) rotateX(-14deg) rotateY(18deg) rotateX(var(--rx)) rotateY(var(--ry))}
+  100%{transform:translate3d(0,0,0) rotateX(-14deg) rotateY(18deg) rotateX(var(--rx)) rotateY(var(--ry))}}
+.hm-d3w:nth-child(2).roll .hm-d3{animation-name:hmD3b}
+@keyframes hmD3b{
+  0%{transform:translate3d(0,calc(var(--s)*-2.2),0) rotateX(0) rotateY(0) rotateZ(0) scale(.55);opacity:0}
+  12%{opacity:1}
+  38%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.55)) rotateY(calc(var(--ry)*.55)) rotateZ(calc(var(--rz)*.6)) scale(1.05)}
+  55%{transform:translate3d(0,calc(var(--s)*-.45),0) rotateX(calc(var(--rx)*.82)) rotateY(calc(var(--ry)*.82)) rotateZ(calc(var(--rz)*.3)) scale(1)}
+  72%{transform:translate3d(0,0,0) rotateX(calc(var(--rx)*.96 - 10deg)) rotateY(calc(var(--ry)*.96 - 12deg)) rotateZ(calc(var(--rz)*.08))}
+  84%{transform:translate3d(0,calc(var(--s)*-.1),0) rotateX(-14deg) rotateY(-18deg) rotateX(var(--rx)) rotateY(var(--ry))}
+  100%{transform:translate3d(0,0,0) rotateX(-14deg) rotateY(-18deg) rotateX(var(--rx)) rotateY(var(--ry))}}
+.hm-msg .hm-dice3{margin-inline:1.2cqw}

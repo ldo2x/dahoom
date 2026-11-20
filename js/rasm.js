@@ -98,10 +98,24 @@
   }
   const hintText = () => G.word ? [...G.word.w].map((ch,i)=> ch===' ' ? '  ' : (G.revealed&&G.revealed.has(i) ? ch : '_')).join(' ') : '';
 
+  // ---------- اللعب يمشي لحاله ----------
+  // الرسام ينختار تلقائي (بالفردي على طول، وبالفرق لو محد ضغط «أنا برسم»)، والكلمة تنختار لو طوّل، والدور الجاي يبدأ بعد عدّ تنازلي
+  const AUTO = { claim:9000, pick:15000, next:10 };
+  let autoT=null, cdT=null;
+  function clearAuto(){ clearTimeout(autoT); autoT=null; clearInterval(cdT); cdT=null; if(G) G.nextIn=0; }
+  function autoClaim(){
+    const t=cur(), n=NET(); if(!G || G.phase!=='claim' || !n || !n.phones) return false;
+    const ph=n.phones(t.id); if(!ph.length) return false;
+    const c=rnd(ph); onClaim(t.id, c.cid, c.pid); return true;
+  }
+
   // ---------- الدور ----------
   function startTurn(){
-    stopTimer(); G.phase='claim'; G.result=null; G.rateBy={}; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[]; G.solved=[]; G.dpTurn=0;
+    clearAuto(); stopTimer(); G.phase='claim'; G.result=null; G.rateBy={}; G.drawer=null; G.choices=null; G.word=null; G.revealed=new Set(); G.feed=[]; G.solved=[]; G.dpTurn=0;
     clearBoard(); setTvDraw(false); renderScore(); turnIntro();
+    const solo = D.session.mode==='solo' || cur().players.length<=1;
+    if(solo){ if(autoClaim()) return; }
+    else autoT=setTimeout(()=>{ if(G && G.phase==='claim') autoClaim(); }, AUTO.claim);
   }
   function turnIntro(){
     const t=cur(), n=NET(), viaPhone = n && n.hasPhone(t.id);
@@ -122,7 +136,10 @@
     });
   }
   function offerChoices(){
+    clearAuto();
     G.phase='pick'; G.choices=pickChoices(); play('card',{volume:.6});
+    G.pickUntil=Date.now()+AUTO.pick;
+    autoT=setTimeout(()=>{ if(G && G.phase==='pick' && G.choices) choose(1); }, AUTO.pick);   // طوّل؟ نختار له المتوسطة
     const t=cur();
     if(G.drawer.tv){
       panel(`<div class="lower-third" style="--c:${t.color}"><span class="lt-k">الرسام</span><span class="lt-v">${esc(t.name)}</span></div>
@@ -139,6 +156,7 @@
   }
   function choose(i){
     if(G.phase!=='pick' || !G.choices || !G.choices[i]) return;
+    clearAuto();
     G.word=G.choices[i]; G.choices=null; G.used.add(G.word.id); used.save(G.used);
     G.phase='draw'; G.feed=[]; G.solved=[]; G.dpTurn=0; G.revealed=new Set(); clearBoard();
     { const L=G.log.items, last=L[L.length-1]; if(last && last.r==='?') last.r='skip';
@@ -277,8 +295,15 @@
       <div class="row center mt-s"><button class="btn btn-hype big" id="rs-next">${last?`${ic('podium')} النتائج`:`الدور الجاي ${ic('next')}`}</button></div>`);
     $('#rs-next').onclick=()=>nextTurn();
     drawRating();
+    // عدّ تنازلي للدور الجاي (وقت للتقييم)، والمضيف يقدر يستعجل بالزر
+    clearAuto(); G.nextIn=AUTO.next;
+    const tickNext=()=>{ const b=$('#rs-next'); if(b) b.innerHTML = `${last?`${ic('podium')} النتائج`:`الدور الجاي ${ic('next')}`} <span class="rs-cd">${G.nextIn}</span>`; pushAll(); };
+    tickNext();
+    cdT=setInterval(()=>{ if(!G || G.phase!=='reveal'){ clearAuto(); return; } G.nextIn--; if(G.nextIn<=0){ clearAuto(); nextTurn(); } else tickNext(); }, 1000);
   }
   function nextTurn(){
+    if(!G || G.phase==='over') return;
+    clearAuto();
     closeRating();
     G.turn++;
     if(G.turn>=G.order.length){ G.turn=0; G.round++; }
@@ -348,7 +373,7 @@
         reveal: G.phase==='reveal' && G.lastWord ? G.lastWord.w : null,
         timer: G.phase==='draw' && G.deadline ? { ms:Math.max(0,G.deadline-Date.now()), total:G.total*1000 } : null,
         feed: (G.feed||[]).slice(-14).map(f=>({ n:f.name, c:f.color, x:f.close?'':f.text, close:!!f.close, ok:!!f.ok })),
-        result: G.phase==='reveal' ? G.result : null, tag: G.word && G.phase!=='pick' ? G.word.tag : null, diff: G.word ? DIFF[G.word.d]+' · '+PTS[G.word.d] : null,
+        result: G.phase==='reveal' ? G.result : null, nextIn: G.phase==='reveal' ? (G.nextIn||0) : 0, pickMs: G.phase==='pick' && G.pickUntil ? Math.max(0, G.pickUntil-Date.now()) : 0, tag: G.word && G.phase!=='pick' ? G.word.tag : null, diff: G.word ? DIFF[G.word.d]+' · '+PTS[G.word.d] : null,
         rating: G.phase==='reveal' ? { avg:rateAvg(), n:Object.keys(G.ratings||{}).length, votes:Object.entries(G.ratings||{}).map(([k,v])=>({ n:((G.rateBy||{})[k]||{}).name||'', c:((G.rateBy||{})[k]||{}).color||'', v })) } : null },
       phase: G.phase==='claim' ? `دور ${cur().name} يرسم` : G.phase==='pick' ? 'الرسام يختار كلمة' : G.phase==='draw' ? (mine ? 'ارسم! الكل يشوف رسمتك على الشاشة' : mySolve ? 'خمّنتها صح — انتظر الباقين' : 'خمّنوا الرسمة!') : '' };
   }
@@ -397,7 +422,7 @@
 
   // ---------- النهاية ----------
   function endMatch(){
-    stopTimer(); stopAll(); G.phase='over'; setTvDraw(false);
+    clearAuto(); stopTimer(); stopAll(); G.phase='over'; setTvDraw(false);
     const sorted=[...G.teams].sort((a,b)=>b.score-a.score), winner=sorted[0];
     go('results'); play('win'); setTimeout(()=>memeSound('win'),700); confetti(400,6000); reaction('win',4000);
     $('#winner-title').innerHTML=`<span class="who" style="--c:${winner.color}">${esc(winner.name)}</span> فاز بارسم وخمّن`;
@@ -457,7 +482,7 @@
     $('#btn-to-settings').addEventListener('click',()=>setTimeout(renderSettings,0));
     $('#btn-rasm-start').onclick=()=>{ play('cheer',{volume:.5}); newMatch(); };
     $('#rs-help').onclick=helpModal;
-    $('#rs-quit').onclick=async ()=>{ if(await confirmBox('<h3>تنهي المباراة؟</h3>','أنهِ','كمّل','btn-bad')){ stopTimer(); stopAll(); if(G) G.phase='over'; go('home'); } };
+    $('#rs-quit').onclick=async ()=>{ if(await confirmBox('<h3>تنهي المباراة؟</h3>','أنهِ','كمّل','btn-bad')){ clearAuto(); stopTimer(); stopAll(); if(G) G.phase='over'; go('home'); } };
   });
   window.DAHOOM_DEBUG_RS = { state:()=>G, settings:()=>S, check, norm, choose, win, reveal, nextTurn, onGuess, addStroke, onRate, board:()=>B };
 })();

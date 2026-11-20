@@ -199,5 +199,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

@@ -848,3 +848,6 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .rs-prog-l span{padding:3px 10px;border-radius:999px;border:2px dashed color-mix(in srgb,var(--c) 60%,transparent);color:var(--mute);font-size:.9rem;transition:all .25s}
 .rs-prog-l span.ok{border-style:solid;border-color:var(--c);background:color-mix(in srgb,var(--c) 22%,var(--surface-2));color:var(--text);font-weight:700;animation:fadeUp .3s both}
 .btn.team:disabled{opacity:.35;pointer-events:none}
+
+/* ارسم وخمّن: عدّاد الدور الجاي على زر المضيف */
+.rs-cd{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;border-radius:99px;background:rgba(0,0,0,.25);font-family:var(--num);font-weight:900;margin-inline-start:6px}

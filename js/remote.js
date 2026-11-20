@@ -163,7 +163,7 @@
   function renderMain(){
     const sw=$('#r-switch'); if(sw) sw.style.display = (st.S && st.S.locked) || st.mode==='solo' ? 'none' : '';
     renderSess();
-    const S=st.S, waiting = !S || S.waiting;
+    const S=st.S, waiting = !S || !!S.waiting;   // لازم true/false بالضبط: toggle مع undefined يقلب الكلاس كل مرة (كان يخفي سطر الحالة ويرجّعه فتتحرك الشاشة)
     $('#r-main').classList.toggle('is-waiting', waiting);
     tog('#r-wait', waiting);
     if(waiting){
@@ -385,7 +385,16 @@
     const tl=$('#r-hmtoks'); const ids=H.pl.map(p=>p.id).join(',');
     if(tl.dataset.ids!==ids){ tl.dataset.ids=ids; tl.innerHTML=H.pl.map(p=>`<span class="hm-tok" data-p="${p.id}" style="--c:${p.color}">${tokIn(p)}</span>`).join(''); }
     hmTokens();
-    renderMine(H); renderPlayers(H); renderTrades(H);
+    renderMine(H); renderPlayers(H); renderTrades(H); renderMeCard(H);
+  }
+  // بطاقتي جنب اللوحة (بالكمبيوتر بدل الشريط اللي فوق — عشان اللوحة تاخذ الطول كله)
+  function renderMeCard(H){
+    const el=$('#r-hmme'); if(!el) return; const p=H.pl.find(x=>x.id===H.me); if(!p) return;
+    const rank=[...H.pl].sort((a,b)=>(a.out-b.out)||b.worth-a.worth).indexOf(p)+1;
+    const html=`<span class="hm-tok ${p.jail?'jail':''}" style="--c:${p.color}">${tokIn(p)}</span><span class="r-hmme-n"><b>${esc(p.name)}</b><small>${p.out?`${ic('skull')} أفلست`:H.debt&&H.debt.id===p.id?`<em class="rh-dbt">${ic('hm-receipt-tax')} عليك ${money(H.debt.n)}</em>`:p.jail?`${ic('hm-jail')} بالسجن`:`${ic('hm-home')} ${p.props} عقار · المركز ${rank}`}</small></span>
+      <span class="r-hmme-c"><small>كاش</small><b>${money(p.cash)}</b></span><span class="r-hmme-c w"><small>الثروة</small><b>${money(p.worth)}</b></span>${p.turn?'<span class="r-hmme-turn">دورك</span>':''}`;
+    if(el.dataset.h!==html){ el.dataset.h=html; el.innerHTML=html; }
+    el.classList.toggle('turn', !!p.turn);
   }
   // ---------- تبويبات تحت/جنب اللوحة ----------
   function setHmTab(k){
@@ -457,7 +466,7 @@
   const plOf = id => (hm.B && hm.B.pl.find(p=>p.id===id)) || { name:'?', color:'var(--line)' };
   const tileOf = i => hm.S.tiles[i];
   const trSide = s => `${s.props.map(i=>`<span class="r-tp" style="--g:${tileOf(i).c}">${esc(tileOf(i).full)}</span>`).join('')}${s.cash?`<span class="r-tp cash">${money(s.cash)}</span>`:''}${!s.props.length&&!s.cash?'<span class="r-tp none">ولا شي</span>':''}`;
-  const tradableOf = pid => { const H=hm.B; return H.own.map((o,i)=>o===pid && !H.lv[i] && !(H.mort&&H.mort[i]) && tileOf(i).p ? i : -1).filter(i=>i>=0); };
+  const tradableOf = pid => { const H=hm.B; return H.own.map((o,i)=>o===pid && tileOf(i).p ? i : -1).filter(i=>i>=0); };
   let trSeen=new Set();
   function renderTrades(H){
     const box=$('#r-hmtr'); const L=H.trades||[], me=H.me;
@@ -483,7 +492,8 @@
       if(b.dataset.op==='counter') return tradeBuilder({ to:t.from, give:t.get, get:t.give, counter:t.id });
       send({ t:'hmtrade', op:b.dataset.op, id:t.id }); b.closest('.r-tra').innerHTML='<span class="muted small">انرسل…</span>'; });
   }
-  // بناء عرض: مع مين + اللي تعطيه + اللي تبيه
+  // بناء عرض: مع مين + اللي تعطيه + اللي تبيه — الكاش بأزرار +/−، وملخص واضح قبل الإرسال
+  const STEPS = [10000, 5000, 1000];
   function tradeBuilder(pre){
     const H=hm.B; if(!H || !hm.S) return;
     const others=H.pl.filter(p=>p.id!==H.me && !p.out); if(!others.length) return;
@@ -491,20 +501,37 @@
     let to=(pre&&others.find(p=>p.id===pre.to))||others[0];
     const sel={ give:new Set((pre&&pre.give.props)||[]), get:new Set((pre&&pre.get.props)||[]) };
     let cash={ give:(pre&&pre.give.cash)||0, get:(pre&&pre.get.cash)||0 };
+    const valOf = i => (H.val && H.val[i]) || tileOf(i).p;
+    const owner = k => k==='give' ? meP : to;
+    const sideVal = k => [...sel[k]].reduce((a,i)=>a+valOf(i),0) + cash[k];
+    const tag = i => { const lv=H.lv[i]||0, L=hm.S.levels; return `${lv?`<span class="r-tbt">${ic(L[lv-1].icon)}${esc(L[lv-1].name)}</span>`:''}${H.mort&&H.mort[i]?`<span class="r-tbt bad">${ic('hm-lock')}مرهون</span>`:''}`; };
+    const propBtn = (i,k) => { const t=tileOf(i), on=sel[k].has(i);
+      return `<button type="button" class="r-tbp ${on?'on':''}" data-k="${k}" data-i="${i}" aria-pressed="${on}" style="--g:${t.c}"><span class="r-tbck">${ic(on?'check':'plus')}</span><span class="r-tbn"><b>${esc(t.full)}</b><small>${esc(t.k)} ${tag(i)}</small></span><span class="r-tbv">${money(valOf(i))}</span></button>`; };
+    const col = k => { const p=owner(k), list=tradableOf(p.id);
+      return `<section class="r-tbc ${k}" style="--c:${p.color}"><div class="r-tbh"><b>${k==='give'?'أنت تعطي':'تاخذ من '+esc(p.name)}</b><span class="r-tbhas">${ic('hm-wallet')} معه <b>${money(p.cash)}</b></span></div>
+        <div class="r-tbps">${list.map(i=>propBtn(i,k)).join('')||`<p class="muted small">${k==='give'?'ما عندك عقارات':'ما عنده عقارات'} — تقدر تحط كاش بس.</p>`}</div>
+        <div class="r-tbcash"><div class="r-tbcv"><span>كاش</span><b data-cv="${k}">${money(cash[k])}</b></div>
+          <div class="r-tbst">${STEPS.map(s=>`<button type="button" class="btn small" data-st="${k}:-${s}">−${money(s/1000)} ألف</button>`).join('')}${STEPS.slice().reverse().map(s=>`<button type="button" class="btn small" data-st="${k}:${s}">+${money(s/1000)} ألف</button>`).join('')}</div>
+          <div class="r-tbst2"><input type="number" inputmode="numeric" min="0" max="${p.cash}" step="any" value="${cash[k]||''}" placeholder="أو اكتب المبلغ" data-c="${k}"><button type="button" class="btn small ghost" data-st="${k}:0">صفّر</button><button type="button" class="btn small ghost" data-st="${k}:all">الكل</button></div></div></section>`; };
+    const sum = () => { const g=sideVal('give'), t=sideVal('get'), d=t-g;
+      const list = k => [...[...sel[k]].map(i=>esc(tileOf(i).full)), cash[k]?money(cash[k])+' كاش':''].filter(Boolean).join('، ') || 'ولا شي';
+      return `<div class="r-tbsum"><div><small>تعطي</small><b>${list('give')}</b><em>قيمتها ${money(g)}</em></div><span class="r-tbx">${ic('hm-exchange')}</span><div><small>تاخذ</small><b>${list('get')}</b><em>قيمتها ${money(t)}</em></div>
+        <p class="r-tbd ${d>0?'up':d<0?'dn':''}">${d>0?`الصفقة لصالحك بـ ${money(d)}`:d<0?`تدفع زيادة ${money(-d)}`:'متعادلة'}</p></div>`; };
     const draw=()=>{
-      const col=(p,k)=>{ const list=tradableOf(p.id);
-        return `<div class="r-tbc"><div class="lbl">${k==='give'?'تعطي':'تاخذ من '+esc(p.name)} <small>معه ${money(p.cash)}</small></div>
-          <div class="r-tbps">${list.map(i=>`<button type="button" class="r-tbp ${sel[k].has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${tileOf(i).c}"><b>${esc(tileOf(i).full)}</b><small>${money(tileOf(i).p)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى — المبني والمرهون ما يدخلون بالصفقات. تقدر تحط كاش بس.</p>'}</div>
-          <label class="r-tbcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" step="any" value="${cash[k]||''}" placeholder="0" data-c="${k}"></label></div>`; };
-      sheet(`<div class="eyebrow">${pre&&pre.counter?'رد بعرض ثاني':'صفقة جديدة'}</div><h3>مع مين؟</h3>
-        <div class="r-tbto">${others.map(p=>`<button class="btn small ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${esc(p.name)}</button>`).join('')}</div>
-        <div class="r-tbcols">${col(meP,'give')}${col(to,'get')}</div>
+      sheet(`<div class="eyebrow">${ic('hm-exchange')} ${pre&&pre.counter?'رد بعرض ثاني':'صفقة جديدة'}</div><h3>مع مين؟</h3>
+        <div class="r-tbto">${others.map(p=>`<button class="r-tbwho ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${p.av?`<img src="${avSrc(p.av)}" alt="">`:''}<span><b>${esc(p.name)}</b><small>${money(p.cash)} كاش</small></span></button>`).join('')}</div>
+        <div class="r-tbcols">${col('give')}${col('get')}</div>
+        <div id="r-tbsum">${sum()}</div>
         <p class="r-err" id="r-tberr"></p>
-        <div class="r-actions"><button class="btn btn-hype big" data-send>أرسل العرض</button><button class="btn ghost" data-x>تراجع</button></div>
-        <p class="muted small center">العرض يطلع للكل، وهو يوافق أو يرفض أو يرد بعرض ثاني.</p>`);
+        <div class="r-actions"><button class="btn btn-hype big" data-send>${ic('hm-exchange')} أرسل العرض</button><button class="btn ghost" data-x>تراجع</button></div>
+        <p class="muted small center">العرض يطلع للكل، و${esc(to.name)} يوافق أو يرفض أو يرد بعرض ثاني. العقار المبني ينتقل بمبانيه، والمرهون ينتقل برهنه.</p>`);
+      const refresh = () => { $('#r-tbsum').innerHTML=sum(); ['give','get'].forEach(k=>{ const v=$(`#r-sheet [data-cv="${k}"]`); if(v) v.textContent=money(cash[k]); const inp=$(`#r-sheet [data-c="${k}"]`); if(inp && document.activeElement!==inp) inp.value=cash[k]||''; }); };
       $$('#r-sheet [data-to]').forEach(b=>b.onclick=()=>{ to=others.find(p=>p.id===b.dataset.to); sel.get.clear(); cash.get=0; vibe(8); draw(); });
-      $$('#r-sheet [data-i]').forEach(b=>b.onclick=()=>{ const s=sel[b.dataset.k], i=+b.dataset.i; s.has(i)?s.delete(i):s.add(i); b.classList.toggle('on'); vibe(8); });
-      $$('#r-sheet [data-c]').forEach(inp=>inp.oninput=()=>{ cash[inp.dataset.c]=Math.max(0, Math.round(+inp.value||0)); });
+      $$('#r-sheet [data-i]').forEach(b=>b.onclick=()=>{ const k=b.dataset.k, s=sel[k], i=+b.dataset.i; s.has(i)?s.delete(i):s.add(i); vibe(8);
+        const on=s.has(i); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.querySelector('.r-tbck').innerHTML=ic(on?'check':'plus'); refresh(); });
+      $$('#r-sheet [data-st]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.st.split(':'), max=owner(k).cash; vibe(6);
+        cash[k] = v==='all' ? max : v==='0' ? 0 : Math.max(0, Math.min(max, cash[k]+Number(v))); refresh(); });
+      $$('#r-sheet [data-c]').forEach(inp=>inp.oninput=()=>{ const k=inp.dataset.c; cash[k]=Math.max(0, Math.min(owner(k).cash, Math.round(+inp.value||0))); refresh(); });
       $('#r-sheet [data-x]').onclick=closeSheet;
       $('#r-sheet [data-send]').onclick=()=>{
         const err=$('#r-tberr'), give={ props:[...sel.give], cash:cash.give }, get={ props:[...sel.get], cash:cash.get };
@@ -654,6 +681,7 @@
       if(f.dataset.k!==k){ const fresh=f.dataset.k!=null && f.dataset.k!==''; f.dataset.k=k;
         f.innerHTML = L.length ? L.map((x,i)=>`<div class="rg-m ${x.ok?'ok':x.close?'close':''} ${fresh&&i===0?'new':''}" style="--c:${x.c||'var(--line)'}"><b>${esc(x.n)}</b><span>${x.ok?'خمّنها صح!':x.close?'قريب جداً!':esc(x.x)}</span></div>`).join('')
           : `<p class="muted small">${R.mine?'تخمينات الباقين تطلع هنا':'التخمينات تطلع هنا — حتى تخمينات الفرق الثانية'}</p>`; } }
+    { const nx=$('#rp-next'); if(nx) nx.innerHTML = R.nextIn ? `${ic('next')} الدور الجاي بعد <b>${R.nextIn}</b>` : ''; }
     if(R.phase==='reveal'){ if(R.myRate) markRate(R.myRate);
       const ri=$('#rp-rinfo'), g=R.rating; if(ri && g){ ri.innerHTML = g.n ? `<div class="rp-avg"><b>${g.avg.toFixed(1)}</b><span>من 5 — ${RATE[Math.max(0,Math.round(g.avg)-1)]}</span><small>${g.n} ${g.n===1?'صوت':'أصوات'}</small></div>
         <div class="rp-votes">${g.votes.map(v=>`<span style="--c:${v.c||'var(--line)'}"><b>${esc(v.n||'لاعب')}</b> ${v.v}</span>`).join('')}</div>` : '<p class="muted small center">محد قيّم للحين</p>'; } }
@@ -668,7 +696,7 @@
     }
     if(R.phase==='pick'){
       if(R.mine && R.choices){ vibe([80,40,80]);
-        box.innerHTML=`<div class="eyebrow">${ic('pencil')} اختار كلمة — لا تخلي أحد يشوف</div><div class="rp-choices">${R.choices.map((c,i)=>`<button class="btn big rp-choice" data-i="${i}"><b>${esc(c.w)}</b><small>${['','سهلة','متوسطة','صعبة'][c.d]} · ${c.p}</small></button>`).join('')}</div>`;
+        box.innerHTML=`<div class="eyebrow">${ic('pencil')} اختار كلمة — لا تخلي أحد يشوف</div>${R.pickMs?`<div class="sq-qbar rp-pickbar"><i style="--ms:${R.pickMs}ms;--from:1"></i></div><p class="muted small center">لو ما اخترت نختار لك المتوسطة</p>`:''}<div class="rp-choices">${R.choices.map((c,i)=>`<button class="btn big rp-choice" data-i="${i}"><b>${esc(c.w)}</b><small>${['','سهلة','متوسطة','صعبة'][c.d]} · ${c.p}</small></button>`).join('')}</div>`;
         $$('#r-rasm [data-i]').forEach(bt=>bt.onclick=()=>{ vibe(30); send({t:'rpick', i:+bt.dataset.i}); });
       } else box.innerHTML=`<div class="ch-taken">${ic('pencil')} ${esc(R.drawer||'الرسام')} يختار كلمة…</div>`;
       return;
@@ -742,6 +770,7 @@
         ${res.ok?`<div class="rp-solvers">${SV.map((s,i)=>`<span style="--c:${s.c||'var(--line)'}"><i>${i+1}</i><b>${esc(s.n)}</b><em>+${s.gp}</em></span>`).join('')}</div>`:''}</div>
       ${R.canRate?`<div class="lbl center">قيّم الرسمة</div><div class="rs-rate" id="rp-rate">${RATE.map((r,i)=>`<button class="rs-rate-b" data-rv="${i+1}"><b>${i+1}</b><span>${r}</span></button>`).join('')}</div>`:'<div class="lbl center">تقييم الرسمة</div>'}
       <div class="rp-rinfo" id="rp-rinfo"></div>
+      <div class="rp-next" id="rp-next"></div>
       <div class="lbl">التخمينات</div><div class="rg-feed" id="rg-feed"></div>`;
     vibe(res.ok ? (won?[80,40,80,40,160]:[60]) : [200]);
     $$('#rp-rate [data-rv]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'rate', v:+b.dataset.rv}); markRate(+b.dataset.rv); });

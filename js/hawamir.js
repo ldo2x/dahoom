@@ -78,13 +78,13 @@ window.DahoomHawamir = (function(){
   const mortVal = i => Math.round(tileVal(i)*0.5/500)*500;
   const unmortCost = i => Math.round((G.mort[i]||0)*(1+MORT_INT)/500)*500;
   const demoBack = i => Math.round(upCost(i)/2/100)*100;
-  const sellBack = i => Math.round(tileVal(i)/2/500)*500;
+  const sellBack = i => Math.max(0, Math.round(tileVal(i)*0.6/500)*500 - (G.mort[i]||0));   // البنك يشتري بـ 60٪ وينخصم الرهن لو مرهون
   const worth = p => p.cash + owned(p).reduce((a,i)=>a+tileVal(i)-(G.mort[i]||0),0);
   const groupMort = g => groupTiles(g).some(isMort);
   const canBuild = p => owned(p).filter(i=>T[i].t==='city' && groupFull(p,T[i].g) && !groupMort(T[i].g) && (G.level[i]||0)<LV.length && p.cash>=upCost(i));
   const demolishable = p => owned(p).filter(i=>(G.level[i]||0)>0 && !isMort(i));
   const mortgageable = p => owned(p).filter(i=>!isMort(i));
-  const sellable = p => owned(p).filter(i=>!isMort(i));
+  const sellable = p => owned(p);
   const unmortgageable = p => owned(p).filter(i=>isMort(i));
 
   // ---------- الرسم ----------
@@ -156,13 +156,18 @@ window.DahoomHawamir = (function(){
   }
   function renderAll(){ renderBoard(); renderSide(); renderLog(); renderTrades(); pushAll(); }
   const stage = html => { const s=$('#hm-stage'); if(s) s.innerHTML=html; if(G) G.stageHtml=html; pushAll(); };
+  // النرد: مكعبات ثلاثية الأبعاد تطيح وتتدحرج وتوقف على الرقم (نفس الحركة تطلع بجوالات اللاعبين)
   const PIPS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
-  const die = n => `<span class="hm-die">${[1,2,3,4,5,6,7,8,9].map(k=>`<i class="${(PIPS[n]||[]).includes(k)?'on':''}"></i>`).join('')}</span>`;
-  const diceHTML = (a,b,cls='') => `<span class="hm-dice ${cls}">${die(a)}${b!=null?die(b):''}</span>`;
+  const FACE_ROT = { 1:[0,0], 2:[0,-90], 3:[-90,0], 4:[90,0], 5:[0,90], 6:[0,180] };
+  const face = n => `<i class="f f${n}">${[1,2,3,4,5,6,7,8,9].map(k=>`<i class="${(PIPS[n]||[]).includes(k)?'on':''}"></i>`).join('')}</i>`;
+  const die3 = (n, k, roll) => { const [rx,ry]=FACE_ROT[n]||[0,0], sx=roll?720+rx:rx, sy=roll?(k?-720:720)+ry:ry, sz=roll?(k?-1:1)*(160+Math.floor(Math.random()*120)):0;
+    return `<span class="hm-d3w ${roll?'roll':''}" style="--dl:${k*110}ms"><span class="hm-d3" style="--rx:${sx}deg;--ry:${sy}deg;--rz:${sz}deg">${[1,2,3,4,5,6].map(face).join('')}</span><b class="hm-d3s"></b></span>`; };
+  const diceHTML = (a,b,cls='') => `<span class="hm-dice3 ${cls}">${die3(a,0,cls==='roll')}${b!=null?die3(b,1,cls==='roll'):''}</span>`;
   async function rollDice(two=true){
-    play('drums',{volume:.4,max:700});
-    for(let k=0;k<6;k++){ stage(`<div class="hm-msg">${diceHTML(d6(), two?d6():null, 'roll')}</div>`); await sleep(70); }
-    const a=d6(), b=two?d6():null; play('pop',{volume:.6});
+    const a=d6(), b=two?d6():null;
+    play('drums',{volume:.4,max:900});
+    stage(`<div class="hm-msg">${diceHTML(a,b,'roll')}</div>`);
+    await sleep(1250); play('pop',{volume:.6});
     return [a,b];
   }
   function tick(){
@@ -265,11 +270,11 @@ window.DahoomHawamir = (function(){
     const lbl = i => kind==='demo' ? `${T[i].name}: اهدم ${LV[G.level[i]-1].name} وخذ ${money(demoBack(i))}`
       : kind==='mort' ? `${T[i].name}: خذ ${money(mortVal(i))}`
       : kind==='unmort' ? `${T[i].name}: فكّه بـ ${money(unmortCost(i))}`
-      : `${T[i].name}: بيع بـ ${money(sellBack(i))}`;
+      : `${T[i].name}: بيع بـ ${money(sellBack(i))}${isMort(i)?' (مرهون)':''}`;
     const text = kind==='demo' ? 'تهدم مستوى واحد وترجع لك نص تكلفته. العقار يبقى لك.'
       : kind==='mort' ? `ترهنه للبنك مع مبانيه وتبقى مالكه، بس ما يجيب إيجار وما تبني ولا تهدم فيه. تفكه بعدين بفايدة ${Math.round(MORT_INT*100)}٪.`
       : kind==='unmort' ? 'تسدد الرهن مع الفايدة ويرجع العقار يجيب إيجار.'
-      : 'تبيعه للبنك بنص قيمته (مع مبانيه) ويرجع بدون مالك.';
+      : 'تبيعه للبنك بـ 60٪ من قيمته (مع مبانيه) ويرجع بدون مالك. لو مرهون ينخصم الرهن من السعر.';
     const title = { demo:'وش تهدم؟', mort:'وش ترهن؟', unmort:'وش تفك؟', sell:'وش تبيع للبنك؟' }[kind];
     const icon = { demo:'hm-hammer', mort:'hm-lock', unmort:'hm-lock-open', sell:'hm-cash' }[kind];
     const i=await decide(p, { title, text, cancel:'رجوع', options:L.map(k=>({ v:k, label:lbl(k), icon, cls:'plain', dis: kind==='unmort' && p.cash<unmortCost(k) })) });
@@ -277,7 +282,7 @@ window.DahoomHawamir = (function(){
     if(kind==='demo'){ if(!(G.level[i]>0) || isMort(i)) return; const back=demoBack(i), nm=LV[G.level[i]-1].name; G.level[i]--; p.cash+=back; play('game:g_swoosh',{volume:.5}); logE(p, `هدم ${nm} في ${T[i].name}`, back); }
     else if(kind==='mort'){ if(isMort(i)) return; const v=mortVal(i); G.mort[i]=v; p.cash+=v; play('coin',{volume:.5}); logE(p, `رهن ${T[i].name} للبنك`, v, 'info'); }
     else if(kind==='unmort'){ const c=unmortCost(i); if(p.cash<c){ toast(`فك الرهن يبي ${money(c)}`); return; } p.cash-=c; delete G.mort[i]; play('bonus',{volume:.5}); logE(p, `فك الرهن عن ${T[i].name} (مع الفايدة)`, -c); }
-    else { if(isMort(i)) return; const v=sellBack(i); delete G.owner[i]; delete G.level[i]; p.cash+=v; play('coin',{volume:.5}); logE(p, `باع ${T[i].name} للبنك`, v); }
+    else { const v=sellBack(i), m=isMort(i); delete G.owner[i]; delete G.level[i]; delete G.mort[i]; p.cash+=v; play('coin',{volume:.5}); logE(p, `باع ${T[i].name} للبنك${m?' (وانسدد رهنه)':''}`, v); }
     renderAll();
   }
   async function manageMenu(p){
@@ -344,11 +349,11 @@ window.DahoomHawamir = (function(){
   // ---------- الصفقات: عروض معلّقة يشوفها الكل ----------
   // العرض: from يعطي give (عقارات + كاش) ويبي get من to. ينرسل ويبقى معلّق لين to يوافق أو يرفض أو from يسحبه.
   // أي وقت بالمباراة (مو لازم دورك). عند الموافقة نتأكد إن كل شي لسا موجود — لو تغيّر الوضع العرض يفشل.
-  const tradable = p => owned(p).filter(i=>!(G.level[i]>0) && !isMort(i));
+  const tradable = p => owned(p);
   const TR_AR = { pending:'معلّقة', accepted:'تمت', rejected:'انرفضت', cancelled:'انسحبت', failed:'ما زبطت', countered:'رد بعرض ثاني' };
   const sideTxt = s => [...s.props.map(i=>T[i].name), s.cash?money(s.cash):''].filter(Boolean).join('، ') || 'ولا شي';
   function cleanSide(o, p){
-    const props=[...new Set((o&&o.props||[]).map(Number))].filter(i=>T[i] && T[i].price && G.owner[i]===p.id && !(G.level[i]>0) && !isMort(i));
+    const props=[...new Set((o&&o.props||[]).map(Number))].filter(i=>T[i] && T[i].price && G.owner[i]===p.id);
     const cash=Math.max(0, Math.round(Number(o&&o.cash)||0));
     return { props, cash };
   }
@@ -375,8 +380,8 @@ window.DahoomHawamir = (function(){
     if(how==='cancel'){ tr.st='cancelled'; tr.done=Date.now(); logE(A, `سحب صفقته مع ${B.name}`, 0, 'info'); }
     else if(how==='reject'){ tr.st='rejected'; tr.done=Date.now(); play('fx_deny',{volume:.5}); logE(B, `رفض صفقة ${A.name}`, 0, 'bad'); }
     else if(how==='accept'){
-      const okSide=(s,p)=>s.props.every(i=>G.owner[i]===p.id && !(G.level[i]>0) && !isMort(i)) && p.cash>=s.cash && !p.out;
-      if(!okSide(tr.give,A) || !okSide(tr.get,B) || (tr.get.cash && A.jail) || (tr.give.cash && B.jail)){ tr.st='failed'; tr.done=Date.now(); play('fx_deny',{volume:.5}); logE(null, `صفقة ${A.name} و${B.name} ما زبطت — الوضع تغيّر (عقار انباع أو انبنى أو الكاش ما يكفي)`, 0, 'bad'); }
+      const okSide=(s,p)=>s.props.every(i=>G.owner[i]===p.id) && p.cash>=s.cash && !p.out;
+      if(!okSide(tr.give,A) || !okSide(tr.get,B) || (tr.get.cash && A.jail) || (tr.give.cash && B.jail)){ tr.st='failed'; tr.done=Date.now(); play('fx_deny',{volume:.5}); logE(null, `صفقة ${A.name} و${B.name} ما زبطت — الوضع تغيّر (عقار انباع أو الكاش ما يكفي)`, 0, 'bad'); }
       else {
         tr.give.props.forEach(i=>G.owner[i]=B.id); tr.get.props.forEach(i=>G.owner[i]=A.id);
         A.cash+=tr.get.cash-tr.give.cash; B.cash+=tr.give.cash-tr.get.cash;
@@ -441,8 +446,9 @@ window.DahoomHawamir = (function(){
     const m=modal('<div id="hm-bld"></div>',{onMount(){}}); m.querySelector('.panel').classList.add('hm-bldp');
     const draw=()=>{ const box=m.querySelector('#hm-bld');
       const col=(p,set,k,cash)=>`<div class="hm-bc"><div class="lbl">${p===from?'تعطي':'تاخذ من '+esc(p.name)} <small>(معه ${money(p.cash)})</small></div>
-        <div class="hm-bps">${tradable(p).map(i=>`<button type="button" class="hm-bp ${set.has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${T[i].color}"><b>${esc(T[i].name)}</b><small>${money(T[i].price)}</small></button>`).join('')||'<p class="muted small">ما عنده عقار ينعطى (المبني والمرهون ما ينعطون)</p>'}</div>
-        <label class="hm-bcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" max="${p.cash}" step="any" value="${cash}" data-c="${k}"></label></div>`;
+        <div class="hm-bps">${tradable(p).map(i=>`<button type="button" class="hm-bp ${set.has(i)?'on':''}" data-k="${k}" data-i="${i}" style="--g:${T[i].color}"><b>${esc(T[i].name)}</b><small>${money(tileVal(i))}${G.level[i]?' · '+LV[G.level[i]-1].name:''}${isMort(i)?' · مرهون':''}</small></button>`).join('')||'<p class="muted small">ما عنده عقارات — يقدر يحط كاش بس</p>'}</div>
+        <div class="hm-bcash"><span>كاش</span><input type="number" inputmode="numeric" min="0" max="${p.cash}" step="any" value="${cash}" data-c="${k}"></div>
+        <div class="hm-bst">${[-10000,-5000,-1000,1000,5000,10000].map(v=>`<button type="button" class="btn small" data-st="${k}:${v}">${v>0?'+':'−'}${Math.abs(v)/1000} ألف</button>`).join('')}</div></div>`;
       box.innerHTML=`<div class="eyebrow">صفقة جديدة — ${esc(from.name)}</div><h3>مع مين؟</h3><div class="hm-pk">${others.map(p=>`<button class="btn small team ${p===to?'on':''}" style="--c:${p.color}" data-to="${p.id}">${esc(p.name)}</button>`).join('')}</div>
         <div class="hm-bcols">${col(from,sel.give,'give',gc)}${col(to,sel.get,'get',tc)}</div>
         <p class="hm-berr" id="hm-berr"></p>
@@ -450,6 +456,8 @@ window.DahoomHawamir = (function(){
       $$('[data-to]',box).forEach(b=>b.onclick=()=>{ to=byId(b.dataset.to); sel.get.clear(); tc=0; draw(); });
       $$('[data-i]',box).forEach(b=>b.onclick=()=>{ const set=sel[b.dataset.k], i=+b.dataset.i; set.has(i)?set.delete(i):set.add(i); b.classList.toggle('on'); });
       $$('[data-c]',box).forEach(inp=>inp.oninput=()=>{ const v=Math.max(0,Math.round(+inp.value||0)); if(inp.dataset.c==='give') gc=v; else tc=v; });
+      $$('[data-st]',box).forEach(b=>b.onclick=()=>{ const [k,d]=b.dataset.st.split(':'), who=k==='give'?from:to, inp=box.querySelector(`[data-c="${k}"]`);
+        const v=Math.max(0, Math.min(who.cash, (k==='give'?gc:tc)+Number(d))); if(k==='give') gc=v; else tc=v; inp.value=v; });
       box.querySelector('[data-x]').onclick=()=>m.remove();
       box.querySelector('[data-send]').onclick=()=>{ const r=offerTrade(from, to, { props:[...sel.give], cash:gc }, { props:[...sel.get], cash:tc }, pre&&pre.counter);
         if(typeof r==='string'){ box.querySelector('#hm-berr').textContent=r; return; } m.remove(); };
@@ -715,7 +723,7 @@ window.DahoomHawamir = (function(){
   function hmBoard(p, cid){
     const fresh = cid && !G.sent.has(cid); if(cid) G.sent.add(cid);
     return { st: fresh ? hmStatic() : null, key:MAP.id, me:p.id,
-      own:T.map((_,i)=>G.owner[i]||null), lv:T.map((_,i)=>G.level[i]||0), mort:T.map((_,i)=>G.mort[i]?unmortCost(i):0), debt:G.debt?{ id:G.debt.id, n:G.debt.n }:null, sub:T.map((_,i)=>tileSub(i)), focus:G.focus,
+      own:T.map((_,i)=>G.owner[i]||null), lv:T.map((_,i)=>G.level[i]||0), val:T.map((_,i)=>T[i].price?tileVal(i):0), mort:T.map((_,i)=>G.mort[i]?unmortCost(i):0), debt:G.debt?{ id:G.debt.id, n:G.debt.n }:null, sub:T.map((_,i)=>tileSub(i)), focus:G.focus,
       pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', pos:x.pos, cash:x.cash, worth:worth(x), out:x.out, jail:x.jail||0, props:owned(x).length, turn:!G.over && x===cur(), phone:phoneOf(x) })),
       pot:G.pot, round:G.round, endsIn:G.open ? 0 : Math.max(0,G.endAt-Date.now()), open:!!G.open, up:Date.now()-G.t0, lastRound:!!G.lastRound, timeUp:!!G.timeUp, stage:G.stageHtml||'',
       canBuild: !G.over && cur()===p ? canBuild(p).length : 0,
@@ -755,12 +763,12 @@ window.DahoomHawamir = (function(){
       <p><b>البناء:</b> لازم تملك كل مدن الدولة. بعدها تبني بيت ثم عمارة ثم فندق ثم برج، وكل مستوى يرفع الإيجار. تبني قبل ما ترمي النرد.</p>
       <p><b>الشركات:</b> شركتين تنشترى. إيجارها مجموع رمية اللي وقف عليها × ${money(DATA.coRent[0])}، ولو ملكت الثنتين × ${money(DATA.coRent[1])}.</p>
       <p><b>المطارات:</b> إيجارها يزيد كل ما ملكت مطار ثاني: ${DATA.airRent.map(money).join(' ثم ')}.</p>
-      <p><b>الصفقات:</b> بأي وقت ترسل عرض للاعب: تحط اللي تعطيه (عقارات أو كاش أو الاثنين) واللي تبيه منه — حتى لو كاش بس. العرض يبقى معلّق ويشوفه الكل، وهو يوافق أو يرفض أو يرد بعرض ثاني. العقار المبني ما يدخل بالصفقات.</p>
+      <p><b>الصفقات:</b> بأي وقت ترسل عرض للاعب: تحط اللي تعطيه (عقارات أو كاش أو الاثنين) واللي تبيه منه — حتى لو كاش بس. العرض يبقى معلّق ويشوفه الكل، وهو يوافق أو يرفض أو يرد بعرض ثاني. العقار المبني ينتقل بمبانيه، والمرهون ينتقل برهنه.</p>
       <p><b>الصندوق:</b> كل المخالفات والغرامات تتجمع فيه، واللي يوقف على خانة الصندوق ياخذه كله.</p>
       <p><b>السجن:</b> لو وقفت على الدورية (أو طلعت لك بطاقة حظ) تروح السجن على طول وما تاخذ راتب البداية. بدورك تجرّب تطلع دبل وتطلع ببلاش، أو تدفع كفالة ${money(DATA.bail)} للصندوق. عندك ${DATA.jailTries} محاولات، وبعدها تدفع الكفالة غصب. لو وقفت على السجن بالنرد عادي فأنت زائر بس. وانت بالسجن إيجاراتك تمشي عادي.</p>
       <p><b>الخانات الخاصة:</b> حظك (بطاقة عشوائية)، ساهر (مخالفة)، الدورية (توديك السجن)، رحلة مجانية (تطير لمطار أو للبداية أو سوق الأسهم)، سوق الأسهم (تستثمر وترمي نرد).</p>
-      <p><b>ما معك تدفع؟</b> ما ينباع شي لحاله. اللعب يوقف وأنت تدبّر الفلوس: تهدم مبنى (يرجع لك نص تكلفته)، أو ترهن عقار، أو تبيعه للبنك بنص قيمته، أو تسوي صفقة مع لاعب. لو ما قدرت تعلن إفلاسك وأملاكك ترجع للبنك.</p>
-      <p><b>الرهن:</b> ترهن عقارك (مع مبانيه) للبنك وتاخذ نص قيمته، وتبقى مالكه. وهو مرهون ما يجيب إيجار وما تبني ولا تهدم فيه ولا يدخل بالصفقات. تفكه متى ما بغيت بالمبلغ + ${Math.round(MORT_INT*100)}٪ فايدة. كل هذا من زر «أملاكي» بدورك.</p>
+      <p><b>ما معك تدفع؟</b> ما ينباع شي لحاله. اللعب يوقف وأنت تدبّر الفلوس: تهدم مبنى (يرجع لك نص تكلفته)، أو ترهن عقار، أو تبيعه للبنك بـ 60٪ من قيمته (المرهون ينخصم رهنه)، أو تسوي صفقة مع لاعب. لو ما قدرت تعلن إفلاسك وأملاكك ترجع للبنك.</p>
+      <p><b>الرهن:</b> ترهن عقارك (مع مبانيه) للبنك وتاخذ نص قيمته، وتبقى مالكه. وهو مرهون ما يجيب إيجار وما تبني ولا تهدم فيه. تقدر تبيعه أو تعطيه بصفقة وينتقل الرهن معه. تفكه متى ما بغيت بالمبلغ + ${Math.round(MORT_INT*100)}٪ فايدة. كل هذا من زر «أملاكي» بدورك.</p>
       <p><b>بالسجن:</b> ما تستلم فلوس لين تطلع: لا إيجار ولا توزيعات ولا كاش من صفقات.</p>
       <p><b>النهاية:</b> لما يخلص الوقت نكمل اللفة عشان الكل ياخذ نفس عدد الأدوار.</p></div>
       <div class="row center mt"><button class="btn" data-x>تمام</button></div>`,{onMount(m){ m.querySelector('[data-x]').onclick=()=>m.remove(); }});
