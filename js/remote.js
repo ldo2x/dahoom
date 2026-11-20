@@ -62,7 +62,7 @@
   try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{ let v=null; try{ v=localStorage.getItem('dahoom_theme'); }catch(_){} if(v!=='day'&&v!=='night') setTheme(e.matches?'day':'night', false); }); }catch(e){}
 
   // ---------- الحالة ----------
-  const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], teams:[], info:null, feed:[] };
+  const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], avGroups:null, teams:[], info:null, feed:[] };
   const teamKey = () => 'dahoom_team_'+st.room;
   const meKey = 'dahoom_me';   // الاسم والصورة يتذكرهم الجوال لكل الغرف
   // صاحب الجلسة يلعب من نفس جهاز الطاولة (صفحة اللاعب داخلها) — ما يحتاج شريطنا العلوي ولا «اطلع من الغرفة»
@@ -71,7 +71,8 @@
   const me = () => { try{ return JSON.parse(localStorage.getItem(meKey)||'null'); }catch(e){ return null; } };
   const avSrc = a => 'assets/avatars/'+a+'.webp';
   // نسخة احتياطية من قائمة الصور لو الشاشة ما أرسلتها
-  const AV_FALLBACK = ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
+  const AV_LIB = window.DAHOOM_AVATARS;
+  const AV_FALLBACK = (AV_LIB && AV_LIB.all && AV_LIB.all.slice()) || ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
     'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
     'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
   function show(id){ $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
@@ -109,13 +110,13 @@
   // ---------- الرسائل ----------
   function onData(d){
     if(!d) return;
-    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.teams=d.teams||[]; st.canCreate=!!d.canCreate; renderTeams(d.teams); return; }
+    if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.avGroups=d.avatarGroups||null; st.teams=d.teams||[]; st.canCreate=!!d.canCreate; renderTeams(d.teams); return; }
     // فردي: ما فيه فرق — سجّل اسمك وصورتك على طول
-    if(d.t==='soloreg'){ st.teamId=null; st.mode='solo'; st.avatars=d.avatars||[]; st.soloPlayers=d.players||[];
+    if(d.t==='soloreg'){ st.teamId=null; st.mode='solo'; st.avatars=d.avatars||[]; st.avGroups=d.avatarGroups||null; st.soloPlayers=d.players||[];
       if(!$('#r-reg').classList.contains('hidden')){ drawSoloList(); return; }
       const m=me(); if(m && m.name && !d.locked && st.autoReg!==st.room){ st.autoReg=st.room; send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
       openReg(); return; }
-    if(d.t==='joined'){ st.teamId=d.teamId; if(d.mode) st.mode=d.mode; if(d.avatars&&d.avatars.length) st.avatars=d.avatars; if(d.teams) st.teams=d.teams; localStorage.setItem(teamKey(), d.teamId); keepAwake();
+    if(d.t==='joined'){ st.teamId=d.teamId; if(d.mode) st.mode=d.mode; if(d.avatars&&d.avatars.length){ st.avatars=d.avatars; st.avGroups=d.avatarGroups||null; } if(d.teams) st.teams=d.teams; localStorage.setItem(teamKey(), d.teamId); keepAwake();
       const m=me(); if(st.mode==='solo'){ show('r-main'); return; }
       if(m && m.name && st.registeredRoom===st.room+':'+d.teamId){ show('r-main'); return; }
       if(m && m.name){ send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }
@@ -169,8 +170,18 @@
   }
   function drawSoloList(){ const l=st.soloPlayers||[]; $('#r-reg-lbl').textContent = l.length ? `اللاعبين (${l.length}):` : 'كل واحد لحاله — كن أول لاعب';
     $('#r-reg-team').innerHTML = l.map(p=>`<span class="r-solo"><img src="${avSrc(p.avatar)}" alt="">${esc(p.name)}</span>`).join(''); }
+  // الصور مقسّمة مجموعات (ميمز، أنمي…): من الشاشة لو أرسلتها، وإلا من js/avatars.js، وإلا قائمة وحدة
+  function avGroups(){
+    const ok=new Set(st.avatars), seen=new Set();
+    const src=(st.avGroups&&st.avGroups.length) ? st.avGroups : (AV_LIB&&AV_LIB.groups) || [];
+    const out=src.map(g=>({ name:g.name||'', list:(g.list||[]).filter(a=>ok.has(a)&&!seen.has(a)&&seen.add(a)) })).filter(g=>g.list.length);
+    const rest=st.avatars.filter(a=>!seen.has(a)); if(rest.length) out.push({ name:out.length?'غيرها':'', list:rest });
+    return out;
+  }
   function drawAvatars(){
-    $('#r-avatars').innerHTML=st.avatars.map(a=>`<button class="r-av ${a===regAv?'sel':''}" data-a="${a}"><img src="${avSrc(a)}" alt=""></button>`).join('');
+    const btn = a => `<button class="r-av ${a===regAv?'sel':''}" data-a="${a}"><img src="${avSrc(a)}" alt=""></button>`;
+    const box=$('#r-avatars'), top=box.scrollTop;
+    box.innerHTML=avGroups().map(g=>(g.name?`<div class="r-av-group">${esc(g.name)}</div>`:'')+g.list.map(btn).join('')).join(''); box.scrollTop=top;
     $$('#r-avatars .r-av').forEach(b=>b.onclick=()=>{ regAv=b.dataset.a; vibe(10); drawAvatars(); });
   }
   $('#r-reg-back').onclick=()=>{ vibe(10); show('r-main'); renderMain(); };

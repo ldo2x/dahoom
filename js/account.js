@@ -43,11 +43,13 @@ window.DahoomAccount = (function(){
   };
   const GAME_IDS = Object.keys(GAMES);
 
-  // صور اللاعبين وألوانهم: نفس قوائم core.js (لو الصفحة فيها core.js ناخذها منه)
-  const AVATARS = (window.Dahoom && window.Dahoom.AVATARS) || ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
+  // صور اللاعبين وألوانهم: القائمة من js/avatars.js (أو من core.js لو موجود)، والقائمة هنا احتياط لو ما تحمّل
+  const AV_LIB = window.DAHOOM_AVATARS;
+  const AVATARS = (window.Dahoom && window.Dahoom.AVATARS) || (AV_LIB && AV_LIB.all && AV_LIB.all.slice()) || ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
     'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
     'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
   const COLORS = ['#FF3D81','#38B6FF','#FFC23A','#2EE59D','#B07CFF','#FF8A3D','#2EC4B6','#FF5A5F','#C6F432','#F72585','#5B8CFF','#FFD166'];
+  const AVATAR_GROUPS = (AV_LIB && AV_LIB.groups) ? AV_LIB.groups.map(g=>({ name:g.name, list:g.list.filter(a=>AVATARS.includes(a)) })).filter(g=>g.list.length) : [{ name:'', list:AVATARS }];
   const avatarSrc = a => 'assets/avatars/' + (AVATARS.includes(a) ? a : AVATARS[0]) + '.webp';
   const randAvatar = () => AVATARS[Math.floor(Math.random()*AVATARS.length)];
 
@@ -738,7 +740,7 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
     init, current, onChange, signInGoogle, signOut, continueAsGuest, saveProfile, recordMatch,
     getProfile, searchUsers, sendFriendRequest, respondFriendRequest, listFriends, listRequests, removeFriend,
     // الكتالوجات
-    ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, COLORS,
+    ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, AVATAR_GROUPS, COLORS,
     // أدوات للعرض
     mountBadge, showUnlocks, avatarHTML, ringHTML, avatarSrc, bannerBg, titleName, levelInfo, achProgress, isUnlocked, unlockHint, normName,
     pendingSentTo: uid => sentSet().has(uid),

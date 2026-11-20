@@ -46,9 +46,9 @@ window.DahoomNet = (function(){
   const soloList = () => D.session.players.map(p=>({name:p.name, avatar:p.avatar}));
   const canCreate = () => !isSolo() && !!D.session.phoneTeams && !isLocked() && D.session.teams.length < (D.session.game==='khaliya'?2:6);
   // شاشة البداية للجوال اللي ما له مكان بعد: فردي = يسجّل نفسه على طول، فرق = يختار فريقه
-  const lobbyMsg = () => isSolo() ? {t:'soloreg', mode:'solo', avatars:D.AVATARS, players:soloList(), locked:isLocked()}
-    : {t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), canCreate:canCreate()};
-  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); push(c); sendInfo(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+  const lobbyMsg = () => isSolo() ? {t:'soloreg', mode:'solo', avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, players:soloList(), locked:isLocked()}
+    : {t:'teams', mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), canCreate:canCreate()};
+  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList()}); push(c); sendInfo(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
@@ -70,7 +70,7 @@ window.DahoomNet = (function(){
     if(d.t==='hello'){
       if(isLocked() && d.pid){ const home=homeTeamOf(d.pid); if(home && d.teamId!==home.id){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${home.name}`}); d.teamId=home.id; } }
       const teams = teamList();
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      if(d.teamId && teams.some(t=>t.id===d.teamId)){ c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else c.send(lobbyMsg());
       refreshUI(); return;
     }
