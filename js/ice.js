@@ -22,7 +22,11 @@ window.DAHOOM_ICE = (function(){
   const TURN_FETCH_URL = '';
   // (2) أو بيانات ثابتة (أسهل، بس أي أحد يقدر يشوفها من الكود — حدّد الاستخدام من لوحة المزوّد):
   //     { urls:['turn:example.com:3478','turns:example.com:443?transport=tcp'], username:'...', credential:'...' }
-  const TURN_STATIC = [];
+  // Metered (الخطة المجانية 20 قيقا بالشهر) — حساب صاحب المنصة، الاعتماد اسمه «dahoom»
+  const TURN_STATIC = [
+    { urls:['turn:standard.relay.metered.ca:80', 'turn:standard.relay.metered.ca:80?transport=tcp', 'turn:standard.relay.metered.ca:443', 'turns:standard.relay.metered.ca:443?transport=tcp'],
+      username:'aa92c2f233c103fd04c06e83', credential:'mbuHDvEQ6E20ATBS' },
+  ];
   // ====================================================================
 
   // STUN: سيرفرين يكفون (كثرة السيرفرات تبطّئ تجميع المسارات)
