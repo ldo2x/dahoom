@@ -11,7 +11,7 @@
     { id:'cute', name:'لطيفين', list:['capybara','chiikawa','hamtaro','pochita','baby_yoda','shiba','kitten','puppy','red_panda','panda','quokka','sea_otter','fennec','bunny','hedgehog','owl','penguins'] },
     { id:'vibes', name:'أجواء', list:['full_moon','sunset_sea','sakura','starry_night','great_wave','aurora','milky_way','mountain_lake','tokyo_night','neon_city','lavender','tulip','sunflower','latte'] },
     { id:'gulf', name:'خليجي', list:['saudi_smile','saudi_smirk','falcon','arabian_horse','camel','dallah','palms','dunes','alula','edge_of_world','riyadh_night'] },
-    { id:'stars', name:'مشاهير', list:['dua_lipa','keanu_reeves','tom_holland','mrbeast','jackie_chan','mohammed_abdu'] },
+    { id:'stars', name:'مشاهير', list:['dua_lipa','dua_lipa_2','keanu_reeves','tom_holland','mrbeast','jackie_chan','mohammed_abdu'] },
     { id:'sports', name:'رياضة', list:['ronaldo','messi','salah','benzema','mbappe','salem_aldawsari','football','stadium'] },
     { id:'games', name:'ألعاب', list:['mario','sonic','pikachu','eevee','kirby','link','steve','creeper','pacman','master_chief','barbarian'] },
   ];

@@ -1,6 +1,6 @@
 # مصادر صور اللاعبين
 
-سطر لكل صورة: `الاسم` — المصدر — الرخصة. الصور مقصوصة مربع 256×256 ومحوّلة WebP.
+سطر لكل صورة: `الاسم` — المصدر — الرخصة. الصور مقصوصة مربع 256×256 ومحوّلة WebP. صور المشاهير واللاعبين انقصّت من جديد (2026-11-20) بمساحة أوسع حول الوجه عشان تجي زينة بالدائرة.
 صور Wikimedia Commons بالرخصة المذكورة (CC BY / CC BY-SA تتطلب ذكر المصوّر — مذكور هنا). صور شخصيات الأنمي والألعاب من ويكيات المعجبين (Fandom) وحقوقها لأصحابها، مثل صور الأنمي السابقة.
 الصور القديمة اللي ما تغيّرت انضافت قبل وما انحفظ مصدرها.
 
@@ -137,7 +137,8 @@ Please cred (2012-12-31) — CC BY-SA 3.0
 
 ## مشاهير
 
-- `dua_lipa` — https://commons.wikimedia.org/wiki/File:Dua_Lipa_at_Berlin_Film_Festival_2026_69806_(cropped).jpg — Harald Krichel (2026-02-14) — CC BY-SA 4.0
+- `dua_lipa` — صورة أرسلها صاحب المنصة (2026-11-20)
+- `dua_lipa_2` — صورة أرسلها صاحب المنصة (2026-11-20)
 - `keanu_reeves` — https://commons.wikimedia.org/wiki/File:Keanu_Reeves_(crop_and_levels)_(cropped).jpg — Marybel Le Pape (2015-09-04) — CC BY-SA 4.0
 - `tom_holland` — https://commons.wikimedia.org/wiki/File:Tom_Holland_during_pro-am_Wentworth_golf_club_2023-2_(cropped).jpg — ChristopherJClarke (2023-09-13) — CC BY-SA 4.0
 - `mrbeast` — https://commons.wikimedia.org/wiki/File:MrBeast_2023_(cropped).jpg — Steven Khan (2023-09-10) — CC BY 4.0
