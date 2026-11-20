@@ -398,7 +398,7 @@ window.DahoomSadq = (function(){
         pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan })),
         act:actView(), wait:G.wait?{ label:G.wait.label, left:Math.max(0,G.wait.until-Date.now()), ms:G.wait.ms }:null,
         log:G.log.slice(-30), roles:ROLES_STATIC(), forceAt:DATA.forceAt } };
-    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, awards:[], all:finalAll(p), rows:[['كذبات',String(p.stats.lies)],['انفضح',String(p.stats.liesCaught)],['كشف صح',String(p.stats.chWon)],['شهادات صح',String(p.stats.witRight)]] }; }
+    if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, mid:G.t0, stats:{ caught:p.stats.chWon, lies:p.stats.lies }, awards:[], all:finalAll(p), rows:[['كذبات',String(p.stats.lies)],['انفضح',String(p.stats.liesCaught)],['كشف صح',String(p.stats.chWon)],['شهادات صح',String(p.stats.witRight)]] }; }
     return st;
   }
 

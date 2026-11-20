@@ -28,11 +28,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611200620">
-<link rel="stylesheet" href="css/remote.css?v=202611200620">
-<link rel="stylesheet" href="css/hawamir.css?v=202611200620">
-<link rel="stylesheet" href="css/sadq.css?v=202611200620">
-<link rel="stylesheet" href="css/draw.css?v=202611200620">
+<link rel="stylesheet" href="css/style.css?v=202611200654">
+<link rel="stylesheet" href="css/remote.css?v=202611200654">
+<link rel="stylesheet" href="css/hawamir.css?v=202611200654">
+<link rel="stylesheet" href="css/sadq.css?v=202611200654">
+<link rel="stylesheet" href="css/draw.css?v=202611200654">
 </head>
 <body class="remote">
 
@@ -44,6 +44,7 @@
 
 <!-- الدخول بالكود -->
 <section id="r-join" class="r-screen">
+  <div class="acc-slot r-acc" id="acc-badge"></div>
   <h1>ادخل جلسة</h1>
   <p class="muted">اكتب كود الجلسة اللي وصلك، أو اختر من الجلسات المفتوحة تحت</p>
   <div class="r-codebox"><input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="••••" inputmode="text" aria-label="كود الجلسة">
@@ -132,13 +133,14 @@
 <div class="r-status hidden" id="r-status"></div>
 <div class="r-sheet hidden" id="r-sheet"><div class="r-sheet-in" id="r-sheet-in"></div></div>
 
-<script src="js/vendor/peerjs.min.js?v=202611200620"></script>
-<script src="js/ice.js?v=1"></script>
-<script src="data/cards.js?v=202611200620"></script>
-<script src="js/config.js?v=1"></script>
-<script src="js/lobby.js?v=1"></script>
-<script src="js/telemetry.js?v=202611200620"></script>
-<script src="js/draw.js?v=202611200620"></script>
-<script src="js/remote.js?v=202611200620"></script>
+<script src="js/vendor/peerjs.min.js?v=202611200654"></script>
+<script src="js/ice.js?v=202611200654"></script>
+<script src="data/cards.js?v=202611200654"></script>
+<script src="js/config.js?v=202611200654"></script>
+<script src="js/account.js?v=202611200654"></script>
+<script src="js/lobby.js?v=202611200654"></script>
+<script src="js/telemetry.js?v=202611200654"></script>
+<script src="js/draw.js?v=202611200654"></script>
+<script src="js/remote.js?v=202611200654"></script>
 </body>
 </html>

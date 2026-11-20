@@ -910,3 +910,5 @@ body.own-me{overflow:hidden}
 
 .own-b.hot{color:var(--ink)}
 .own-dock{backdrop-filter:none;background:var(--surface)}
+
+.acc-slot{display:flex;align-items:center;margin-inline-start:auto;margin-inline-end:12px;min-width:0}

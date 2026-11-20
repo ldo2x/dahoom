@@ -158,7 +158,8 @@
   let regAv=null;
   function openReg(){
     if(!st.avatars.length) st.avatars=AV_FALLBACK.slice();
-    const m=me()||{}; const t=st.teams.find(x=>x.id===st.teamId)||{};
+    const A=window.DahoomAccount && window.DahoomAccount.current();
+    const m=me() || (A ? { name:A.name, avatar:A.avatar } : {}); const t=st.teams.find(x=>x.id===st.teamId)||{};
     if(st.mode==='solo') drawSoloList(); else { $('#r-reg-lbl').textContent='فريقك'; $('#r-reg-team').innerHTML=`<span class="r-teamchip" style="--c:${t.color||'var(--line)'}">${esc(t.name||'')}</span>`; }
     $('#r-name').value=m.name||''; regAv = st.avatars.includes(m.avatar) ? m.avatar : st.avatars[Math.floor(Math.random()*st.avatars.length)];
     const editing = !!(m.name && st.teamId && st.registeredRoom);
@@ -219,7 +220,12 @@
         <div class="rf-rows">${f.rows.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
         ${f.all ? finalAllHTML(f.all) : `<p class="muted small center">${S.game==='alf'?'الإحصائيات الكاملة والمنحنى على الشاشة':'الإحصائيات الكاملة على الشاشة'}</p>`}`;
       $('#r-phase').textContent='';
-    } else st.finalShown=false;
+      if(!st.recorded && window.DahoomAccount){ st.recorded=true;
+        const mm=me()||{}, fx=f.stats||{};
+        Promise.resolve(window.DahoomAccount.recordMatch({ id:`${st.room}-${S.game}-${f.mid||Math.floor(Date.now()/600000)}-${mm.pid||''}`, game:S.game, rank:f.rank, of:f.of, won:f.rank===1,
+          score: typeof t.score==='number' ? t.score : Number(String(t.score).replace(/[^\d]/g,''))||0, mode:st.mode, stats:fx, name:mm.name, avatar:mm.avatar }))
+          .then(res=>{ if(res) window.DahoomAccount.showUnlocks(res); }).catch(()=>{}); }
+    } else { st.finalShown=false; st.recorded=false; }
     // التمثيل: واحد من الفريق يختار يمثّل والعبارة تطلع له بس
     renderCharade(S.charade);
     // البز
@@ -927,6 +933,7 @@
     $$('#r-rooms [data-room]').forEach(b=>b.onclick=()=>{ vibe(15); join(b.dataset.room); });
   }
   setInterval(loadRooms, 8000);
+  { const A=window.DahoomAccount, el=$('#acc-badge'); if(A){ A.init().then(()=>{ const c=A.current(); if(c && !me()) { try{ localStorage.setItem(meKey, JSON.stringify({ name:c.name, avatar:c.avatar })); }catch(e){} } }); if(el) A.mountBadge(el); } }
   const q=new URLSearchParams(location.search).get('room');
   if(q) join(q); else { const last=localStorage.getItem('dahoom_last_room'); if(last) $('#r-code').value=last; loadRooms(); }
 })();

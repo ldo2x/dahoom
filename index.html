@@ -32,10 +32,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611200620">
-<link rel="stylesheet" href="css/draw.css?v=202611200620">
-<link rel="stylesheet" href="css/hawamir.css?v=202611200620">
-<link rel="stylesheet" href="css/sadq.css?v=202611200620">
+<link rel="stylesheet" href="css/style.css?v=202611200654">
+<link rel="stylesheet" href="css/draw.css?v=202611200654">
+<link rel="stylesheet" href="css/hawamir.css?v=202611200654">
+<link rel="stylesheet" href="css/sadq.css?v=202611200654">
 </head>
 <body>
 
@@ -57,6 +57,7 @@
 <section id="home" class="screen">
   <header class="topbar">
     <div class="brand" data-go="home"><span class="brand-mark">د</span> دحوم</div>
+    <div class="acc-slot" id="acc-badge"></div>
     <div class="row">
       <button class="btn ghost small btn-sound"></button>
       <input type="range" class="vol-slider" min="0" max="100" value="35" aria-label="مستوى الصوت">
@@ -561,46 +562,47 @@
 <div id="overlay-root"></div>
 <canvas class="confetti-canvas" id="confetti"></canvas>
 
-<script src="data/questions.js?v=202611200620"></script>
-<script src="data/questions-2.js?v=202611200620"></script>
-<script src="data/choices.js?v=202611200620"></script>
-<script src="data/questions-3.js?v=202611200620"></script>
-<script src="data/questions-4.js?v=202611200620"></script>
-<script src="data/questions-5.js?v=202611200620"></script>
-<script src="data/questions-6.js?v=202611200620"></script>
-<script src="data/questions-7.js?v=202611200620"></script>
-<script src="data/questions-8.js?v=202611200620"></script>
-<script src="data/charades.js?v=202611200620"></script>
-<script src="data/charades-2.js?v=202611200620"></script>
-<script src="data/challenges.js?v=202611200620"></script>
-<script src="data/challenges-2.js?v=202611200620"></script>
-<script src="data/cards.js?v=202611200620"></script>
-<script src="data/memes.js?v=202611200620"></script>
-<script src="data/words.js?v=202611200620"></script>
-<script src="data/hawamir.js?v=202611200620"></script>
-<script src="data/sadq.js?v=202611200620"></script>
-<script src="data/letters-1.js?v=202611200620"></script>
-<script src="data/letters-2.js?v=202611200620"></script>
-<script src="data/letters-3.js?v=202611200620"></script>
-<script src="data/letters-4.js?v=202611200620"></script>
-<script src="data/letters-hard-1.js?v=202611200620"></script>
-<script src="data/letters-hard-2.js?v=202611200620"></script>
-<script src="js/vendor/peerjs.min.js?v=202611200620"></script>
-<script src="js/ice.js?v=1"></script>
-<script src="js/vendor/qrcode.min.js?v=202611200620"></script>
-<script src="js/core.js?v=202611200620"></script>
-<script src="js/config.js?v=202611200620"></script>
-<script src="js/telemetry.js?v=202611200620"></script>
-<script src="js/lobby.js?v=1"></script>
-<script src="js/net.js?v=202611200620"></script>
-<script src="js/owner.js?v=1"></script>
-<script src="js/stats.js?v=202611200620"></script>
-<script src="js/cardfx.js?v=202611200620"></script>
-<script src="js/alf.js?v=202611200620"></script>
-<script src="js/draw.js?v=202611200620"></script>
-<script src="js/khaliya.js?v=202611200620"></script>
-<script src="js/rasm.js?v=202611200620"></script>
-<script src="js/hawamir.js?v=202611200620"></script>
-<script src="js/sadq.js?v=202611200620"></script>
+<script src="data/questions.js?v=202611200654"></script>
+<script src="data/questions-2.js?v=202611200654"></script>
+<script src="data/choices.js?v=202611200654"></script>
+<script src="data/questions-3.js?v=202611200654"></script>
+<script src="data/questions-4.js?v=202611200654"></script>
+<script src="data/questions-5.js?v=202611200654"></script>
+<script src="data/questions-6.js?v=202611200654"></script>
+<script src="data/questions-7.js?v=202611200654"></script>
+<script src="data/questions-8.js?v=202611200654"></script>
+<script src="data/charades.js?v=202611200654"></script>
+<script src="data/charades-2.js?v=202611200654"></script>
+<script src="data/challenges.js?v=202611200654"></script>
+<script src="data/challenges-2.js?v=202611200654"></script>
+<script src="data/cards.js?v=202611200654"></script>
+<script src="data/memes.js?v=202611200654"></script>
+<script src="data/words.js?v=202611200654"></script>
+<script src="data/hawamir.js?v=202611200654"></script>
+<script src="data/sadq.js?v=202611200654"></script>
+<script src="data/letters-1.js?v=202611200654"></script>
+<script src="data/letters-2.js?v=202611200654"></script>
+<script src="data/letters-3.js?v=202611200654"></script>
+<script src="data/letters-4.js?v=202611200654"></script>
+<script src="data/letters-hard-1.js?v=202611200654"></script>
+<script src="data/letters-hard-2.js?v=202611200654"></script>
+<script src="js/vendor/peerjs.min.js?v=202611200654"></script>
+<script src="js/ice.js?v=202611200654"></script>
+<script src="js/vendor/qrcode.min.js?v=202611200654"></script>
+<script src="js/core.js?v=202611200654"></script>
+<script src="js/config.js?v=202611200654"></script>
+<script src="js/account.js?v=202611200654"></script>
+<script src="js/telemetry.js?v=202611200654"></script>
+<script src="js/lobby.js?v=202611200654"></script>
+<script src="js/net.js?v=202611200654"></script>
+<script src="js/owner.js?v=202611200654"></script>
+<script src="js/stats.js?v=202611200654"></script>
+<script src="js/cardfx.js?v=202611200654"></script>
+<script src="js/alf.js?v=202611200654"></script>
+<script src="js/draw.js?v=202611200654"></script>
+<script src="js/khaliya.js?v=202611200654"></script>
+<script src="js/rasm.js?v=202611200654"></script>
+<script src="js/hawamir.js?v=202611200654"></script>
+<script src="js/sadq.js?v=202611200654"></script>
 </body>
 </html>
