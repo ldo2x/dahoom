@@ -1132,3 +1132,6 @@ label.sm-row,.sm-link{cursor:pointer}
   .game-tile:hover,.game-tile:hover .gt-mark{transform:none}
 }
 
+
+/* نوافذ التأكيد فوق شاشة صاحب الجلسة (كانت تطلع خلفها) */
+.modal{z-index:90}

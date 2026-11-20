@@ -951,3 +951,6 @@ body.is-owner .r-bar{display:none}
 /* شاشة الدخول: مربع الكود ياخذ المساحة والزر على قده */
 #r-join .r-codebox .btn.big{min-width:0;width:auto;flex:none;padding-inline:24px}
 #r-join .r-codebox .r-code-in{flex:1 1 0;min-width:0}
+
+/* زر إنهاء الجلسة في لوحة صاحب الجلسة */
+.ow-more .ow-end{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}

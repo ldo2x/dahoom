@@ -117,6 +117,7 @@ window.DahoomOwner = (function(){
     teams:()=>D.session.mode==='solo' ? [] : D.session.teams.map(t=>({ name:t.name, color:t.color, n:t.members.length })),
     phoneTeams:v=>{ const c=document.getElementById('opt-phone-teams'); if(!c) return false; if(v!=null){ c.checked=!!v; c.dispatchEvent(new Event('change',{bubbles:true})); } return c.checked; },
     players:()=>D.competitors().length, screen:scrNow, table:()=>setMode('table'), leave:()=>leave(),
+    end:async()=>{ if(await D.confirmBox('<h3>تنهي الجلسة؟</h3><p class="muted">الجلسة تنقفل والكل يطلع منها، وترجع للرئيسية.</p>','إيه، أنهها','لا','btn-bad')) closeSession(); },
     again:()=>{ const b=document.getElementById('btn-again'); if(b) b.click(); }, toSetup:()=>{ const n=NET(); if(n) n.use(null); D.go('lobby'); prepare(); },
   };
   function closeSession(){ try{ window.DahoomLobby && window.DahoomLobby.close(); }catch(e){} const n=NET(); if(n) n.newSession(); on=false; wrap().classList.add('hidden'); const f=$('#own-frame'); f.src='about:blank'; frameRoom=null; try{ sessionStorage.removeItem(KEY); sessionStorage.removeItem('dahoom_room'); }catch(e){} render(); D.go('home'); }

@@ -352,7 +352,7 @@
           ${secs.map(s=>`<div class="ow-ss"><div class="ow-lbl">${esc(s.t)}</div>${s.f.map(field).join('')}${chips(s.f.filter(f=>f.type==='chip'||f.type==='pick'))}</div>`).join('')}</details>`:''}
         <p class="r-err" id="ow-err"></p>
         <button type="button" class="btn btn-hype big ow-start" data-start>${ic('play')} ابدأ ${esc(G.name)}</button>
-        <div class="ow-more"><button type="button" class="btn ghost small" data-table>${ic('podium')} اعرض الطاولة على شاشة ثانية</button><button type="button" class="btn ghost small" data-leave>${ic('cancel')} ما بلعب — أخلي الجهاز شاشة عرض</button></div>
+        <div class="ow-more"><button type="button" class="btn ghost small" data-table>${ic('podium')} اعرض الطاولة على شاشة ثانية</button><button type="button" class="btn ghost small" data-leave>${ic('cancel')} ما بلعب — أخلي الجهاز شاشة عرض</button><button type="button" class="btn ghost small ow-end" data-end>${ic('door')} أنهِ الجلسة</button></div>
       </section>`;
       const A2=OWN(), again=()=>setTimeout(()=>renderOwnerPanel(box), 80);
       { const d=$('.ow-set'); if(d) d.ontoggle=()=>{ st.owSetOpen=d.open; }; }
@@ -363,6 +363,7 @@
       $('.ow [data-copy]').onclick=async()=>{ const url=location.href.replace(/remote\.html.*$/,'remote.html?room='+st.room); try{ await navigator.clipboard.writeText(url); status('انسخ الرابط — أرسله للشباب'); }catch(e){ status(url); } setTimeout(()=>status(''),2500); };
       $('.ow [data-start]').onclick=()=>{ vibe(30); const err=A2.start(); $('#ow-err').textContent=err||''; if(err){ vibe([40,30,40]); sfx('bad'); } };
       $('.ow [data-table]').onclick=()=>A2.table();
+      $('.ow [data-end]').onclick=()=>A2.end();
       $('.ow [data-leave]').onclick=()=>{ if(confirm('ما بتلعب؟ تطلع من الجلسة كلاعب ويصير هالجهاز شاشة عرض بس.')) A2.leave(); };
     }
     // الأجزاء اللي تتحدث بدون إعادة بناء
