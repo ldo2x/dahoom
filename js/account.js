@@ -618,7 +618,8 @@ window.DahoomAccount = (function(){
       u=cleanUname(u); const bad=unameProblem(u); if(bad) return { ok:false, why:bad };
       const p=st.prof, old=p.username||'';
       if(old===u) return { ok:true, why:'' };
-      const w=unameWait(); if(w>0) return { ok:false, why:`تقدر تغيّره بعد ${Math.ceil(w/60000)} دقيقة` };
+      const w=unameWait(); if(w>0){ const m=Math.ceil(w/60000), h=Math.floor(m/60), r=m%60;
+        return { ok:false, why:'تقدر تغيّره بعد '+(h ? (h===2?'ساعتين':'ساعة')+(r?` و${r} دقيقة`:'') : `${m} دقيقة`) }; }
       if(!await bootCloud()) return { ok:false, why:'ما قدرنا نوصل، تأكد من النت' };
       // نتأكد إن وثيقة الحساب موجودة ومحدّثة (لو فيه مزامنة شغالة ننتظرها)
       let synced=false; for(let i=0;i<12 && !synced;i++){ synced=await sync(); if(!synced){ if(!st.syncing && st.offline) break; await new Promise(r=>setTimeout(r,500)); } }
