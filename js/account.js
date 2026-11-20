@@ -85,18 +85,18 @@ window.DahoomAccount = (function(){
   const ACHIEVEMENTS = [
     // عامة
     { id:'first_game', name:'أول طلعة',       desc:'العب أول مباراة',                     icon:'acc-rocket',   rarity:'common',    goal:1,   val:S=>S.games },
-    { id:'first_win',  name:'أول فوز',        desc:'افز بأي لعبة',                         icon:'trophy',       rarity:'common',    goal:1,   val:S=>S.wins },
+    { id:'first_win',  name:'أول فوز',        desc:'فز بأي لعبة',                         icon:'trophy',       rarity:'common',    goal:1,   val:S=>S.wins },
     { id:'games_10',   name:'من أهل المجلس',  desc:'العب 10 مباريات',                      icon:'team',         rarity:'common',    goal:10,  val:S=>S.games },
     { id:'games_50',   name:'سهّير',          desc:'العب 50 مباراة',                       icon:'hourglass',    rarity:'rare',      goal:50,  val:S=>S.games },
     { id:'games_200',  name:'عمود المجلس',    desc:'العب 200 مباراة',                      icon:'acc-chart',    rarity:'epic',      goal:200, val:S=>S.games },
-    { id:'wins_10',    name:'فوّاز',          desc:'افز 10 مرات',                          icon:'acc-medal',    rarity:'rare',      goal:10,  val:S=>S.wins },
-    { id:'wins_50',    name:'ما ينغلب',       desc:'افز 50 مرة',                           icon:'crown',        rarity:'epic',      goal:50,  val:S=>S.wins },
-    { id:'streak_3',   name:'على نار',        desc:'افز 3 مرات ورا بعض',                   icon:'flame',        rarity:'rare',      goal:3,   val:S=>S.bestStreak },
-    { id:'streak_5',   name:'محد يوقفه',      desc:'افز 5 مرات ورا بعض',                   icon:'acc-bolt',     rarity:'legendary', goal:5,   val:S=>S.bestStreak },
+    { id:'wins_10',    name:'فوّاز',          desc:'فز 10 مرات',                          icon:'acc-medal',    rarity:'rare',      goal:10,  val:S=>S.wins },
+    { id:'wins_50',    name:'ما ينغلب',       desc:'فز 50 مرة',                           icon:'crown',        rarity:'epic',      goal:50,  val:S=>S.wins },
+    { id:'streak_3',   name:'على نار',        desc:'فز 3 مرات ورا بعض',                   icon:'flame',        rarity:'rare',      goal:3,   val:S=>S.bestStreak },
+    { id:'streak_5',   name:'محد يوقفه',      desc:'فز 5 مرات ورا بعض',                   icon:'acc-bolt',     rarity:'legendary', goal:5,   val:S=>S.bestStreak },
     { id:'podium_10',  name:'دايم بالمنصة',   desc:'خلّص بالمراكز الثلاث الأولى 10 مرات',  icon:'podium',       rarity:'rare',      goal:10,  val:S=>S.podiums },
     { id:'last_5',     name:'الحظ زعلان',     desc:'اطلع الأخير 5 مرات وكمّل لعب',         icon:'skull',        rarity:'common',    goal:5,   val:S=>S.lasts },
     { id:'explorer',   name:'جرّب كل شي',     desc:'العب كل ألعاب دحوم الخمس',             icon:'acc-target',   rarity:'rare',      goal:5,   val:S=>countGames(S,'g') },
-    { id:'all_wins',   name:'سيد الألعاب',    desc:'افز مرة على الأقل بكل لعبة',           icon:'sparkles',     rarity:'legendary', goal:5,   val:S=>countGames(S,'w') },
+    { id:'all_wins',   name:'سيد الألعاب',    desc:'فز مرة على الأقل بكل لعبة',           icon:'sparkles',     rarity:'legendary', goal:5,   val:S=>countGames(S,'w') },
     { id:'big_room',   name:'الديوانية فل',   desc:'العب مباراة فيها 8 منافسين وفوق',      icon:'acc-users',    rarity:'rare',      goal:8,   val:S=>S.maxOf },
     { id:'night_owl',  name:'سهرة للفجر',     desc:'العب مباراة بين 2 و5 الفجر',           icon:'moon',         rarity:'rare',      goal:1,   val:S=>S.night },
     { id:'days_7',     name:'زبون دايم',      desc:'العب في 7 أيام مختلفة',                icon:'acc-calendar', rarity:'rare',      goal:7,   val:S=>S.days },
@@ -106,20 +106,20 @@ window.DahoomAccount = (function(){
     { id:'friend_1',   name:'أخوياك معك',       desc:'ضيف أول صديق',                         icon:'acc-user-plus',rarity:'common',    goal:1,   val:S=>S.friends },
     { id:'friend_10',  name:'الشلة كاملة',    desc:'ضيف 10 أصدقاء',                        icon:'acc-users',    rarity:'rare',      goal:10,  val:S=>S.friends },
     // ألف نقطة
-    { id:'alf_win',    name:'أبو ألف',        desc:'افز بألف نقطة',                        icon:'brain',        rarity:'common',    goal:1,   val:S=>per(S,'alf').w,  game:'alf' },
-    { id:'alf_10',     name:'ملك الأسئلة',    desc:'افز بألف نقطة 10 مرات',                icon:'brain',        rarity:'epic',      goal:10,  val:S=>per(S,'alf').w,  game:'alf' },
+    { id:'alf_win',    name:'أبو ألف',        desc:'فز بألف نقطة',                        icon:'brain',        rarity:'common',    goal:1,   val:S=>per(S,'alf').w,  game:'alf' },
+    { id:'alf_10',     name:'ملك الأسئلة',    desc:'فز بألف نقطة 10 مرات',                icon:'brain',        rarity:'epic',      goal:10,  val:S=>per(S,'alf').w,  game:'alf' },
     { id:'alf_steals', name:'حرامي النقاط',   desc:'اسرق 25 مرة بألف نقطة',                icon:'ninja',        rarity:'rare',      goal:25,  val:S=>pstat(S,'alf','steals'), game:'alf' },
     // خلية الحروف
-    { id:'kh_win',     name:'النحّال',        desc:'افز بخلية الحروف',                     icon:'acc-hexagon',  rarity:'common',    goal:1,   val:S=>per(S,'khaliya').w, game:'khaliya' },
-    { id:'kh_10',      name:'ملك الخلية',     desc:'افز بخلية الحروف 10 مرات',             icon:'hive',         rarity:'epic',      goal:10,  val:S=>per(S,'khaliya').w, game:'khaliya' },
+    { id:'kh_win',     name:'النحّال',        desc:'فز بخلية الحروف',                     icon:'acc-hexagon',  rarity:'common',    goal:1,   val:S=>per(S,'khaliya').w, game:'khaliya' },
+    { id:'kh_10',      name:'ملك الخلية',     desc:'فز بخلية الحروف 10 مرات',             icon:'hive',         rarity:'epic',      goal:10,  val:S=>per(S,'khaliya').w, game:'khaliya' },
     // ارسم وخمّن
-    { id:'rs_win',     name:'فنان الحارة',    desc:'افز بارسم وخمّن',                      icon:'acc-brush',    rarity:'common',    goal:1,   val:S=>per(S,'rasm').w, game:'rasm' },
+    { id:'rs_win',     name:'فنان الحارة',    desc:'فز بارسم وخمّن',                      icon:'acc-brush',    rarity:'common',    goal:1,   val:S=>per(S,'rasm').w, game:'rasm' },
     { id:'rs_20',      name:'ريشة ذهبية',     desc:'العب ارسم وخمّن 20 مرة',               icon:'acc-palette',  rarity:'rare',      goal:20,  val:S=>per(S,'rasm').g, game:'rasm' },
     // هوامير
-    { id:'hm_win',     name:'هامور',          desc:'افز بهوامير',                          icon:'hm-building',  rarity:'common',    goal:1,   val:S=>per(S,'hawamir').w, game:'hawamir' },
-    { id:'hm_5',       name:'إمبراطور العقار',desc:'افز بهوامير 5 مرات',                   icon:'hm-building-skyscraper', rarity:'epic', goal:5, val:S=>per(S,'hawamir').w, game:'hawamir' },
+    { id:'hm_win',     name:'هامور',          desc:'فز بهوامير',                          icon:'hm-building',  rarity:'common',    goal:1,   val:S=>per(S,'hawamir').w, game:'hawamir' },
+    { id:'hm_5',       name:'إمبراطور العقار',desc:'فز بهوامير 5 مرات',                   icon:'hm-building-skyscraper', rarity:'epic', goal:5, val:S=>per(S,'hawamir').w, game:'hawamir' },
     // ما أصدقك
-    { id:'sq_win',     name:'وجه بوكر',       desc:'افز بما أصدقك',                        icon:'masks',        rarity:'common',    goal:1,   val:S=>per(S,'sadq').w, game:'sadq' },
+    { id:'sq_win',     name:'وجه بوكر',       desc:'فز بما أصدقك',                        icon:'masks',        rarity:'common',    goal:1,   val:S=>per(S,'sadq').w, game:'sadq' },
     { id:'sq_caught',  name:'كاشف الكذب',     desc:'اكشف 15 كذبة صح بما أصدقك',            icon:'eye',          rarity:'rare',      goal:15,  val:S=>pstat(S,'sadq','caught'), game:'sadq' },
   ];
   const ACH = Object.fromEntries(ACHIEVEMENTS.map(a=>[a.id,a]));
