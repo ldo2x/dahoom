@@ -196,7 +196,7 @@
       ['#r-timer','#r-view','#r-hmwrap','#r-hmaskjump'].forEach(q=>tog(q,false)); if(!st.askId) tog('#r-ask', false);
       $('#r-main').classList.remove('is-hm','is-sq'); $('#r-sq').classList.add('hidden');
       ['#r-final','#r-charade','#r-rasm'].forEach(q=>$(q).classList.add('hidden'));
-      $('#r-buzz').style.display='none'; $('#r-hand-wrap').classList.add('hidden'); $('#r-fx').innerHTML=''; $('#r-scores').innerHTML='';
+      tog('#r-slot', false); $('#r-fx').innerHTML=''; $('#r-scores').innerHTML='';
       $('#r-phase').textContent=''; stopTimer(); return; }
     $('#r-buzz').style.display='';
     const t=S.team;
@@ -237,20 +237,37 @@
     else if(z.first){ b.classList.add('lost'); sub.textContent=`${z.first} سبقكم`; }
     else if(z.open){ sub.textContent='مو متاح لكم الحين'; }
     else sub.textContent='البز يفتح لما يجي وقته';
+    // ألف نقطة: البز "قريب يفتح" لما فريق ثاني يجاوب سؤال على الشاشة (لو غلط تفتح السرقة)
+    const isAlf = S.game==='alf', scoresL = S.scores||[];
+    const soon = isAlf && !S.myTurn && !z.open && !!(S.view && S.view.kind==='q' && !S.view.answer);
+    if(soon) sub.textContent='لو غلطوا تفتح السرقة — خلّك جاهز';
     if(S.benched){ b.className='r-buzz lost'; b.disabled=true; sub.textContent='انت برا السالفة هالدور'; }
     // الطاقات
     $('#r-fx').innerHTML=(S.fx||[]).map(f=>`<span class="fx-tag ${f.bad?'bad':''}">${esc(f.n)}</span>`).join('');
-    // اليد
-    const wrap=$('#r-hand-wrap'); wrap.classList.toggle('hidden', S.game!=='alf');
-    if(S.game==='alf'){
-      const hand=(S.hand||[]).map(C).filter(Boolean);
-      $('#r-hand-lbl').innerHTML = hand.length ? (S.canPlay?`<b class="r-can">${ic('cards')} دوركم — العبوا بطاقة (وحدة بس)</b>`:`${ic('cards')} بطاقاتكم السرية (${hand.length})`) : 'ما عندكم بطاقات';
-      $('#r-hand').innerHTML = hand.map((c,i)=>`<div class="r-card" data-i="${i}">${cardHTML(c,{size:'mini',flag:c.kind==='reaction'?'رد فعل':''})}</div>`).join('')
-        + (S.fuse?`<button class="btn small r-fuse" id="r-fuse">${ic('recycle')} ادمج سودتين = زرقا</button>`:'');
-      $$('#r-hand .r-card').forEach(el=>el.onclick=()=>preview(+el.dataset.i));
-      const f=$('#r-fuse'); if(f) f.onclick=()=>{ vibe(30); send({t:'fuse'}); };
-      $('#r-hand').classList.toggle('can', !!S.canPlay);
+    // خانة الفعل: وحدة بارتفاع ثابت — البز لما يكون له داعي، وإلا اليد لما دوركم تلعبون بطاقة، وإلا سطر حالة هادي
+    const slot=$('#r-slot'), hand=isAlf ? (S.hand||[]).map((id,i)=>({ c:C(id), i })).filter(x=>x.c) : [];
+    const mode = !isAlf || soon || z.open || z.mine || z.rank ? 'buzz' : S.canPlay && hand.length ? 'play' : 'idle';
+    tog('#r-slot', !done && !['rasm','hawamir','sadq'].includes(S.game));
+    slot.dataset.mode=mode; slot.classList.toggle('has-hand', hand.length>0);
+    if(mode==='idle'){
+      const tn=(scoresL.find(x=>x.turn)||{}).name, solo=st.mode==='solo';
+      const [mi,mt,ms] = S.myTurn ? ['eye',solo?'دورك — ركّز على الشاشة':'دوركم — ركّزوا على الشاشة', S.canPlay?'ما عندكم بطاقات تلعبونها هالدور':'المضيف يحكم على جوابكم']
+        : ['hourglass', tn?`الدور عند ${tn}`:'استنوا شوي', 'البز يفتح لكم وقت السرقة أو التمثيل'];
+      $('#r-slot-msg').innerHTML=`<span class="rsm-ic">${ic(mi)}</span><span class="rsm-t"><b>${esc(mt)}</b><small>${esc(ms)}</small></span>`;
     }
+    // اليد (ألف نقطة): تنرسم بس لما تتغير عشان ما ترمش الصور ولا يرجع السحب لأوله
+    if(isAlf){
+      const hk=JSON.stringify([S.hand||[], !!S.canPlay, !!S.fuse, S.phaseKey||'']), h=$('#r-hand');
+      $('#r-hand-lbl').innerHTML = S.canPlay && hand.length
+        ? `<b class="r-can">${ic('cards')} ${st.mode==='solo'?'دورك — العب بطاقة وحدة':'دوركم — العبوا بطاقة وحدة'}</b>${S.fuse?`<button class="btn small r-fuse" id="r-fuse">${ic('recycle')} ادمج سودتين = زرقا</button>`:''}`
+        : hand.length ? `<span>${ic('cards')} بطاقاتكم السرية (${hand.length})</span><small>اضغط البطاقة تشوفها</small>` : '';
+      if(h.dataset.k!==hk){ const sl=h.scrollLeft; h.dataset.k=hk;
+        h.innerHTML = hand.map(({c,i})=>`<button type="button" class="r-hcard" data-i="${i}" aria-label="${esc(c.name)}">${cardHTML(c,{size:'mini',flag:c.kind==='reaction'?'رد فعل':''})}</button>`).join('');
+        h.scrollLeft=sl;
+        $$('#r-hand .r-hcard').forEach(el=>el.onclick=()=>{ vibe(10); preview(+el.dataset.i); }); }
+      const f=$('#r-fuse'); if(f) f.onclick=()=>{ vibe(30); send({t:'fuse'}); };
+      h.classList.toggle('can', !!S.canPlay);
+    } else if($('#r-hand').dataset.k){ $('#r-hand').innerHTML=''; $('#r-hand').dataset.k=''; $('#r-hand-lbl').innerHTML=''; }
     // النقاط
     $('#r-scores').innerHTML=(S.scores||[]).map(x=>`<span class="r-sc ${x.id===t.id?'me':''} ${x.turn?'turn':''}" style="--c:${x.color}"><i></i>${esc(x.name)} <b>${x.score}</b>${S.game==='alf'&&x.hand!=null?`<small>${ic('cards')}${x.hand}</small>`:''}</span>`).join('');
     // ارسم وخمّن: لوحة الرسم للرسام، ومربع التخمين للباقين
