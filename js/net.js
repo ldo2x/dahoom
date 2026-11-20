@@ -46,9 +46,9 @@ window.DahoomNet = (function(){
   const soloList = () => D.session.players.map(p=>({name:p.name, avatar:p.avatar}));
   const canCreate = () => !isSolo() && !!D.session.phoneTeams && !isLocked() && D.session.teams.length < (D.session.game==='khaliya'?2:6);
   // شاشة البداية للجوال اللي ما له مكان بعد: فردي = يسجّل نفسه على طول، فرق = يختار فريقه
-  const lobbyMsg = () => isSolo() ? {t:'soloreg', mode:'solo', avatars:D.AVATARS, players:soloList(), locked:isLocked()}
-    : {t:'teams', mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), canCreate:canCreate()};
-  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, teams:teamList()}); push(c); sendInfo(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+  const lobbyMsg = () => isSolo() ? {t:'soloreg', mode:'solo', avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, players:soloList(), locked:isLocked()}
+    : {t:'teams', mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), canCreate:canCreate()};
+  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList()}); push(c); sendInfo(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
@@ -75,13 +75,13 @@ window.DahoomNet = (function(){
       const p=c.pid && D.session.players.find(x=>x.id===c.pid), t=D.session.teams.find(x=>x.id===d.id);
       if(!p || !t || D.session.mode!=='teams'){ c.send(lobbyMsg()); return; }
       D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id;
-      c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true}); push(c); refreshUI(); return; }
+      c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true}); push(c); refreshUI(); return; }
     // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار) — وينتقل له لو كان مسجّل
     if(d.t==='newteam' && !isLocked()){
       const t = canCreate() ? D.createTeam(d.name) : null;
       if(!t){ c.send({t:'notice', msg:'إنشاء الفرق مقفل — كلّم المضيف'}); return; }
       const p=c.pid && D.session.players.find(x=>x.id===c.pid);
-      if(p){ D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id; c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true}); push(c); }
+      if(p){ D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id; c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true}); push(c); }
       else seat(c, t.id);
       refreshUI(); return;
     }
@@ -90,7 +90,7 @@ window.DahoomNet = (function(){
       const teams = teamList();
       const known = d.pid && D.session.players.find(p=>p.id===d.pid);
       if(known && !isLocked()){ const home=homeTeamOf(known.id); d.teamId = home ? home.id : null; }
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, teams, known:!!known}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams, known:!!known}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else if(known){ c.pid=known.id; c.teamId=null; c.send(regMsg(known)); push(c); }
       else c.send(lobbyMsg());
       refreshUI(); return;
@@ -150,13 +150,13 @@ window.DahoomNet = (function(){
   const isReady = pid => RD.has(pid) || (ownerConn() && ownerConn().pid===pid);
   // اللي ننتظرهم: لاعبين متصلين وما ضغطوا مستعد
   const waitingFor = () => { const on=onlinePids(); return D.session.players.filter(p=>on.has(p.id) && !isReady(p.id)); };
-  const regMsg = p => ({t:'registered', pid:p.id, name:p.name, avatar:p.avatar, teamId:null, teamless:true, mode:D.session.mode});
+  const regMsg = p => ({t:'registered', avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, pid:p.id, name:p.name, avatar:p.avatar, teamId:null, teamless:true, mode:D.session.mode});
   // المضيف وزّع الفرق أو حرّك لاعب: جوال كل لاعب ينتقل لفريقه الجديد بدون ما يسوي شي
   function seatSync(){
     if(isLocked() || isSolo()) return;
     conns.forEach(c=>{ if(!c.open || !c.pid) return; const p=D.session.players.find(x=>x.id===c.pid); if(!p) return;
       const home=homeTeamOf(c.pid), tid=home ? home.id : null; if(tid===c.teamId) return;
-      c.teamId=tid; try{ c.send(tid ? {t:'joined', teamId:tid, mode:D.session.mode, avatars:D.AVATARS, teams:teamList(), known:true} : regMsg(p)); }catch(e){} push(c); });
+      c.teamId=tid; try{ c.send(tid ? {t:'joined', teamId:tid, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true} : regMsg(p)); }catch(e){} push(c); });
   }
 
   // ---------- معلومات الجلسة: اللعبة والمضيف واللاعبين (تنرسل لكل الجوالات) ----------

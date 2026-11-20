@@ -349,7 +349,9 @@
     V.draft={ name:p.name, bio:p.bio, avatar:p.avatar, color:p.color, banner:p.banner, frame:p.frame, title:p.title };
     render(); const n=$('#e-name'); if(n) n.focus();
   }
-  function avButtons(sel){ return A.AVATARS.map(a=>`<button type="button" role="radio" aria-checked="${a===sel}" class="pf-pick ${a===sel?'sel':''}" data-v="${a}" aria-label="صورة ${a.replace(/_/g,' ')}"><img src="${A.avatarSrc(a)}" alt="" loading="lazy" width="56" height="56"></button>`).join(''); }
+  // الصور مقسّمة مجموعات (ميمز، أنمي…) بعناوين صغيرة
+  function avButtons(sel){ const b=a=>`<button type="button" role="radio" aria-checked="${a===sel}" class="pf-pick ${a===sel?'sel':''}" data-v="${a}" aria-label="صورة ${a.replace(/_/g,' ')}"><img src="${A.avatarSrc(a)}" alt="" loading="lazy" width="56" height="56"></button>`;
+    return (A.AVATAR_GROUPS||[{ name:'', list:A.AVATARS }]).map(g=>(g.name?`<span class="pf-av-group" aria-hidden="true">${esc(g.name)}</span>`:'')+g.list.map(b).join('')).join(''); }
   function lockOf(kind, id){ return A.isUnlocked(kind, id, V.prof) ? '' : A.unlockHint(kind, id); }
   function editorHTML(){
     const d=V.draft;

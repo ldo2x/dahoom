@@ -331,10 +331,13 @@ window.Dahoom = (function(){
 
   // ---------- اللاعبين ----------
   const COLORS = ['#FF3D81','#38B6FF','#FFC23A','#2EE59D','#B07CFF','#FF8A3D','#2EC4B6','#FF5A5F','#C6F432','#F72585','#5B8CFF','#FFD166'];
-  // صور اللاعبين: وجوه ميمز (assets/avatars) — الأسماء القديمة تتحول لصورة ثابتة حسب الاسم
-  const AVATARS = ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
+  // صور اللاعبين (assets/avatars) — القائمة من js/avatars.js، والقائمة هنا احتياط لو ما تحمّل — الأسماء القديمة تتحول لصورة ثابتة حسب الاسم
+  const AV_LIB = window.DAHOOM_AVATARS;
+  const AVATARS = (AV_LIB && AV_LIB.all && AV_LIB.all.slice()) || ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
     'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
     'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
+  // مجموعات الصور (ميمز، أنمي…) للاختيار — [{name, list}]
+  const AVATAR_GROUPS = (AV_LIB && AV_LIB.groups) ? AV_LIB.groups.map(g=>({ name:g.name, list:g.list.filter(a=>AVATARS.includes(a)) })) : [{ name:'', list:AVATARS }];
   const avatarSrc = a => { if(!AVATARS.includes(a)){ let h=0; for(const ch of String(a||'')) h=(h*31+ch.charCodeAt(0))>>>0; a=AVATARS[h%AVATARS.length]; } return 'assets/avatars/'+a+'.webp'; };
 
   const session = {
@@ -352,8 +355,9 @@ window.Dahoom = (function(){
   function renderPickers(){
     const cw=$('#p-colors'); cw.innerHTML='';
     COLORS.forEach(c=>{ const b=document.createElement('button'); b.style.background=c; b.className=c===pick.color?'sel':''; b.setAttribute('aria-label','لون '+c); b.onclick=()=>{pick.color=c; renderPickers(); play('tick',{volume:.4});}; cw.appendChild(b); });
-    const aw=$('#p-avatars'); aw.innerHTML='';
-    AVATARS.forEach(a=>{ const b=document.createElement('button'); b.className=a===pick.avatar?'sel':''; b.style.background=pick.color+'40'; b.innerHTML=`<img src="${avatarSrc(a)}" alt="${a}" loading="lazy" decoding="async" width="96" height="96">`; b.onclick=()=>{pick.avatar=a; renderPickers(); play('pop',{volume:.4});}; aw.appendChild(b); });
+    const aw=$('#p-avatars'), top=aw.scrollTop; aw.innerHTML='';
+    AVATAR_GROUPS.forEach(g=>{ if(g.name){ const h=document.createElement('div'); h.className='av-group'; h.textContent=g.name; aw.appendChild(h); }
+      g.list.forEach(a=>{ const b=document.createElement('button'); b.className=a===pick.avatar?'sel':''; b.style.background=pick.color+'40'; b.innerHTML=`<img src="${avatarSrc(a)}" alt="${a}" loading="lazy" decoding="async" width="96" height="96">`; b.onclick=()=>{pick.avatar=a; renderPickers(); play('pop',{volume:.4});}; aw.appendChild(b); }); }); aw.scrollTop=top;
   }
   // لاعب ينضم من جواله: يضاف (أو يتحدث) وينحط بفريقه
   function joinPlayer({pid, name, avatar, teamId}){
@@ -598,7 +602,7 @@ window.Dahoom = (function(){
   }
   document.addEventListener('DOMContentLoaded', init);
 
-  return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, feed, joinPlayer, joinable, createTeam, AVATARS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
+  return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, feed, joinPlayer, joinable, createTeam, AVATARS, AVATAR_GROUPS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
     session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, renderSyn, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();
