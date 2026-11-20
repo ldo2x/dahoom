@@ -144,13 +144,25 @@ window.DahoomRules = (function(){
     sheet.querySelectorAll('.rl-cg > li').forEach(li=>{ const ok=(t==='all'||li.dataset.tier===t)&&(k==='all'||li.dataset.kind===k); li.hidden=!ok; if(ok) n++; });
     const none=sheet.querySelector('.rl-cnone'); if(none) none.hidden=n>0;
   }
+  // صوت البطاقة: بالشاشة نمر على نظام الصوت (يحترم كتم الصوت واختيارات صاحب المنصة)، وبالجوال نشغّل الملف مباشرة
+  let cardAudio=null;
+  function stopCardSound(){ try{ if(cardAudio && cardAudio.pause) cardAudio.pause(); }catch(e){} cardAudio=null; }
+  function cardSound(c){
+    stopCardSound();
+    const D=window.Dahoom, snd=((D && D.picks && D.picks.csnd)||{})[c.id] || c.snd;
+    if(!snd || snd==='none') return;
+    if(D && D.play){ cardAudio=D.play(snd, { raw:true, volume:.9 }); return; }
+    const src = snd.startsWith('meme:') ? 'assets/sfx/meme/'+snd.slice(5)+'.mp3' : snd.startsWith('game:') ? 'assets/sfx/game/'+snd.slice(5)+'.mp3' : 'assets/sfx/'+snd.replace(/^file:/,'')+'.mp3';
+    try{ const a=new Audio(src); a.volume=.8; cardAudio=a; a.play().catch(()=>{}); }catch(e){}
+  }
   function zoomCard(id, from){
     const c=(cardsData()||[]).find(x=>x.id===id); if(!c) return;
     const sh=from.closest('.rl-sheet'), host=(sh && sh.parentElement) || document.body;   // فوق النافذة كلها (مو داخل التمرير)
     const z=document.createElement('div'); z.className='rl-zoom'; z.setAttribute('role','dialog'); z.setAttribute('aria-label', c.name);
-    z.innerHTML=`<div class="rl-zin">${cardFace(c, { size:'big', anim:true })}${cardMeta(c)}<button type="button" class="rl-zx">${ic('cancel')} رجوع للمعرض</button></div>`;
-    const done=()=>{ z.remove(); try{ from.focus(); }catch(e){} };
-    z.addEventListener('click', e=>{ if(e.target===z || e.target.closest('.rl-zx')) done(); });
+    z.innerHTML=`<div class="rl-zin">${cardFace(c, { size:'big', anim:true })}${cardMeta(c)}<div class="rl-zacts">${c.snd && c.snd!=='none' ? `<button type="button" class="rl-zx rl-zs">${ic('sound')} اسمع صوتها</button>` : ''}<button type="button" class="rl-zx">${ic('cancel')} رجوع للمعرض</button></div></div>`;
+    const done=()=>{ stopCardSound(); z.remove(); try{ from.focus(); }catch(e){} };
+    z.addEventListener('click', e=>{ if(e.target.closest('.rl-zs')){ cardSound(c); return; } if(e.target===z || e.target.closest('.rl-zx')) done(); });
+    cardSound(c);
     host.appendChild(z); const x=z.querySelector('.rl-zx'); if(x) x.focus();
   }
   document.addEventListener('click', e=>{
@@ -441,7 +453,7 @@ window.DahoomRules = (function(){
   function onKey(e){
     if(!root) return;
     if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation();
-      const z=root.querySelector('.rl-zoom'); if(z){ z.querySelector('.rl-zx').click(); return; }   // بطاقة مكبّرة: نرجع للمعرض بس
+      const z=root.querySelector('.rl-zoom'); if(z){ z.querySelector('.rl-zx:not(.rl-zs)').click(); return; }   // بطاقة مكبّرة: نرجع للمعرض بس
       close(); return; }
     if(e.key==='Tab' && root.querySelector('.rl-zoom')){ e.preventDefault(); const x=root.querySelector('.rl-zx'); if(x) x.focus(); return; }
     if(e.key==='Tab'){
@@ -476,6 +488,7 @@ window.DahoomRules = (function(){
   }
   function close(){
     if(!root) return;
+    stopCardSound();
     window.removeEventListener('keydown', onKey, true);
     root.remove(); root=null;
     if(saved){ document.documentElement.style.overflow=saved.html; document.body.style.overflow=saved.body; saved=null; }
