@@ -12,6 +12,24 @@
   const TARGET_AR = { next:'اللي بعدك', prev:'اللي قبلك', leader:'المتصدر', choose:'اللي تختاره' };
   const PREFIX = 'dahoom-v2-';
   const vibe = ms => { try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} };
+  // ---------- أصوات الجوال: نغمات قصيرة مولّدة (بدون ملفات) ----------
+  // الآيفون ما يدعم الاهتزاز، فالصوت هو التنبيه: دورك، قرار جديد، صح/غلط، آخر الثواني. يحترم كتم الصوت من المنصة.
+  let AC=null;
+  const soundOn = () => { try{ return localStorage.getItem('dahoom_sound')!=='false'; }catch(e){ return true; } };
+  const NOTES = { turn:[[523,0,.13],[784,.12,.2]], ask:[[880,0,.09],[1175,.08,.13]], good:[[523,0,.09],[659,.08,.09],[784,.16,.18]], bad:[[233,0,.16],[196,.13,.24]], tick:[[1500,0,.035]], coin:[[988,0,.06],[1319,.06,.14]] };
+  function sfx(kind){
+    if(!soundOn() || document.hidden) return;
+    try{
+      AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+      const now=AC.currentTime+.01;
+      (NOTES[kind]||[]).forEach(([f,t,d])=>{ const o=AC.createOscillator(), e=AC.createGain(); o.type = kind==='bad' ? 'square' : 'triangle'; o.frequency.value=f;
+        const peak = kind==='tick' ? .06 : kind==='bad' ? .07 : .16;
+        e.gain.setValueAtTime(.0001, now+t); e.gain.exponentialRampToValueAtTime(peak, now+t+.012); e.gain.exponentialRampToValueAtTime(.0001, now+t+d);
+        o.connect(e); e.connect(AC.destination); o.start(now+t); o.stop(now+t+d+.03); });
+    }catch(e){}
+  }
+  // المتصفح ما يسمح بالصوت إلا بعد أول لمسة
+  document.addEventListener('pointerdown', ()=>{ try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){} }, { passive:true });
 
   function cardHTML(c, {size='', anim=false, flag=''}={}){
     const K = DATA.cardKinds[c.kind] || {name:'',icon:'cards'};
@@ -63,24 +81,27 @@
   function connect(){
     status('نتصل بالشاشة…');
     try{ st.peer && st.peer.destroy(); }catch(e){}
-    const peer = st.peer = new window.Peer({debug:0});
+    const peer = st.peer = new window.Peer(Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
     peer.on('open', ()=>{
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
-      const to = setTimeout(()=>{ if(!conn.open) fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); }, 9000);
+      if(window.DAHOOM_ICE) window.DAHOOM_ICE.watch(conn, lost);
+      const to = setTimeout(()=>{ if(!conn.open){ const I=window.DAHOOM_ICE; if(I) lost(I.diagnose(peer, conn)); else fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); } }, 9000);
       conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); });
       conn.on('data', onData);
       conn.on('close', lost);
       conn.on('error', lost);
     });
     peer.on('error', e=>{
-      if(e.type==='peer-unavailable') return fail('الكود غلط أو الشاشة مقفلة. تأكد من الكود وجرب مرة ثانية.', true);
-      lost();
+      if(e.type==='peer-unavailable') return fail('الكود غلط أو الجلسة انقفلت. تأكد من الكود وجرب مرة ثانية.', true);
+      lost(e);
     });
   }
   function fail(msg, toJoin){ status(''); $('#r-err').textContent=msg; if(toJoin){ show('r-join'); localStorage.removeItem('dahoom_last_room'); } else lost(); }
-  function lost(){
+  function lost(why){
     if(!st.room) return;
-    status('انقطع الاتصال… نرجع نتصل');
+    const I = window.DAHOOM_ICE;
+    // أول مرة: «نرجع نتصل». لو فيه سبب واضح أو تكرر الفشل: نقول له وش يسوي
+    status(I && ((why && typeof why!=='function') || st.retry>=2) ? I.why(why || 'ice') : 'انقطع الاتصال… نرجع نتصل');
     clearTimeout(st.rt); st.rt=setTimeout(()=>{ if(!st.conn || !st.conn.open) connect(); }, Math.min(8000, 1500*(++st.retry)));
   }
   function send(msg){ if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
@@ -113,7 +134,7 @@
     if(d.t==='feedall'){ st.feed=(d.list||[]).slice(-60); renderFeed(false); return; }
     if(d.t==='feedreset'){ st.feed=[]; renderFeed(false); return; }
     if(d.t==='ended'){ st.room=null; try{ st.peer && st.peer.destroy(); }catch(e){} localStorage.removeItem('dahoom_last_room'); history.replaceState(null,'','remote.html'); $('#r-code').value=''; $('#r-err').textContent=d.msg||''; show('r-join'); return; }
-    if(d.t==='notice'){ status(d.msg); vibe([40,30,40]); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),3500); return; }
+    if(d.t==='notice'){ status(d.msg); vibe([40,30,40]); sfx(/صح|وافق|فزت|طلعت!|\+/.test(d.msg) ? 'good' : /رفض|ما زبطت|نشل|أخذ منك|خسر/.test(d.msg) ? 'bad' : 'coin'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),3500); return; }
   }
 
   // ---------- اختيار الفريق ----------
@@ -179,6 +200,7 @@
     $('#r-buzz').style.display='';
     const t=S.team;
     document.body.style.setProperty('--team', t.color);
+    if(S.myTurn && !st.wasTurn && !S.final) sfx('turn'); st.wasTurn=!!S.myTurn;
     const m=me();
     $('#r-head').innerHTML=`${m&&m.avatar?`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
       <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>
@@ -237,6 +259,8 @@
     if(isSQ) renderSQ(S.sq); else if(st.sqAsk && !S.sq){ st.sqAsk=null; }
     // المؤقت (ألف نقطة وارسم وخمّن) + السؤال كما هو على الشاشة + لوحة هوامير
     setTimer(done ? null : (S.timer || (S.rasm && S.rasm.timer) || null));
+    { const tm=$('#r-timer'), keep = S.game==='rasm' && !done && !(S.rasm && S.rasm.timer);
+      if(keep){ tm.classList.remove('r-hide'); tm.classList.add('r-ghost'); } else tm.classList.remove('r-ghost'); }
     renderView(done ? null : S.view);
     const hm = S.game==='hawamir' && S.hm && !done;
     tog('#r-hmwrap', hm); $('#r-main').classList.toggle('is-hm', !!hm);
@@ -320,7 +344,7 @@
     const late = tmr.total>12000 ? sec<=10 : frac<=.5;
     el.classList.toggle('warn', late && sec>5 && frac<.75); el.classList.toggle('crit', sec<=5 && frac<.75 && ms>0); el.classList.toggle('over', ms<=0);
     $('#rt-lbl').textContent = ms<=0 ? 'خلص الوقت' : late ? 'آخر الثواني!' : 'الوقت';
-    const whole=Math.ceil(sec); if(whole!==lastWhole){ lastWhole=whole; if(whole<=5 && whole>0) vibe(25); }
+    const whole=Math.ceil(sec); if(whole!==lastWhole){ lastWhole=whole; if(whole<=5 && whole>0){ vibe(25); sfx('tick'); } }
     if(ms>0) tmr.raf=requestAnimationFrame(timerFrame);
   }
 
@@ -476,7 +500,7 @@
     const pend=L.filter(t=>t.st==='pending');
     const mine=pend.filter(t=>t.to===me), sent=pend.filter(t=>t.from===me), others=pend.filter(t=>t.to!==me && t.from!==me), done=L.filter(t=>t.st!=='pending').slice(-4).reverse();
     // صفقة جديدة وصلتك: اهتزاز
-    mine.forEach(t=>{ if(!trSeen.has(t.id)){ trSeen.add(t.id); vibe([60,40,60]); } });
+    mine.forEach(t=>{ if(!trSeen.has(t.id)){ trSeen.add(t.id); vibe([60,40,60]); sfx('ask'); } });
     const tn=$('#r-hmtrn'); if(tn){ tn.textContent = mine.length ? String(mine.length) : pend.length ? String(pend.length) : ''; tn.classList.toggle('hot', !!mine.length); }
     const card = (t, acts) => { const A=plOf(t.from), B=plOf(t.to);
       return `<div class="r-trc ${t.st}"><div class="r-trw"><b style="color:${A.color}">${esc(A.name)}</b> <span>${t.counter?'رد بعرض على':'يعرض على'}</span> <b style="color:${B.color}">${esc(B.name)}</b>${t.st!=='pending'?`<em class="r-trs ${t.st}">${TR_ST[t.st]}</em>`:''}</div>
@@ -653,9 +677,10 @@
       return; }
     const k='a:'+A.reqId; if(box.dataset.k===k) return; box.dataset.k=k;
     const { reqId, spec }=A; box.className='sq-rask on';
-    const opt=(o,i)=>{ const role=o.role && Q ? sqRole(Q,o.role) : null;
+    const mineR = new Set(Q ? Q.cards.filter(c=>!c.up).map(c=>c.r) : []);
+    const opt=(o,i)=>{ const role=o.role && Q ? sqRole(Q,o.role) : null, have = o.role && mineR.has(o.role);
       return spec.grid
-        ? `<button class="sq-qa ${o.dis?'dis':''}" data-o="${i}" ${o.dis?'disabled':''} style="--rc:${o.color||'var(--line)'}"><span class="sq-qa-ic">${ic(o.icon||'star')}</span><span class="sq-qa-t"><b>${esc(o.label)}</b>${role?`<em>${esc(role.name)}</em>`:'<em class="any">أي أحد</em>'}</span><small>${esc(o.sub||'')}</small></button>`
+        ? `<button class="sq-qa ${o.dis?'dis':''} ${have?'have':''}" data-o="${i}" ${o.dis?'disabled':''} style="--rc:${o.color||'var(--line)'}"><span class="sq-qa-ic">${ic(o.icon||'star')}</span><span class="sq-qa-t"><b>${esc(o.label)}</b>${role?`<em>${esc(role.name)}</em>`:'<em class="any">أي أحد</em>'}${have?'<i class="sq-have">عندك</i>':''}</span><small>${esc(o.sub||'')}</small></button>`
         : `<button class="btn ${o.cls||'btn-hype'} ${o.color?'sq-qc':''}" data-o="${i}" ${o.dis?'disabled':''} ${o.color?`style="--rc:${o.color}"`:''}>${o.icon?ic(o.icon):''}<span>${esc(o.label)}</span>${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`; };
     box.innerHTML=`<div class="sq-qh"><b>${esc(spec.title)}</b>${spec.text?`<p>${esc(spec.text)}</p>`:''}</div>
       ${spec.ms?`<div class="sq-qbar"><i style="--ms:${spec.ms}ms;--from:1"></i></div>`:''}
@@ -775,7 +800,7 @@
       <div class="rp-rinfo" id="rp-rinfo"></div>
       <div class="rp-next" id="rp-next"></div>
       <div class="lbl">التخمينات</div><div class="rg-feed" id="rg-feed"></div>`;
-    vibe(res.ok ? (won?[80,40,80,40,160]:[60]) : [200]);
+    vibe(res.ok ? (won?[80,40,80,40,160]:[60]) : [200]); sfx(res.ok ? 'good' : 'bad');
     $$('#rp-rate [data-rv]').forEach(b=>b.onclick=()=>{ vibe(20); send({t:'rate', v:+b.dataset.rv}); markRate(+b.dataset.rv); });
     markRate(R.myRate);
   }
@@ -824,6 +849,7 @@
 
   // ---------- أسئلة الشاشة ----------
   function openAsk(reqId, spec){
+    sfx('ask');
     st.askId=reqId; vibe([80,40,80]);
     if(spec.sq){ st.sqAsk={ reqId, spec }; renderSQAsk(); return; }
     const isHM = spec.hm || (st.S && st.S.game==='hawamir');

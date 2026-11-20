@@ -8,7 +8,7 @@ window.DAHOOM_DATA.sadq = {
     tajer:  { name:'التاجر',  icon:'coins',       color:'#D9961A', act:'tijara',    block:null,        line:'يجيب الفلوس بسرعة' },
     wasta:  { name:'الواسطة', icon:'phone',       color:'#2E9E5B', act:'wasta',     block:'mukhalafa', line:'يعرف أحد بكل مكان' },
     muhami: { name:'المحامي', icon:'hm-gavel',    color:'#8A5A2B', act:'istishara', block:'fadiha',    line:'عنده مخرج لكل ورطة' },
-    harami: { name:'الحرامي', icon:'ninja',       color:'#3B3F4C', act:'nashl',     block:'mubadala',  line:'خفيف يد وما ينضحك عليه' },
+    harami: { name:'الحرامي', icon:'ninja',       color:'#5E6680', act:'nashl',     block:'mubadala',  line:'خفيف يد وما ينضحك عليه' },
     shurti: { name:'الشرطي',  icon:'hm-siren',    color:'#2478C8', act:'mukhalafa', block:'nashl',     line:'يحب يكتب مخالفات' },
     faddah: { name:'الفضّاح', icon:'hm-camera',   color:'#D5489A', act:'fadiha',    block:null,        line:'معه صور الكل' },
     dallal: { name:'الدلّال', icon:'hm-exchange', color:'#E2563F', act:'mubadala',  block:null,        line:'يبيعك الشي ويشتريه منك' },

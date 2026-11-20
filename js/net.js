@@ -21,14 +21,14 @@ window.DahoomNet = (function(){
   function start(){
     if(peer || !window.Peer) return;
     code = sessionStorage.getItem('dahoom_room') || genCode();
-    peer = new window.Peer(PREFIX+code, {debug:0});
+    peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
     peer.on('open', ()=>{ ready=true; tries=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
     peer.on('connection', c=>{
       c.cid='c'+(++cidSeq);
       c.on('open', ()=>{ conns.add(c); });
       c.on('data', d=>onMsg(c,d));
       c.on('close', ()=>{ conns.delete(c); refreshUI(); });
-      c.on('error', ()=>{ conns.delete(c); refreshUI(); });
+      c.on('error', e=>{ conns.delete(c); refreshUI(); if(e && e.type==='negotiation-failed' && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.MSG.host); });
     });
     peer.on('disconnected', ()=>{ ready=false; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
     peer.on('error', e=>{
@@ -37,7 +37,7 @@ window.DahoomNet = (function(){
         if(++tries>=4){ sessionStorage.removeItem('dahoom_room'); tries=0; }
         setTimeout(start, 2000); return;
       }
-      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=false; refreshUI(); }
+      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=false; refreshUI(); if(window.DAHOOM_ICE) toast(window.DAHOOM_ICE.why('signal')); }
     });
   }
 
@@ -211,5 +211,5 @@ window.DahoomNet = (function(){
   }
   document.addEventListener('click', e=>{ if(e.target.closest('[data-net]')) openPanel(); });
 
-  return { isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+  return { get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

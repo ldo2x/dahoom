@@ -224,7 +224,7 @@ window.DahoomSadq = (function(){
     if(cost){ p.coins-=cost; G.pot+=cost; }
     if(A.role){ if(!hidden(p).some(c=>c.r===A.role)) p.stats.lies++; else p.stats.truths++; }
     play('card',{volume:.6});
-    log(p, `${A.role?`يقول إنه ${RL(A.role).name} ويسوي `:''}${A.name}${t?` على ${t.name}`:''}${cost?` (دفع ${cost} للصندوق)`:''}`, 'act', A.icon);
+    if(A.role || t || cost) log(p, `${A.role?`يقول إنه ${RL(A.role).name} ويسوي `:''}${A.name}${t?` على ${t.name}`:''}${cost?` (دفع ${cost} للصندوق)`:''}`, 'act', A.icon);
     stage(`<div class="sq-msg">${who(p)} ${A.role?`يقول إنه ${roleChip(A.role)} — `:''}<b>${esc(A.name)}</b>${t?` على ${who(t)}`:''}</div>`);
     render(); await sleep(900);
     if(A.role){ const r=await challengeWindow(p, A.role, false); if(r==='lie' || p.out || !G || G.over) return; }
@@ -289,7 +289,7 @@ window.DahoomSadq = (function(){
     if(!G || G.over) return;
     const p=cur(); if(p.out) return next();
     G.act=null; render();
-    stage(`<div class="sq-msg">${who(p)} — دورك</div>`);
+    stage(`<div class="sq-msg">دور ${who(p)}</div>`);
     if(p.loan){ p.loan=false;
       if(p.coins>=DATA.loanPay){ p.coins-=DATA.loanPay; G.pot+=DATA.loanPay; log(p, `سدد السلفة: ${DATA.loanPay} للصندوق`, 'info', 'hm-cash'); render(); await sleep(700); }
       else { const v=p.coins; p.coins=0; G.pot+=v; log(p, 'ما قدر يسدد السلفة', 'bad', 'hm-cash'); await loseCard(p, 'ما سدد السلفة'); if(p.out) return next(); }

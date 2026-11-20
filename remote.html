@@ -6,6 +6,24 @@
 <meta name="theme-color" content="#0D0B14">
 <script>(function(){var t=null;try{t=localStorage.getItem('dahoom_theme');}catch(e){}if(t!=='day'&&t!=='night'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'day':'night';}document.documentElement.setAttribute('data-theme',t);if(t==='day'){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#ECEAF1');}})();</script>
 <title>دحوم — الجوال</title>
+<meta name="description" content="ادخل كود الغرفة والعب من جوالك مع اللي حولك.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/app/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="دحوم">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="دحوم">
+<meta property="og:locale" content="ar_SA">
+<meta property="og:title" content="تعال العب معنا — دحوم">
+<meta property="og:description" content="افتح الرابط من جوالك وادخل الغرفة.">
+<meta property="og:url" content="https://ldo2x.github.io/dahoom/remote.html">
+<meta property="og:image" content="https://ldo2x.github.io/dahoom/assets/app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ldo2x.github.io/dahoom/assets/app/og.png">
+<script>if('serviceWorker' in navigator && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))){ addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23FF3D81'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E%D8%AF%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,13 +46,14 @@
 <section id="r-join" class="r-screen">
   <h1>ادخل جلسة</h1>
   <p class="muted">اكتب كود الجلسة اللي وصلك، أو اختر من الجلسات المفتوحة تحت</p>
-  <div class="r-codebox"><input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" inputmode="text" aria-label="كود الجلسة">
+  <div class="r-codebox"><input id="r-code" class="r-code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="••••" inputmode="text" aria-label="كود الجلسة">
   <button class="btn btn-hype big" id="r-go">دخول</button></div>
   <p class="r-err" id="r-err"></p>
   <section class="r-lobby">
     <div class="r-lobby-h"><b>الجلسات المفتوحة</b><a class="btn small" href="index.html">سوّ جلستك</a></div>
     <div class="jl-list" id="r-rooms"><p class="muted small">نجيب الجلسات…</p></div>
   </section>
+  <nav class="legal-links small muted" aria-label="روابط"><a href="privacy.html">الخصوصية</a> · <a href="terms.html">الشروط</a></nav>
 </section>
 
 <!-- اختيار الفريق -->
@@ -94,7 +113,7 @@
       <div class="r-charade hidden" id="r-charade"></div>
       <div class="r-rasm hidden" id="r-rasm"></div>
       <div class="r-sq hidden" id="r-sq"></div>
-      <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">BUZZ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
+      <button class="r-buzz" id="r-buzz" disabled><span class="bz-main">بزّ</span><span class="bz-sub" id="r-buzz-sub"></span></button>
       <div class="fx-tags" id="r-fx"></div>
       <div class="r-hand-wrap" id="r-hand-wrap">
         <div class="r-hand-lbl" id="r-hand-lbl"></div>
@@ -114,6 +133,7 @@
 <div class="r-sheet hidden" id="r-sheet"><div class="r-sheet-in" id="r-sheet-in"></div></div>
 
 <script src="js/vendor/peerjs.min.js?v=202611200620"></script>
+<script src="js/ice.js?v=1"></script>
 <script src="data/cards.js?v=202611200620"></script>
 <script src="js/config.js?v=1"></script>
 <script src="js/lobby.js?v=1"></script>

@@ -198,3 +198,10 @@
   .sq-r{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
 }
 @media (prefers-reduced-motion:reduce){ .sq-msg,.sq-rask.on{animation:none} .sq-qbar i{animation:none} .sq-seat{transition:none} }
+
+@media (min-width:1200px){ .sq-card{width:108px;height:150px;border-top-width:30px} .sq-card .sq-cic .ic{width:38px;height:38px} .sq-card b{font-size:1.05rem} .sq-seats{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))} }
+.sq-center{min-height:200px}
+
+/* الحركة اللي شخصيتها عندك فعلًا (صادق) */
+.sq-qa.have{border-color:color-mix(in srgb,var(--rc) 70%,transparent);background:color-mix(in srgb,var(--rc) 10%,var(--surface-2))}
+.sq-have{font-style:normal;font-size:.68rem;font-weight:800;background:var(--ok);color:#fff;border-radius:99px;padding:0 7px;margin-inline-start:auto}

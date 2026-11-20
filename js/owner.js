@@ -32,7 +32,8 @@ window.DahoomOwner = (function(){
   }
   function setMode(m){ mode=m; try{ sessionStorage.setItem(KEY, JSON.stringify({ on, mode })); }catch(e){} render(); }
   function enter(){
-    const n=NET(); if(!n) return; n.start(); on=true; wrap().classList.remove('hidden'); ensureFrame(); setMode('me');
+    const n=NET(); if(!n) return;
+    if(/[?&]noown=1/.test(location.search)) { n.start(); return; }   // للاختبارات وشاشات العرض: الطاولة بس n.start(); on=true; wrap().classList.remove('hidden'); ensureFrame(); setMode('me');
   }
   function leave(){
     on=false; wrap().classList.add('hidden'); const f=$('#own-frame'); f.src='about:blank'; frameRoom=null;
@@ -48,7 +49,7 @@ window.DahoomOwner = (function(){
   });
   // لما تبدأ المباراة نرجع صاحب الجلسة لشاشته عشان يلعب
   document.addEventListener('dahoom:screen', ()=>{ if(!on) return; const scr=(document.querySelector('.screen.active')||{}).id||'';
-    if(GAME_SCREENS.includes(scr) || scr==='results') { if(mode!=='me') setMode('me'); } render(); });
+    if((GAME_SCREENS.includes(scr) || scr==='results') && NET() && NET().ownerPid) { if(mode!=='me') setMode('me'); } render(); });
   // بعد تحديث الصفحة: نرجع زي ما كنا
   document.addEventListener('DOMContentLoaded', ()=>{ try{ const s=JSON.parse(sessionStorage.getItem(KEY)||'null'); if(s && s.on){ mode=s.mode||'me'; setTimeout(enter, 300); setTimeout(()=>setMode(s.mode||'me'), 600); } }catch(e){} });
   setInterval(()=>{ if(on){ ensureFrame(); render(); } }, 3000);

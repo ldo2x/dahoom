@@ -151,7 +151,7 @@ window.DahoomHawamir = (function(){
   }
   function tileSub(i){
     const t=T[i];
-    if(t.price){ const o=ownerOf(i); return !o ? money(t.price) : isMort(i) ? `<small>مرهون</small>` : t.t==='co' ? `<small>النرد ×</small> ${money(coMult(o))}` : `<small>إيجار</small> ${money(rentOf(i))}`; }
+    if(t.price){ const o=ownerOf(i); return !o ? money(t.price) : isMort(i) ? `<small>مرهون</small>` : t.t==='co' ? `<small>النرد ×</small> ${money(coMult(o))}` : money(rentOf(i)); }
     return t.t==='pot' ? money(G.pot) : t.t==='start' ? plus(S.salary) : t.t==='jail' ? `<small>كفالة</small> ${money(DATA.bail)}` : '';
   }
   function renderAll(){ renderBoard(); renderSide(); renderLog(); renderTrades(); pushAll(); }
@@ -614,7 +614,7 @@ window.DahoomHawamir = (function(){
     if(p.jail){ const free=await jailTurn(p); if(!G || G.over) return; if(!free) return next(); }
     for(let rolls=0; rolls<2; rolls++){
       for(;;){
-        stage(`<div class="hm-msg"><span class="who" style="--c:${p.color}">${esc(p.name)}</span> ${rolls?'— دبل! ارمِ مرة ثانية':'— دورك'}</div>`);
+        stage(`<div class="hm-msg">${rolls?'دبل!':'دور'} <span class="who" style="--c:${p.color}">${esc(p.name)}</span>${rolls?' يرمي مرة ثانية':''}</div>`);
         const opts=[{v:'roll',label:'ارمِ النرد',icon:'dice',cls:'btn-hype big'}];
         if(canBuild(p).length) opts.push({v:'build',label:'ابنِ',icon:'hm-building',cls:'big'});
         if(owned(p).length) opts.push({v:'manage',label:'أملاكي',icon:'hm-briefcase',cls:'big'});
@@ -681,8 +681,8 @@ window.DahoomHawamir = (function(){
       d.innerHTML=`${i===0?ic('crown','crown'):''}<div class="rank">${i+1}</div><div class="pn">${esc(p.name)}</div><div class="muted small">${p.out?'أفلس':`${owned(p).length} عقار`}</div><div class="ps">${money(worth(p))}</div>`; pod.appendChild(d); });
     $('#btn-again').onclick=()=>startMatch();
     const el=$('#match-stats');
-    if(el) el.innerHTML=`<div class="panel mt"><h3>أرقام المباراة</h3><div class="hm-table"><div class="hm-tr hm-th"><span>اللاعب</span><span>الثروة</span><span>كاش</span><span>عقارات</span><span>إيجار دخل</span><span>إيجار دفع</span><span>صفقات</span></div>
-      ${rank.map(p=>`<div class="hm-tr"><span style="color:${p.color}"><b>${esc(p.name)}</b></span><span>${money(worth(p))}</span><span>${money(p.cash)}</span><span>${owned(p).length}</span><span>${money(p.stats.rentIn)}</span><span>${money(p.stats.rentOut)}</span><span>${p.stats.trades}</span></div>`).join('')}</div></div>`;
+    if(el) el.innerHTML=`<div class="panel mt"><h3>أرقام المباراة</h3><div class="hm-rtable"><div class="hm-rrow hm-rth"><span>اللاعب</span><span>الثروة</span><span>كاش</span><span>عقارات</span><span>إيجار دخل</span><span>إيجار دفع</span><span>صفقات</span></div>
+      ${rank.map(p=>`<div class="hm-rrow"><span style="color:${p.color}"><b>${esc(p.name)}</b></span><span>${money(worth(p))}</span><span>${money(p.cash)}</span><span>${owned(p).length}</span><span>${money(p.stats.rentIn)}</span><span>${money(p.stats.rentOut)}</span><span>${p.stats.trades}</span></div>`).join('')}</div></div>`;
     try{ const DS=window.DahoomStats; if(DS && DS.autoShow) DS.autoShow(()=>({ items:awards(rank), pool:G.players.map(p=>p.name) })); }catch(e){ console.error(e); }
     try{ const L=window.DahoomLog; if(L && L.match) L.match({ game:'hawamir', rounds:G.round, mins:Math.round((Date.now()-G.t0)/60000), mode:D.session.mode, opts:{ map:MAP.id, minutes:S.minutes, start:S.startCash },
       teams:rank.map((p,i)=>({ id:p.id, name:p.name, score:worth(p), rank:i+1, win:i===0, players:(p.players||[]).map(x=>({name:x.name, av:x.avatar||''})), st:{ cash:p.cash, props:owned(p).length, rentIn:p.stats.rentIn, rentOut:p.stats.rentOut, trades:p.stats.trades } })), items:[] }); }catch(e){ console.error(e); }

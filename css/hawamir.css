@@ -334,3 +334,9 @@
   84%{transform:translate3d(0,calc(var(--s)*-.1),0) rotateX(-14deg) rotateY(-18deg) rotateX(var(--rx)) rotateY(var(--ry))}
   100%{transform:translate3d(0,0,0) rotateX(-14deg) rotateY(-18deg) rotateX(var(--rx)) rotateY(var(--ry))}}
 .hm-msg .hm-dice3{margin-inline:1.2cqw}
+
+/* جدول نتائج هوامير (اسم مستقل عن صفوف الصفقات) */
+.hm-rtable{display:grid;gap:4px;overflow:auto}
+.hm-rrow{display:grid;grid-template-columns:1.4fr repeat(6,1fr);gap:8px;padding:8px 12px;border-radius:var(--r-xs);background:var(--surface-2);text-align:center;font-family:var(--num);font-weight:700;min-width:560px;align-items:center}
+.hm-rrow span:first-child{text-align:start;font-family:var(--body)}
+.hm-rth{background:transparent;color:var(--mute);font-family:var(--body);font-size:.85rem}

@@ -809,3 +809,7 @@ body.remote::before{height:10px;background-size:23px 10px}
 body.is-owner .r-bar{display:none}
 
 .rs-own{font-style:normal;color:var(--gold);display:inline-grid;vertical-align:-.15em}.rs-own .ic{width:15px;height:15px}
+
+.r-ghost{visibility:hidden}
+.rs-rate{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.rs-rate-b{min-width:0!important}

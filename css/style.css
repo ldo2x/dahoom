@@ -304,7 +304,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;color:var
 .tchip .bar{position:absolute;bottom:0;right:0;left:0;height:4px;background:var(--line-soft);overflow:hidden}
 .tchip .bar i{display:block;height:100%;width:100%;background:var(--c);transform-origin:100% 50%;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
 .tchip.turn{background:color-mix(in srgb,var(--c) 16%,var(--surface))}
-.tchip.turn::before{content:'دورك';position:absolute;z-index:2;top:-12px;right:12px;background:var(--c);color:var(--ink);font-size:.82rem;font-weight:700;padding:0 10px;border-radius:var(--r-xs);line-height:1.7;letter-spacing:0}
+.tchip.turn::before{content:'الدور';position:absolute;z-index:2;top:-12px;right:12px;background:var(--c);color:var(--ink);font-size:.82rem;font-weight:700;padding:0 10px;border-radius:var(--r-xs);line-height:1.7;letter-spacing:0}
 .tchip.turn::after{content:'';position:absolute;inset:-1px;border:2px solid var(--c);border-radius:inherit;pointer-events:none}
 .scoreboard .tchip:first-child{border-start-start-radius:var(--r-m);border-end-start-radius:var(--r-m)}
 .scoreboard .tchip:last-child{border-start-end-radius:var(--r-m);border-end-end-radius:var(--r-m)}
@@ -904,3 +904,9 @@ body.own-me .own-frame{display:block}
 body.own-on{padding-top:48px}
 body.own-me{overflow:hidden}
 @media (max-width:720px){ .own-b span{display:none} .own-b.hot span,.own-b.sw span{display:inline} .own-b{padding:6px 9px} }
+
+.legal-links{text-align:center;margin:28px 0 8px;color:var(--mute)}
+.legal-links a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+
+.own-b.hot{color:var(--ink)}
+.own-dock{backdrop-filter:none;background:var(--surface)}
