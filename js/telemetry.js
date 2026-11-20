@@ -18,8 +18,9 @@ window.DahoomLog = (function(){
     l: ['الجواب غلط','الجواب ما يبدأ بالحرف','صعب زيادة','سهل زيادة','السؤال مو واضح'],
     w: ['صعبة ترسم','سهلة زيادة','أصعب من مستواها','أسهل من مستواها','مو مناسبة'],
     card: ['قوية زيادة','ضعيفة','وصفها مو واضح','ما اشتغلت صح (باق)','الصورة أو الصوت ما يناسب'],
+    other: ['مشكلة بالاتصال','شي بالشكل أو الواجهة','خطأ باللعبة','اقتراح','شي ثاني'],
   };
-  const KIND_AR = { q:'سؤال', c:'بدون كلام', t:'تحدي', l:'سؤال حروف', w:'كلمة رسم', card:'بطاقة' };
+  const KIND_AR = { q:'سؤال', c:'بدون كلام', t:'تحدي', l:'سؤال حروف', w:'كلمة رسم', card:'بطاقة', other:'شي ثاني' };
 
   // ---------- تحويل JSON لصيغة Firestore ----------
   function val(v){
@@ -74,11 +75,13 @@ window.DahoomLog = (function(){
     const D=window.Dahoom; if(!D || !item) return;
     const esc=D.esc, list=REASONS[item.kind]||[];
     let pick=null;
+    const other = item.kind==='other';
     D.modal(`<div class="eyebrow">بلاغ — ${KIND_AR[item.kind]||''}</div>
-      <div class="rep-item"><b>${esc(item.text)}</b>${item.answer?`<span class="muted small">الجواب: ${esc(item.answer)}</span>`:''}</div>
+      ${other?'<h3>وش المشكلة؟</h3>':`<div class="rep-item"><b>${esc(item.text)}</b>${item.answer?`<span class="muted small">الجواب: ${esc(item.answer)}</span>`:''}</div>`}
       <div class="rep-reasons">${list.map((r,i)=>`<button class="btn small ghost" data-r="${i}">${esc(r)}</button>`).join('')}</div>
-      <textarea class="rep-note" maxlength="300" placeholder="ملاحظة (اختياري): وش الصح؟ وش المشكلة؟"></textarea>
-      <div class="row center mt-s"><button class="btn btn-hype" data-send disabled>أرسل البلاغ</button><button class="btn ghost" data-x>إلغاء</button></div>`,{onMount(m){
+      <textarea class="rep-note" maxlength="${other?400:300}" placeholder="${other?'اكتب وش صار بالتفصيل':'ملاحظة (اختياري): وش الصح؟ وش المشكلة؟'}"></textarea>
+      <div class="row center mt-s"><button class="btn btn-hype" data-send disabled>أرسل البلاغ</button>${other?'':'<button class="btn ghost" data-other>بلاغ عن شي ثاني</button>'}<button class="btn ghost" data-x>إلغاء</button></div>`,{onMount(m){
+        const ob=m.querySelector('[data-other]'); if(ob) ob.onclick=()=>{ m.remove(); openReport({ kind:'other', id:'', text:'بلاغ عام', answer:'', d:0, tag:'' }); };
         m.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ pick=list[+b.dataset.r]; m.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('btn-hype', x===b)); m.querySelector('[data-send]').disabled=false; });
         m.querySelector('[data-x]').onclick=()=>m.remove();
         m.querySelector('[data-send]').onclick=()=>{ report(item, pick, m.querySelector('.rep-note').value.trim(), 'المضيف'); m.remove(); D.toast('وصل البلاغ — شكراً'); D.play('pop'); };
@@ -95,6 +98,5 @@ window.DahoomLog = (function(){
 document.addEventListener('click', e=>{
   if(!e.target.closest('[data-report]')) return;
   const it=window.DAHOOM_ITEM;
-  if(it) window.DahoomLog.openReport(it);
-  else window.Dahoom.toast('البلاغ يكون على آخر سؤال أو تحدي ظهر — ما ظهر شي للحين. للبطاقات: افتح البطاقة واضغط بلّغ');
+  window.DahoomLog.openReport(it || { kind:'other', id:'', text:'بلاغ عام', answer:'', d:0, tag:'' });
 });

@@ -107,7 +107,7 @@ window.DahoomNet = (function(){
   const hasPhone = id => phonesOf(id).length>0;
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
-  function push(c){ if(!c.teamId || !H) return; try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
+  function push(c){ if(!c.teamId) return; if(!H){ try{ c.send({t:'state', waiting:true, locked:false}); }catch(e){} return; } try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
   // تحديث كل الجوالات (مجمّع عشان ما نرسل عشرات المرات بنفس اللحظة)
   function pushAll(){ if(pushT) return; pushT=setTimeout(()=>{ pushT=0; conns.forEach(push); }, 60); }
 
@@ -140,8 +140,7 @@ window.DahoomNet = (function(){
     const id=(document.querySelector('.screen.active')||{}).id||'';
     if(isLocked()) return { k:'play', x:'المباراة شغالة' };
     if(id==='results') return { k:'done', x:'المباراة خلصت' };
-    if(id==='lobby') return { k:'lobby', x:'المضيف يرتّب اللاعبين' + (D.session.mode==='solo'?'':' والفرق') };
-    if(/settings/.test(id)) return { k:'settings', x:'المضيف يضبط إعدادات اللعبة — قربت تبدأ' };
+    if(id==='lobby' || /settings/.test(id)) return { k:'lobby', x:`${hostName()||'صاحب الجلسة'} يجهّز اللعبة — استعدوا` };
     return { k:'home', x:'المضيف يختار اللعبة' };
   }
   function infoMsg(){

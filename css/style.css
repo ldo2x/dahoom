@@ -912,3 +912,13 @@ body.own-me{overflow:hidden}
 .own-dock{backdrop-filter:none;background:var(--surface)}
 
 .acc-slot{display:flex;align-items:center;margin-inline-start:auto;margin-inline-end:12px;min-width:0}
+
+.own-brand{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-weight:800;padding:4px 8px 4px 4px;border-radius:10px}
+.own-brand .brand-mark{width:30px;height:30px;font-size:1rem}
+.own-brand:hover{background:var(--surface-2)}
+.own-brand:focus-visible{outline:2px solid var(--brand)}
+/* صاحب الجلسة على شاشته: تنبيهات الطاولة (فلان دخل…) ما تطلع فوقها — شاشته فيها كل شي */
+body.own-me > .toast{display:none}
+
+/* خلية الحروف: السؤال هو أهم شي على الشاشة — يقرا من بعيد */
+.kh-q{font-size:clamp(1.6rem,2.3vw,2.7rem);line-height:1.5}

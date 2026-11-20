@@ -218,8 +218,10 @@
       fin.innerHTML=`<div class="rf-rank ${f.rank===1?'win':''}"><small>انتهت المباراة</small><b>#${f.rank}</b><span>من ${f.of} ${f.rank===1?'— فزتوا!':''}</span></div>
         ${f.awards.length&&!f.all?`<div class="rf-aw">${f.awards.map(a=>`<span class="rf-badge"><b>${esc(a.title)}</b>${esc(a.value)}</span>`).join('')}</div>`:''}
         <div class="rf-rows">${f.rows.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>
+        ${OWNER && OWN() ? `<div class="ow-after"><button type="button" class="btn btn-hype big" data-ow-again>${ic('recycle')} العبوا مرة ثانية</button><button type="button" class="btn" data-ow-setup>${ic('gears')} غيّر اللعبة أو الإعدادات</button></div>` : ''}
         ${f.all ? finalAllHTML(f.all) : `<p class="muted small center">${S.game==='alf'?'الإحصائيات الكاملة والمنحنى على الشاشة':'الإحصائيات الكاملة على الشاشة'}</p>`}`;
       $('#r-phase').textContent='';
+      { const ag=$('[data-ow-again]'), su=$('[data-ow-setup]'); if(ag) ag.onclick=()=>{ vibe(20); OWN().again(); }; if(su) su.onclick=()=>{ vibe(10); OWN().toSetup(); }; }
       if(!st.recorded && window.DahoomAccount){ st.recorded=true;
         const mm=me()||{}, fx=f.stats||{};
         Promise.resolve(window.DahoomAccount.recordMatch({ id:`${st.room}-${S.game}-${f.mid||Math.floor(Date.now()/600000)}-${mm.pid||''}`, game:S.game, rank:f.rank, of:f.of, won:f.rank===1,
@@ -289,7 +291,7 @@
       const loose=I.players.filter(p=>!p.team); if(loose.length) list += `<div class="rs-team" style="--c:var(--line)"><div class="rs-th"><i></i>بدون فريق <small>${loose.length}</small></div>${loose.map(pl).join('')}</div>`; }
     $('#r-sess-body').innerHTML=`<div class="rs-rows">
         <div><span>اللعبة</span><b>${esc(I.gameName||'—')}</b></div>
-        <div><span>المضيف</span><b>${esc(host)}</b></div>
+        <div><span>صاحب الجلسة</span><b>${esc(host)}</b></div>
         <div><span>الطريقة</span><b>${I.mode==='solo'?'كل واحد لحاله':'فرق'}</b></div>
         <div><span>متصلين</span><b>${on} من ${n}</b></div></div>
       <div class="rs-where k-${esc(I.where.k)}"><i></i>${esc(I.where.x)}</div>
@@ -303,13 +305,72 @@
     const mini=$('#r-sess-mini'); if(mini) mini.innerHTML=`<span>${esc(I.gameName||'')}</span><span>المضيف: <b>${esc(host)}</b></span><span>${n} ${n===1?'لاعب':'لاعبين'}</span>`;
   }
   $('#r-sess').addEventListener('toggle', ()=>{ if(st.info) st.sessTouched=true; });
+  // ---------- لوحة إدارة الجلسة (لصاحب الجلسة بس) ----------
+  // صاحب الجلسة يلعب من نفس الجهاز: هالصفحة داخل إطار بصفحة الطاولة، فنقدر نكلّم مدير الطاولة مباشرة (نفس الموقع)
+  const OWN = () => { try{ return OWNER && window.parent!==window && window.parent.DahoomOwner ? window.parent.DahoomOwner.api : null; }catch(e){ return null; } };
+  let ownSig='';
+  function renderOwnerPanel(box){
+    const A=OWN(); if(!A) return false;
+    A.prepare();
+    const g=A.game(), games=A.games(), G=games.find(x=>x.id===g)||games[0], F=A.fields(), mode=A.mode(), n=A.players();
+    const sig=JSON.stringify([g, mode, F.map(f=>[f.id,f.type,f.label,f.sec,f.group,(f.options||[]).length])]);
+    if(ownSig!==sig || !box.querySelector('.ow')){
+      ownSig=sig;
+      const secs=[]; F.forEach(f=>{ let s=secs.find(x=>x.t===f.sec); if(!s){ s={ t:f.sec, f:[] }; secs.push(s); } s.f.push(f); });
+      const field = f => {
+        if(f.type==='select') return `<label class="ow-f"><span>${esc(f.label)}</span><select data-f="${f.id}">${f.options.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('')}</select></label>`;
+        if(f.type==='checkbox') return `<label class="ow-sw"><input type="checkbox" data-f="${f.id}"><i></i><span>${esc(f.label)}</span></label>`;
+        if(f.type==='chip' || f.type==='pick') return '';
+        return `<label class="ow-f"><span>${esc(f.label)}</span><input type="number" inputmode="numeric" data-f="${f.id}" ${f.min?`min="${f.min}"`:''} ${f.max?`max="${f.max}"`:''} ${f.step?`step="${f.step}"`:''}></label>`; };
+      const chips = list => { const groups=[]; list.forEach(f=>{ let gr=groups.find(x=>x.t===f.group); if(!gr){ gr={ t:f.group, f:[] }; groups.push(gr); } gr.f.push(f); });
+        return groups.map(gr=>`<div class="ow-chg">${gr.t&&gr.t!=='map'?`<div class="ow-lbl">${esc(gr.t)}</div>`:''}<div class="ow-chips">${gr.f.map(f=>`<button type="button" class="ow-chip ${f.type==='pick'?'pick':''}" data-c="${f.id}" data-t="${f.type}"><b>${esc(f.label)}</b>${f.sub?`<small>${esc(f.sub)}</small>`:''}</button>`).join('')}</div></div>`).join(''); };
+      const modes = G.modes.length>1 ? `<div class="ow-seg" role="group" aria-label="طريقة اللعب"><button type="button" data-mode="solo">${ic('person')} كل واحد لحاله</button><button type="button" data-mode="teams">${ic('team')} فرق</button></div>` : '';
+      box.innerHTML=`<section class="ow">
+        <div class="ow-h"><span class="ow-crown">${ic('crown')}</span><div><b>جلستك</b><small>اختر اللعبة واضبطها، وأول ما يكتمل الشباب اضغط ابدأ</small></div></div>
+        <div class="ow-sec"><div class="ow-lbl">اللعبة</div><div class="ow-games">${games.map(x=>`<button type="button" class="ow-g" data-g="${x.id}">${ic(x.icon)}<span>${esc(x.name)}</span></button>`).join('')}</div></div>
+        <div class="ow-sec"><div class="ow-lbl">اللاعبين</div>
+          <div class="ow-plrow"><span class="ow-n"><b id="ow-n"></b> <span id="ow-nl"></span></span><button type="button" class="btn small" data-copy>${ic('share')} انسخ رابط الدعوة</button></div>
+          ${modes}<div id="ow-teams"></div></div>
+        ${secs.length?`<details class="ow-set" ${st.owSetOpen?'open':''}><summary>${ic('gears')}<span>إعدادات ${esc(G.name)}</span><small>اختياري — الافتراضي مضبوط</small></summary>
+          ${secs.map(s=>`<div class="ow-ss"><div class="ow-lbl">${esc(s.t)}</div>${s.f.map(field).join('')}${chips(s.f.filter(f=>f.type==='chip'||f.type==='pick'))}</div>`).join('')}</details>`:''}
+        <p class="r-err" id="ow-err"></p>
+        <button type="button" class="btn btn-hype big ow-start" data-start>${ic('play')} ابدأ ${esc(G.name)}</button>
+        <div class="ow-more"><button type="button" class="btn ghost small" data-table>${ic('podium')} اعرض الطاولة على شاشة ثانية</button><button type="button" class="btn ghost small" data-leave>${ic('cancel')} ما بلعب — أخلي الجهاز شاشة عرض</button></div>
+      </section>`;
+      const A2=OWN(), again=()=>setTimeout(()=>renderOwnerPanel(box), 80);
+      { const d=$('.ow-set'); if(d) d.ontoggle=()=>{ st.owSetOpen=d.open; }; }
+      $$('.ow [data-g]').forEach(b=>b.onclick=()=>{ vibe(10); A2.chooseGame(b.dataset.g); again(); });
+      $$('.ow [data-mode]').forEach(b=>b.onclick=()=>{ vibe(10); A2.setPlayMode(b.dataset.mode); again(); });
+      $$('.ow [data-f]').forEach(el=>el.onchange=()=>{ A2.setField(el.dataset.f, el.type==='checkbox' ? el.checked : el.value); again(); });
+      $$('.ow [data-c]').forEach(b=>b.onclick=()=>{ vibe(8); const f=A2.fields().find(x=>x.id===b.dataset.c); A2.setField(b.dataset.c, b.dataset.t==='pick' ? true : !(f && f.on)); again(); });
+      $('.ow [data-copy]').onclick=async()=>{ const url=location.href.replace(/remote\.html.*$/,'remote.html?room='+st.room); try{ await navigator.clipboard.writeText(url); status('انسخ الرابط — أرسله للشباب'); }catch(e){ status(url); } setTimeout(()=>status(''),2500); };
+      $('.ow [data-start]').onclick=()=>{ vibe(30); const err=A2.start(); $('#ow-err').textContent=err||''; if(err){ vibe([40,30,40]); sfx('bad'); } };
+      $('.ow [data-table]').onclick=()=>A2.table();
+      $('.ow [data-leave]').onclick=()=>{ if(confirm('ما بتلعب؟ تطلع من الجلسة كلاعب ويصير هالجهاز شاشة عرض بس.')) A2.leave(); };
+    }
+    // الأجزاء اللي تتحدث بدون إعادة بناء
+    $$('.ow [data-g]').forEach(b=>b.classList.toggle('on', b.dataset.g===g));
+    $$('.ow [data-mode]').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
+    const solo=mode==='solo' || g==='hawamir' || g==='sadq';
+    $('#ow-n').textContent=n; $('#ow-nl').textContent = solo ? (n===1?'لاعب جاهز':'لاعبين جاهزين') : (n===1?'فريق فيه لاعبين':'فرق فيها لاعبين');
+    const tb=$('#ow-teams'); if(tb){ const T=A.teams();
+      tb.innerHTML = solo ? '' : `<div class="ow-tl">${T.map(t=>`<span style="--c:${t.color}"><i></i>${esc(t.name)} <b>${t.n}</b></span>`).join('')||'<span class="muted small">ما فيه فرق للحين</span>'}</div>
+        <div class="ow-trow"><button type="button" class="btn small" data-auto>${ic('recycle')} وزّع الفرق عشوائي</button><label class="ow-sw"><input type="checkbox" data-pt ${A.phoneTeams()?'checked':''}><i></i><span>كل لاعب يختار فريقه</span></label></div>`;
+      const au=tb.querySelector('[data-auto]'); if(au) au.onclick=()=>{ vibe(10); A.autoTeams(); setTimeout(()=>renderOwnerPanel(box),120); };
+      const pt=tb.querySelector('[data-pt]'); if(pt) pt.onchange=()=>A.phoneTeams(pt.checked); }
+    F.forEach(f=>{ const el=box.querySelector(`[data-f="${f.id}"]`); if(el && document.activeElement!==el){ if(f.type==='checkbox') el.checked=!!f.on; else el.value=f.value; }
+      const c=box.querySelector(`[data-c="${f.id}"]`); if(c){ c.classList.toggle('on', !!f.on); c.setAttribute('aria-pressed', !!f.on); } });
+    return true;
+  }
+  if(OWNER) setInterval(()=>{ if(!$('#r-wait').classList.contains('r-hide') && OWN()) renderOwnerPanel($('#r-wait')); }, 2500);
   function renderWait(){
+    if(OWNER && renderOwnerPanel($('#r-wait'))) return;
     const I=st.info||{}, m=me()||{}, t=(st.teams||[]).find(x=>x.id===st.teamId);
     $('#r-wait').innerHTML=`<div class="rw-me"><img src="${avSrc(m.avatar||'doge')}" alt=""><div><small>أهلًا</small><b>${esc(m.name||'')}</b>${t&&st.mode!=='solo'?`<span class="r-teamchip" style="--c:${t.color}">${esc(t.name)}</span>`:''}</div></div>
       <div class="rw-status"><span class="rw-dot"></span>${esc((I.where&&I.where.x)||'بانتظار المضيف يبدأ')}</div>
-      ${I.gameName?`<p class="muted">اللعبة: <b>${esc(I.gameName)}</b> · المضيف: <b>${esc(I.host||'المضيف')}</b></p>`:''}
+      ${I.gameName?`<p class="muted">اللعبة: <b>${esc(I.gameName)}</b> · صاحب الجلسة: <b>${esc(I.host||'—')}</b></p>`:''}
       <div class="row center">${!I.locked?'<button class="btn btn-hype" data-edit>عدّل اسمك وصورتك</button>':''}</div>
-      <p class="muted small center">أول ما يبدأ المضيف تطلع لك اللعبة هنا. قائمة اللاعبين في خانة الجلسة.</p>`;
+      <p class="muted small center">أول ما يبدأ صاحب الجلسة تطلع لك اللعبة هنا. قائمة اللاعبين في خانة الجلسة.</p>`;
     const e=$('#r-wait [data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
   }
   function renderMe(){
@@ -876,7 +937,7 @@
     const seen=new Set();
     [S.lastCard, ...(S.hand||[])].forEach((id,i)=>{ const c=id&&C(id); if(!c || seen.has(id)) return; seen.add(id);
       opts.push({ what:'card', id, kind:'card', label:c.name, head: i===0&&id===S.lastCard ? 'آخر بطاقة انلعبت' : 'بطاقة بيدكم' }); });
-    if(!opts.length){ sheet(`<h3>بلّغ عن مشكلة</h3><p class="muted">ما فيه شي تبلّغ عنه للحين — البلاغ يكون على آخر سؤال أو تحدي ظهر، أو بطاقة.</p><div class="r-actions"><button class="btn ghost" data-x>إغلاق</button></div>`); $('#r-sheet [data-x]').onclick=closeSheet; return; }
+    opts.push({ what:'other', kind:'other', label:'مشكلة أو اقتراح بأي شي ثاني', head:'شي ثاني' });
     sheet(`<div class="eyebrow">بلّغ عن مشكلة</div><h3>على وش؟</h3>
       <div class="r-rep-list">${opts.map((o,i)=>`<button class="r-rep-opt" data-i="${i}"><small>${esc(o.head)}</small><b>${esc(o.label)}</b></button>`).join('')}</div>
       <div class="r-actions"><button class="btn ghost" data-x>إلغاء</button></div>`);
@@ -885,6 +946,20 @@
   }
   function reasonSheet(o){
     const list=(window.DahoomLog&&window.DahoomLog.REASONS[o.kind])||[]; let pick=null;
+    if(o.what==='other'){
+      sheet(`<div class="eyebrow">${ic('flag')} بلاغ أو اقتراح</div><h3>وش المشكلة؟</h3>
+        <div class="r-rep-reasons">${list.map((r,i)=>`<button class="btn ghost" data-r="${i}">${esc(r)}</button>`).join('')}</div>
+        <textarea class="r-rep-note" id="r-rep-note" maxlength="400" placeholder="اكتب وش صار بالتفصيل: وش كنت تسوي، ووش طلع لك"></textarea>
+        <p class="r-err" id="r-rep-err"></p>
+        <div class="r-actions"><button class="btn btn-hype big" id="r-rep-send">أرسل</button><button class="btn ghost" data-x>إلغاء</button></div>`);
+      $$('#r-sheet [data-r]').forEach(b=>b.onclick=()=>{ pick=list[+b.dataset.r]; vibe(10); $$('#r-sheet [data-r]').forEach(x=>x.classList.toggle('btn-hype',x===b)); });
+      $('#r-rep-send').onclick=()=>{ const note=$('#r-rep-note').value.trim();
+        if(!pick && note.length<4){ $('#r-rep-err').textContent='اختر نوع المشكلة أو اكتب وش صار'; vibe([40,30,40]); return; }
+        const S=st.S||{}, m=me()||{};
+        try{ window.DahoomLog.report({ kind:'other', id:(S.game||'').slice(0,12), text:`${S.game||'خارج اللعب'} — ${(S.phase||'').slice(0,80)}`, answer:'', d:0, tag:'' }, pick||'شي ثاني', note, m.name||'لاعب'); status('وصل البلاغ — شكراً'); }catch(e){ status('ما قدرنا نرسل البلاغ'); }
+        setTimeout(()=>status(''),2500); vibe(30); closeSheet(); };
+      $('#r-sheet [data-x]').onclick=closeSheet; return;
+    }
     sheet(`<div class="eyebrow">${esc(o.head)}</div><h3>${esc(o.label)}</h3>
       <div class="r-rep-reasons">${list.map((r,i)=>`<button class="btn ghost" data-r="${i}">${esc(r)}</button>`).join('')}</div>
       <textarea class="r-rep-note" id="r-rep-note" maxlength="300" placeholder="ملاحظة (اختياري): وش الصح؟"></textarea>
@@ -923,6 +998,12 @@
   $('#r-code').addEventListener('keydown', e=>{ if(e.key==='Enter') join(e.target.value); });
   $('#r-newteam').onsubmit=e=>{ e.preventDefault(); vibe(20); send({t:'newteam', name:$('#r-newteam-name').value.trim(), pid:(me()||{}).pid}); $('#r-newteam-name').value=''; };
   $('#r-switch').onclick=()=>{ localStorage.removeItem(teamKey()); st.teamId=null; send({t:'leave'}); };
+  // شعار المنصة = الرئيسية (لو انت داخل جلسة نسألك أول)
+  { const lg=$('.r-logo'); if(lg){ lg.setAttribute('role','link'); lg.tabIndex=0; const goHome=()=>{
+      const inRoom = st.room && $('#r-join').classList.contains('hidden');
+      if(inRoom && !confirm('تطلع من الجلسة وترجع للرئيسية؟')) return;
+      try{ if(st.room) send({t:'leave'}); }catch(e){} try{ localStorage.removeItem('dahoom_last_room'); }catch(e){} location.href='index.html'; };
+    lg.onclick=goHome; lg.onkeydown=e=>{ if(e.key==='Enter') goHome(); }; } }
   // الجلسات المفتوحة (اللوبي العام) — تتحدث كل شوي وأنت بشاشة الدخول
   const GIC = { alf:'cards', khaliya:'hive', rasm:'pencil', hawamir:'hm-building-bank', sadq:'masks' };
   async function loadRooms(){
