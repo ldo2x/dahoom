@@ -948,3 +948,6 @@ body.is-owner .r-bar{display:none}
 @keyframes rgShake{20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 @media (prefers-reduced-motion:reduce){ .rg-row input.rg-bad{animation:none} }
 .r-hmboard.pt .hm-toks .hm-tok{width:4.6cqw;height:4.6cqw}
+/* شاشة الدخول: مربع الكود ياخذ المساحة والزر على قده */
+#r-join .r-codebox .btn.big{min-width:0;width:auto;flex:none;padding-inline:24px}
+#r-join .r-codebox .r-code-in{flex:1 1 0;min-width:0}

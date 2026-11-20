@@ -126,7 +126,10 @@ window.DahoomNet = (function(){
   const GAME_AR = { alf:'ألف نقطة', khaliya:'خلية الحروف', rasm:'ارسم وخمّن', hawamir:'هوامير', sadq:'ما أصدقك' };
   const ownerConn = () => [...conns].find(c=>c.open && c.owner && c.pid);
   const ownerP = () => { const c=ownerConn(); return c ? D.session.players.find(p=>p.id===c.pid) : null; };
-  const hostName = () => { const o=ownerP(); if(o) return o.name; try{ return localStorage.getItem('dahoom_host')||''; }catch(e){ return ''; } };
+  const hostName = () => { const o=ownerP(); if(o) return o.name;
+    try{ const A=window.DahoomAccount && window.DahoomAccount.current(); if(A && A.name) return A.name; }catch(e){}
+    try{ const m=JSON.parse(localStorage.getItem('dahoom_me')||'null'); if(m && m.name && window.DahoomOwner && window.DahoomOwner.on) return m.name; }catch(e){}
+    try{ return localStorage.getItem('dahoom_host')||''; }catch(e){ return ''; } };
   const isPublic = () => { try{ return localStorage.getItem('dahoom_public')!=='0'; }catch(e){ return true; } };
   const setPublic = v => { try{ localStorage.setItem('dahoom_public', v?'1':'0'); }catch(e){} publishRoom(); };
   const MAXP = { hawamir:6, sadq:6, khaliya:12, rasm:12, alf:12 };
