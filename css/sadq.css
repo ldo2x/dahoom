@@ -401,3 +401,28 @@
 .sqc .sqc-box{flex-basis:35%;overflow:visible;padding-top:7cqw}
 .sqc .sqc-box small{font-size:6.2cqw;line-height:1.3}
 .sqc .sqc-box em{margin-top:auto}
+
+/* =====================================================================
+   بطاقات التاروت (تغلب على اللي قبلها): الرسمة تعبّي البطاقة، والرقم فوق، والاسم تحت
+   ===================================================================== */
+.sqc.tarot{padding:0;background:#0F0C15;border-radius:4.5%/3.2%;overflow:hidden;box-shadow:0 12px 26px -12px rgba(0,0,0,.85),0 0 0 1px rgba(232,217,181,.28)}
+.sqc.tarot>.sq-art{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sqc-num{position:absolute;top:2.2cqw;left:50%;transform:translateX(-50%);width:11cqw;height:11cqw;display:grid;place-items:center;z-index:2}
+.sqc-num::before{content:'';position:absolute;inset:1.6cqw;transform:rotate(45deg);background:#0F0C15;border:max(1px,.6cqw) solid #E8D9B5}
+.sqc-num b{position:relative;font-family:var(--display);font-weight:400;font-size:6.6cqw;line-height:1;color:#E8D9B5}
+.sqc-plate{position:absolute;left:50%;bottom:4.2cqw;transform:translateX(-50%);z-index:2;white-space:nowrap;font-family:var(--display);font-weight:400;font-size:8.6cqw;line-height:1.2;
+  padding:1cqw 5cqw 1.4cqw;color:#F3E6C8;background:#0F0C15;border:max(1px,.5cqw) solid rgba(232,217,181,.75);box-shadow:0 0 0 1.2cqw #0F0C15}
+.sqc-plate::before,.sqc-plate::after{content:'~';color:var(--rl);margin:0 1.6cqw}
+@container (max-width:96px){ .sqc-num{display:none} .sqc-plate{font-size:11cqw;bottom:3cqw;padding:.6cqw 3cqw} .sqc-plate::before,.sqc-plate::after{display:none} }
+@container (max-width:64px){ .sqc-plate{display:none} }
+.sq-ff .sqc.tarot::after{border-radius:inherit}
+.sq-claim.lie .sq-ff .sqc,.sq-big.lux.dead .sqc,.sq-card.lux.dead .sqc{filter:grayscale(.85) brightness(.75)}
+/* الجوال والشرح: تفاصيل الحركة تحت البطاقة */
+.sq-hc>small{display:block}
+.sq-hc>.sq-hc-r{display:flex}
+.sq-hc-art{padding:8px 8px 4px}
+.rl-sqcards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.rl-sqcards>li{display:flex;flex-direction:column;gap:8px}
+.rl-sqcards .rl-sqt{padding:2px 4px}
+.sqc .sqc-num b{background:none;padding:0;width:auto;position:relative;text-align:center}
+.sqc .sqc-plate{width:auto}

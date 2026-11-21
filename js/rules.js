@@ -344,11 +344,12 @@ window.DahoomRules = (function(){
     { k:'harami', i:'ninja', n:'الحرامي', c:'#5E6680', m:'نشل', a:'تاخذ 2 من لاعب', b:'المبادلة' },
     { k:'shurti', i:'hm-siren', n:'الشرطي',  c:'#2478C8', m:'مخالفة', a:'لاعب يدفع 2 للصندوق', b:'النشل' },
     { k:'faddah', i:'hm-camera', n:'المخبر', c:'#D5489A', m:'بلاغ', a:'تدفع 3 ولاعب يخسر ورقة', b:'' },
-    { k:'dallal', i:'hm-exchange', n:'الدلّال', c:'#E2563F', m:'مبادلة', a:'تاخذ ورقة عشوائية من لاعب وتعطيه وحدة', b:'' },
+    { k:'dallal', i:'hm-exchange', n:'الدلّالة', c:'#E2563F', m:'مبادلة', a:'تاخذ ورقة عشوائية من لاعب وتعطيه وحدة', b:'' },
   ];
   // بطاقات الشخصيات برسماتها (نفس اللي باللعبة)
   const sqArt = r => (window.DahoomSqArt ? window.DahoomSqArt.card(r.k, { name:r.n, color:r.c, icon:r.i, move:r.m, desc:r.a, block:r.b }) : `<b>${r.n}</b>`);
-  const sqCards = () => `<ul class="rl-sqcards">${SQ_ROLES.map(r=>`<li><span class="rl-sqa">${sqArt(r)}</span></li>`).join('')}</ul>`;
+  const sqCards = () => `<ul class="rl-sqcards">${SQ_ROLES.map(r=>`<li style="--rc:${r.c}"><span class="rl-sqa">${sqArt(r)}</span>
+      <span class="rl-sqt"><span><i>حركته</i><b>${r.m}</b> ${r.a}</span>${r.b?`<span class="blk"><i>يصد</i><b>${r.b}</b></span>`:'<span class="none">ما يصد شي</span>'}</span></li>`).join('')}</ul>`;
   function sqFlow(){
     return `<div class="rl-flow" role="img" aria-label="تدّعي شخصية، أحد يقول ما أصدقك، تنكشف الورقة">
       <div class="rl-fstep"><span>${ic('masks')}</span><b>تدّعي</b><small>«أنا التاجر»</small></div>
