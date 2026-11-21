@@ -49,7 +49,11 @@ async function boot(){
     async remove(col, ids){ const b=F.writeBatch(db); ids.forEach(id=>b.delete(F.doc(db,col,id))); await b.commit(); },
     signOut:()=>A.signOut(auth),
   };
-  $('#ad-signin').onclick = async ()=>{ $('#ad-login-err').textContent=''; try{ const pv=new A.GoogleAuthProvider(); pv.setCustomParameters({ prompt:'select_account' }); await A.signInWithPopup(auth, pv); }catch(e){ $('#ad-login-err').textContent='ما قدرنا ندخل: '+(e.code||e.message); } };
+  $('#ad-signin').onclick = async ()=>{ $('#ad-login-err').textContent=''; try{ const pv=new A.GoogleAuthProvider(); pv.setCustomParameters({ prompt:'select_account' }); await A.signInWithPopup(auth, pv); }catch(e){
+    // النافذة انحجبت: ننتقل لصفحة قوقل نفسها ونرجع
+    if(e && (e.code==='auth/popup-blocked' || e.code==='auth/operation-not-supported-in-this-environment')){ try{ await A.signInWithRedirect(auth, pv); return; }catch(e2){ e=e2; } }
+    $('#ad-login-err').textContent='ما قدرنا ندخل: '+(e.code||e.message); } };
+  try{ await A.getRedirectResult(auth); }catch(e){ $('#ad-login-err').textContent='ما قدرنا ندخل: '+(e.code||e.message); }
   A.onAuthStateChanged(auth, user=>{
     if(!user){ $('#ad-app').classList.add('hidden'); $('#ad-login').classList.remove('hidden'); $('#ad-user').innerHTML=''; return; }
     startApp(user);
