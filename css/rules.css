@@ -266,3 +266,16 @@
 .rl-zx .ic{width:16px;height:16px}
 @media (max-width:420px){ .rl-cg{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px} }
 .rl-zacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+/* ما أصدقك: بطاقات الشخصيات برسماتها */
+.rl-sqcards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.rl-sqcards li{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line-soft);box-shadow:0 6px 16px -12px rgba(0,0,0,.5)}
+.rl-sqa{position:relative;height:150px;background:var(--rc);display:flex;align-items:flex-end;justify-content:center}
+.rl-sqa .sq-art{position:absolute;inset:0;width:100%;height:100%}
+.rl-sqa b{position:relative;width:100%;text-align:center;color:#fff;font-family:var(--display);font-weight:400;font-size:1.35rem;line-height:1.1;padding:22px 6px 7px;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.rl-sqt{display:flex;flex-direction:column;gap:6px;padding:9px 10px 11px;font-size:.88rem;line-height:1.5;color:var(--mute)}
+.rl-sqt i{display:block;font-style:normal;font-size:.72rem;font-weight:700;color:var(--mute)}
+.rl-sqt b{color:var(--text)}
+.rl-sqt .blk b{color:var(--rc)}
+.rl-sqt .none{font-size:.78rem}
+@media (max-width:420px){ .rl-sqcards{grid-template-columns:repeat(2,minmax(0,1fr))} .rl-sqa{height:128px} }

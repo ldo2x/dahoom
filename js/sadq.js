@@ -478,7 +478,7 @@ window.DahoomSadq = (function(){
   document.addEventListener('DOMContentLoaded',()=>{
     const st=$('#btn-sadq-start'); if(st) st.onclick=()=>startMatch();
     const q=$('#sq-quit'); if(q) q.onclick=async ()=>{ if(await confirmBox('<h3>تنهي المجلس؟</h3><p class="muted">ينحسب الترتيب الحين: اللي معه أوراق أكثر ثم ريالات أكثر.</p>','أنهِ','كمّل','btn-hype')){ endMatch(); } };
-    const h=$('#sq-help'); if(h) h.onclick=helpModal;
+    const h=$('#sq-help'); if(h) h.onclick=()=>{ if(window.DahoomRules) window.DahoomRules.open('sadq'); else helpModal(); };
     const sh=$('#sadq-settings'); if(sh) new MutationObserver(()=>{ if(sh.classList.contains('active')) renderSettings(); }).observe(sh,{attributes:true,attributeFilter:['class']});
   });
   window.DAHOOM_DEBUG_SQ = { state:()=>G, settings:()=>S, end:()=>endMatch(), render:()=>render() };
