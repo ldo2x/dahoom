@@ -340,15 +340,15 @@ window.DahoomRules = (function(){
   const SQ_ROLES = [
     { k:'tajer',  n:'التاجر',  c:'#D9961A', m:'تجارة', a:'تاخذ 3 من البنك', b:'' },
     { k:'wasta',  n:'الواسطة', c:'#2E9E5B', m:'واسطة', a:'تاخذ اللي بالصندوق (لين 5)', b:'المخالفة' },
-    { k:'muhami', n:'المحامي', c:'#8A5A2B', m:'استشارة', a:'تسحب ورقتين وتبدّل وحدة من أوراقك', b:'الفضيحة' },
+    { k:'muhami', n:'المحامي', c:'#8A5A2B', m:'استشارة', a:'تسحب ورقتين وتبدّل وحدة من أوراقك', b:'البلاغ' },
     { k:'harami', n:'الحرامي', c:'#5E6680', m:'نشل', a:'تاخذ 2 من لاعب', b:'المبادلة' },
     { k:'shurti', n:'الشرطي',  c:'#2478C8', m:'مخالفة', a:'لاعب يدفع 2 للصندوق', b:'النشل' },
-    { k:'faddah', n:'الفضّاح', c:'#D5489A', m:'فضيحة', a:'تدفع 3 ولاعب يخسر ورقة', b:'' },
+    { k:'faddah', n:'المخبر', c:'#D5489A', m:'بلاغ', a:'تدفع 3 ولاعب يخسر ورقة', b:'' },
     { k:'dallal', n:'الدلّال', c:'#E2563F', m:'مبادلة', a:'تاخذ ورقة عشوائية من لاعب وتعطيه وحدة', b:'' },
   ];
   // بطاقات الشخصيات برسماتها (نفس اللي باللعبة)
-  const sqArt = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
-  const sqCards = () => `<ul class="rl-sqcards">${SQ_ROLES.map(r=>`<li style="--rc:${r.c}"><span class="rl-sqa">${sqArt(r.k)}<b>${r.n}</b></span>
+  const sqArt = r => (window.DahoomSqArt ? window.DahoomSqArt.card(r.k, r.n, r.c) : `<b>${r.n}</b>`);
+  const sqCards = () => `<ul class="rl-sqcards">${SQ_ROLES.map(r=>`<li style="--rc:${r.c}"><span class="rl-sqa">${sqArt(r)}</span>
       <span class="rl-sqt"><span><i>حركته</i><b>${r.m}</b> ${r.a}</span>${r.b?`<span class="blk"><i>يصد</i><b>${r.b}</b></span>`:'<span class="none">ما يصد شي</span>'}</span></li>`).join('')}</ul>`;
   function sqFlow(){
     return `<div class="rl-flow" role="img" aria-label="تدّعي شخصية، أحد يقول ما أصدقك، تنكشف الورقة">
@@ -382,7 +382,7 @@ window.DahoomRules = (function(){
     return sec('تفاصيل', 'help', notes([
         ['team', 'الشهود:', 'لما أحد يكشف أحد، الباقين يقدرون يشهدون. صح = +1، غلط = −1.'],
         ['hm-building-bank', 'صندوق المجلس:', 'الغرامات والتكاليف تروح له، والواسطة تاخذ منه.'],
-        ['coins', 'الفضيحة والطرد:', 'تدفع أول. لو انكشفت أو انصدت ما ترجع فلوسك.'],
+        ['coins', 'البلاغ والطرد:', 'تدفع أول. لو انكشفت أو انصدت ما ترجع فلوسك.'],
         ['star', 'أحداث المجلس:', 'كل لفة (من الثانية) حدث يغيّر قاعدة صغيرة.'],
         ['hourglass', 'الوقت:', 'ما رديت على قرار؟ كأنك صدّقت.'],
       ]))

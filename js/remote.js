@@ -821,6 +821,8 @@
   // الأوراق مغطاة افتراضياً: تضغط مطوّل تشوفها، أو «خلّها مكشوفة»
   const sq = { built:false, open:false, Q:null };
   const SQART = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
+  const SQCARD = (k, n, c) => (window.DahoomSqArt ? window.DahoomSqArt.card(k, n, c) : `<b>${esc(n)}</b>`);
+  const SQBACK = () => (window.DahoomSqArt ? window.DahoomSqArt.back() : '');
   function buildSQ(){
     $('#r-sq').innerHTML=`<div class="sq-r">
       <div class="sq-rmain">
@@ -854,7 +856,7 @@
     const A=Q.act, pl=id=>Q.pl.find(x=>x.id===id), turnP=Q.pl.find(x=>x.turn);
     let act='';
     if(A){ const st={ ch:'ينتظر: أحد ما يصدقه؟', 'block-ch':'ينتظر: أحد ما يصدق الصد؟', block:`${esc(A.t)} يقرر يصد ولا لا`, blocked:`${esc(A.blk)} صدّها — يقول إنه ${esc(A.blkRole)}`, done:'' }[A.stage]||'';
-      act=`<div class="sq-ra-l">${A.claimK?`<span class="sq-ra-art">${SQART(A.claimK)}</span>`:`<span class="sq-ra-ic" style="--rc:${A.claimC||'var(--line)'}">${ic(A.icon)}</span>`}<span><b style="color:${A.byC}">${esc(A.by)}</b> ${A.claim?`يقول إنه <b style="color:${A.claimC}">${esc(A.claim)}</b> و`:''}يسوي <b>${esc(A.name)}</b>${A.t?` على <b style="color:${A.tC}">${esc(A.t)}</b>`:''}</span></div>
+      act=`<div class="sq-ra-l">${A.claimK?`<span class="sq-ra-art">${SQCARD(A.claimK, A.claim, A.claimC)}</span>`:`<span class="sq-ra-ic" style="--rc:${A.claimC||'var(--line)'}">${ic(A.icon)}</span>`}<span><b style="color:${A.byC}">${esc(A.by)}</b> ${A.claim?`يقول إنه <b style="color:${A.claimC}">${esc(A.claim)}</b> و`:''}يسوي <b>${esc(A.name)}</b>${A.t?` على <b style="color:${A.tC}">${esc(A.t)}</b>`:''}</span></div>
         ${A.ch?`<div class="sq-ra-x">${ic('search')} ${esc(A.ch)} قال: ما أصدقك!</div>`:''}${A.reveal?`<div class="sq-ra-x good">${ic('check')} طلع صادق — عنده ${esc(A.reveal)}</div>`:''}${st?`<div class="sq-ra-s">${st}</div>`:''}`; }
     else act=`<div class="sq-ra-l"><span class="sq-ra-ic">${ic('hourglass')}</span><span>${turnP?`دور <b style="color:${turnP.color}">${esc(turnP.name)}</b>`:'استنوا'}</span></div>`;
     const ae=$('#sq-ract'); if(ae.dataset.h!==act){ ae.dataset.h=act; ae.innerHTML=act; }
@@ -865,7 +867,7 @@
     const ck=JSON.stringify(Q.cards);
     const ce=$('#sq-rcards'); if(force || ce.dataset.k!==ck){ ce.dataset.k=ck;
       ce.innerHTML = Q.cards.map(c=>{ const r=sqRole(Q,c.r);
-        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}">${c.up?'':'<div class="sq-hc-cov"><i></i><span>مغطاة</span></div>'}<div class="sq-hc-art">${SQART(c.r)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
+        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}">${c.up?'':`<div class="sq-hc-cov"><span class="sq-hc-cb">${SQBACK()}</span><span>مغطاة</span></div>`}<div class="sq-hc-art">${SQCARD(c.r, r.name, r.color)}</div><small>${esc(r.line)}</small>
           <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
     // اللاعبين
     $('#sq-rpl').innerHTML=Q.pl.map(x=>`<div class="sq-rp ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" style="--c:${x.color}">

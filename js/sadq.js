@@ -26,16 +26,18 @@ window.DahoomSadq = (function(){
   const roleChip = k => `<span class="sq-rchip" style="--rc:${RL(k).color}">${ic(RL(k).icon)}${esc(RL(k).name)}</span>`;
   const who = p => `<b class="sq-who" style="--c:${p.color}">${esc(p.name)}</b>`;
   const ART = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
+  const CARD = k => (window.DahoomSqArt ? window.DahoomSqArt.card(k, RL(k).name, RL(k).color) : `<b>${esc(RL(k).name)}</b>`);
+  const BACK = () => (window.DahoomSqArt ? window.DahoomSqArt.back() : '');
   // الورقة الكبيرة بوسط السجادة
-  const big = (k, cls='') => `<div class="sq-big ${cls}" style="--rc:${RL(k).color}">${ART(k)}<b>${esc(RL(k).name)}</b></div>`;
+  const big = (k, cls='') => `<div class="sq-big lux ${cls}" style="--rc:${RL(k).color}">${CARD(k)}</div>`;
   function claimHTML(p, role, note){
     return `<div class="sq-claim">${big(role)}<div class="sq-claim-t"><span>${who(p)} يقول إنه</span><strong style="--rc:${RL(role).color}">${esc(RL(role).name)}</strong><em>${note||''}</em></div></div>`;
   }
   function suspenseHTML(claimer, role, ch, note, roll){
-    return `<div class="sq-claim sus ${roll?'roll':''}"><div class="sq-big back"><i></i></div><div class="sq-claim-t"><span>${who(ch)} قال لـ ${who(claimer)}</span><strong class="sq-callout">ما أصدقك!</strong><em>${note}</em></div></div>`;
+    return `<div class="sq-claim sus ${roll?'roll':''}"><div class="sq-big lux">${BACK()}</div><div class="sq-claim-t"><span>${who(ch)} قال لـ ${who(claimer)}</span><strong class="sq-callout">ما أصدقك!</strong><em>${note}</em></div></div>`;
   }
   function revealHTML(claimer, role, truth){
-    return `<div class="sq-claim rev ${truth?'truth':'lie'}"><div class="sq-big flip" style="--rc:${RL(role).color}"><span class="sq-fb"><i></i></span><span class="sq-ff">${ART(role)}<b>${esc(RL(role).name)}</b></span><span class="sq-stamp">${truth?'صادق':'كذّاب'}</span></div>
+    return `<div class="sq-claim rev ${truth?'truth':'lie'}"><div class="sq-big flip" style="--rc:${RL(role).color}"><span class="sq-fb">${BACK()}</span><span class="sq-ff">${CARD(role)}</span><span class="sq-stamp">${truth?'صادق':'كذّاب'}</span></div>
       <div class="sq-claim-t"><span>${who(claimer)}</span><strong>${truth?'طلع صادق!':'انكشف!'}</strong><em>${truth?`عنده ${roleChip(role)} فعلاً`:`ما عنده ${roleChip(role)}`}</em></div></div>`;
   }
   // صندوق المجلس: كومة ريالات تكبر فوق الصندوق
@@ -95,9 +97,9 @@ window.DahoomSadq = (function(){
     waitRaf=requestAnimationFrame(f);
   }
   function cardHTML(c, opts={}){
-    if(!c.up && !opts.show) return `<span class="sq-card back" aria-label="ورقة مقلوبة"><i></i></span>`;
+    if(!c.up && !opts.show) return `<span class="sq-card lux" aria-label="ورقة مقلوبة">${BACK()}</span>`;
     const r=RL(c.r);
-    return `<span class="sq-card face ${c.up?'dead':''}" style="--rc:${r.color}">${ART(c.r)}<b>${esc(r.name)}</b></span>`;
+    return `<span class="sq-card lux ${c.up?'dead':''}" style="--rc:${r.color}" aria-label="${esc(r.name)}">${CARD(c.r)}</span>`;
   }
   function render(){
     if(!G) return;
@@ -304,7 +306,7 @@ window.DahoomSadq = (function(){
     else if(k==='wasta'){ const v=Math.min(G.pot, DATA.wastaMax); G.pot-=v; p.coins+=v; p.stats.earned+=v; log(p, `واسطة: أخذ ${v} من الصندوق`, 'good', 'phone'); play('bonus',{volume:.5}); }
     else if(k==='nashl'){ const v=Math.min(2, t.coins); t.coins-=v; p.coins+=v; p.stats.earned+=v; log(p, `نشل ${v} من ${t.name}`, 'bad', 'ninja'); play('snatch',{volume:.5}); tell(t, `${p.name} نشل منك ${v}`); }
     else if(k==='mukhalafa'){ const v=Math.min(2, t.coins); t.coins-=v; G.pot+=v; log(t, `دفع مخالفة ${v} للصندوق`, 'bad', 'hm-siren'); play('pay',{volume:.5}); }
-    else if(k==='tard' || k==='fadiha'){ p.stats.taken++; render(); await loseCard(t, k==='tard' ? `${p.name} طرده` : `${p.name} فضحه`); }
+    else if(k==='tard' || k==='fadiha'){ p.stats.taken++; render(); await loseCard(t, k==='tard' ? `${p.name} طرده` : `${p.name} بلّغ عليه`); }
     else if(k==='istishara'){
       const drawn=[draw(), draw()], h=hidden(p);
       const opts=[{ v:-1, label:'خلّ أوراقي', cls:'plain' }];
@@ -469,7 +471,7 @@ window.DahoomSadq = (function(){
       <p><b>الدور:</b> تسوي حركة وحدة. فيه حركات لأي أحد (دوام، سلفة، طرد)، وحركات تحتاج تقول إنك شخصية معيّنة — وتقدر تكذب.</p>
       <p><b>الكشف:</b> أي أحد يقدر يقول «ما أصدقك». لو طلعت صادق: تقلب ورقتك وترجع للكومة وتسحب بدالها، واللي كشفك يخسر ورقة. لو طلعت كذّاب: تخسر ورقة وحركتك تنلغي (واللي دفعته للصندوق ما يرجع).</p>
       <p><b>الشهود:</b> لما أحد يكشف أحد، الباقين يقدرون يشهدون «صادق» أو «كذّاب». اللي يشهد صح ياخذ 1، واللي يشهد غلط يدفع 1 للصندوق.</p>
-      <p><b>الصد:</b> الحركة اللي عليك تقدر تصدها لو قلت إنك الشخصية اللي تصدها — والصد بعد ينكشف. النشل يصده الشرطي، والمخالفة تصدها الواسطة، والفضيحة يصدها المحامي، والمبادلة يصدها الحرامي.</p>
+      <p><b>الصد:</b> الحركة اللي عليك تقدر تصدها لو قلت إنك الشخصية اللي تصدها — والصد بعد ينكشف. النشل يصده الشرطي، والمخالفة تصدها الواسطة، والبلاغ يصده المحامي، والمبادلة يصدها الحرامي.</p>
       <p><b>المال:</b> تبدأ بـ ${S.startCoins} ريال. الدوام 1، السلفة 3 الحين وترجّع 4 دورك الجاي (لو ما معك تخسر ورقة). الطرد بـ ${DATA.tardCost} وما ينصد، ولو معك ${DATA.forceAt} أو أكثر لازم تطرد. الغرامات والتكاليف تروح لصندوق المجلس، والواسطة تاخذ منه.</p>
       <p><b>أحداث المجلس:</b> بداية كل لفة يطلع حدث يغيّر شي بسيط هاللفة (رواتب، تفتيش، زكاة، حظر تجوّل…).</p></div>
       <h3 class="mt">الشخصيات</h3>${rolesHTML()}

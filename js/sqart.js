@@ -52,7 +52,7 @@ window.DahoomSqArt = (function(){
       + `<ellipse cx="44.5" cy="70" rx="3" ry="4.6" fill="${s}"/><ellipse cx="75.5" cy="70" rx="3" ry="4.6" fill="${s}"/>` + eyes() + brows(.6) + nose + mous('#231a14') + mouth(3, -.6)
       + `<path d="M41.5 53C41.5 37 78.5 37 78.5 53Z" fill="#1f2d4a"/><rect x="41.5" y="50" width="37" height="5" fill="#152038"/><path d="M42.5 55C50 60.5 70 60.5 77.5 55L80 57.5C71 63.5 49 63.5 40 57.5Z" fill="#0e1424"/><circle cx="60" cy="46" r="4" fill="#E8B04A"/><path d="M58 46L60 43.4L62 46L60 48.6Z" fill="#9E7322"/>`
       + `<g transform="rotate(8 82 125)"><rect x="70" y="112" width="22" height="27" rx="2" fill="#F6EEDC" stroke="#C9B996" stroke-width="1"/><rect x="70" y="112" width="22" height="5" fill="#C8323A"/><path d="M74 122H88M74 127H86M74 132H84" stroke="#9C8E72" stroke-width="1.3" stroke-linecap="round"/></g><path d="M58 138L71 120" stroke="#1c2230" stroke-width="2.6" stroke-linecap="round"/>` + hand(58, 134, s, 4.6),
-    // الفضّاح: كاميرا قدام وجهه وفلاش
+    // المخبر: كاميرا قدام وجهه وفلاش
     faddah: s => shm('faddah') + body() + collar + neck(s) + ghBack('url(#sqshm-faddah)') + face(s) + `<ellipse cx="53" cy="68" rx="1.9" ry="2.3" fill="${INK}"/><path d="M49 62Q53 59.5 57 61.6" stroke="#2a1d14" stroke-width="1.8" fill="none" stroke-linecap="round"/>` + nose + mous('#2a1f19') + `<path d="M54 82Q58 86.5 64 82.5" stroke="#6e3326" stroke-width="1.6" fill="none" stroke-linecap="round"/>` + ghFront('url(#sqshm-faddah)') + igal
       + `<rect x="57" y="58" width="31" height="21" rx="4" fill="#26262e"/><rect x="61" y="54.5" width="9" height="4.5" rx="1.5" fill="#26262e"/><circle cx="73" cy="68.5" r="8.4" fill="#4a4a55"/><circle cx="73" cy="68.5" r="5.6" fill="#10131c"/><circle cx="71.2" cy="66.6" r="1.7" fill="rgba(255,255,255,.55)"/><rect x="81" y="60.5" width="4.5" height="3" rx="1" fill="#F7E7A8"/>`
       + `<path d="M95 44L97 51L104 50L98.5 54.5L102 61L95.5 57L90.5 62L92 55L85.5 52.5L92.5 51Z" fill="#FFF3B0"/>` + hand(58, 80, s, 4.6) + hand(87, 80, s, 4.6),
@@ -67,5 +67,15 @@ window.DahoomSqArt = (function(){
     const s=SKIN[k]||'#C68B59';
     return `<svg class="sq-art" viewBox="0 0 120 140" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="120" height="140" fill="${BG[k]||'#555'}"/>${glow}${sadu()}${f(s)}</svg>`;
   }
-  return { portrait, has:k=>!!ROLES[k] };
+  const esc = s => String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const corners = '<i class="sqc-c k1"></i><i class="sqc-c k2"></i><i class="sqc-c k3"></i><i class="sqc-c k4"></i>';
+  // وجه الورقة: إطار ذهبي، والرسمة داخل قوس، وتحتها لوحة الاسم
+  function card(k, name, color){
+    return `<span class="sqc" style="--rc:${color||BG[k]||'#555'}"><span class="sqc-in">${corners}<span class="sqc-gem"></span><span class="sqc-arch">${portrait(k)}</span><span class="sqc-name">${esc(name)}</span></span></span>`;
+  }
+  // ظهر الورقة: سدو ذهبي خفيف وميدالية بالنص
+  function back(){
+    return `<span class="sqc back"><span class="sqc-in">${corners}<span class="sqc-med"><b>ص</b></span></span></span>`;
+  }
+  return { portrait, card, back, has:k=>!!ROLES[k] };
 })();
