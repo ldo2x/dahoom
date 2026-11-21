@@ -64,6 +64,21 @@
   try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change', e=>{ let v=null; try{ v=localStorage.getItem('dahoom_theme'); }catch(_){} if(v!=='day'&&v!=='night') setTheme(e.matches?'day':'night', false); }); }catch(e){}
 
   // ---------- الحالة ----------
+  // البلاغ من الجوال: نطلب سجل الشاشة وباقي الجوالات (الشاشة تجمعهم)
+  const logWait = new Map();
+  if(window.DahoomLog){
+    window.DahoomLog.setPeers(ms=>new Promise(res=>{
+      if(!st.conn || !st.conn.open) return res([{ who:'الشاشة', dump:'(الجوال مو متصل بالشاشة وقت البلاغ)' }]);
+      const id='P'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const to=setTimeout(()=>{ logWait.delete(id); res([{ who:'الشاشة', dump:'(الشاشة ما ردت على طلب السجل خلال المهلة)' }]); }, ms+1500);
+      logWait.set(id, list=>{ clearTimeout(to); logWait.delete(id); res(list); });
+      try{ st.conn.send({t:'logreq', id, all:1}); }catch(e){ clearTimeout(to); res([]); }
+    }));
+    window.DahoomLog.addSnap('الجوال', ()=>{ const S=st.S||{}, m=me()||{}, sc=[...document.querySelectorAll('.r-screen')].find(x=>!x.classList.contains('hidden'));
+      return { owner:!!OWNER, me:m.name||null, room:st.room, team:st.teamId, mode:st.mode, connected:!!(st.conn && st.conn.open), retry:st.retry,
+        screen:sc?sc.id:null, game:S.game||null, phase:S.phase||null, phaseKey:S.phaseKey||null, myTurn:!!S.myTurn, asking:st.askId||null,
+        status:($('#r-status')||{}).textContent||'' }; });
+  }
   const st = { room:null, peer:null, conn:null, teamId:null, S:null, askId:null, retry:0, wantOpen:false, mode:'teams', avatars:[], avGroups:null, teams:[], info:null, feed:[] };
   const teamKey = () => 'dahoom_team_'+st.room;
   const meKey = 'dahoom_me';   // الاسم والصورة يتذكرهم الجوال لكل الغرف
@@ -77,12 +92,14 @@
   const AV_FALLBACK = (AV_LIB && AV_LIB.all && AV_LIB.all.slice()) || ['doge','cheems','pepe_the_frog','trollface','gigachad','wojak','shrek_face','patrick_star','squidward','kermit','grumpy_cat','smudge_cat','crying_cat','pop_cat',
     'hide_the_pain_harold','mr_bean','nicolas_cage','the_rock_eyebrow','monkey_puppet','capybara','sad_hamster','chill_guy','minion','baby_yoda','side_eye_chloe','spongebob','saudi_smile','saudi_smirk',
     'tan_otori','astolfo','felix_argyle','hideri','saika','nagisa','anya','chika','frieren','marin','bocchi','nezuko','zero_two','megumin','kaguya','power','mai','luffy','naruto','goku','saitama','hakari','pochita','pikachu','chiikawa','hamtaro'];
-  function show(id){ $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
+  const LG = m => { try{ window.DahoomLog && window.DahoomLog.trail(m); }catch(e){} };
+  function show(id){ LG('شاشة: '+id); $$('.r-screen').forEach(s=>s.classList.toggle('hidden', s.id!==id)); }
   // busy=true: شي شغال (اتصال/انتظار) — يطلع جنب الرسالة مؤشر تحميل صغير
-  function status(msg, busy){ const s=$('#r-status'); s.textContent=msg||''; if(msg && busy) s.insertAdjacentHTML('afterbegin','<span class="dh-loader sm" aria-hidden="true"><i></i><i></i><i></i></span>'); s.classList.toggle('busy', !!(msg && busy)); s.classList.toggle('hidden', !msg); }
+  function status(msg, busy){ if(msg) LG('رسالة: '+msg); const s=$('#r-status'); s.textContent=msg||''; if(msg && busy) s.insertAdjacentHTML('afterbegin','<span class="dh-loader sm" aria-hidden="true"><i></i><i></i><i></i></span>'); s.classList.toggle('busy', !!(msg && busy)); s.classList.toggle('hidden', !msg); }
 
   // ---------- الاتصال ----------
   function connect(){
+    LG('نتصل بالغرفة (محاولة '+(st.retry+1)+')');
     status('نتصل بالشاشة…', true);
     try{ st.peer && st.peer.destroy(); }catch(e){}
     const peer = st.peer = new window.Peer(Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
@@ -90,12 +107,13 @@
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
       if(window.DAHOOM_ICE) window.DAHOOM_ICE.watch(conn, lost);
       const to = setTimeout(()=>{ if(!conn.open){ const I=window.DAHOOM_ICE; if(I) lost(I.diagnose(peer, conn)); else fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); } }, 9000);
-      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); conn.send({t:'hb'}); });
+      conn.on('open', ()=>{ LG('اتصل بالشاشة'); clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); conn.send({t:'hb'}); });
       conn.on('data', onData);
-      conn.on('close', lost);
-      conn.on('error', lost);
+      conn.on('close', ()=>{ LG('الاتصال بالشاشة انقفل'); lost(); });
+      conn.on('error', e=>{ LG('خطأ بالاتصال: '+(e&&e.type||e)); lost(e); });
     });
     peer.on('error', e=>{
+      LG('خطأ سيرفر الربط: '+(e&&e.type));
       if(e.type==='peer-unavailable') return fail('الكود غلط أو الجلسة انقفلت. تأكد من الكود وجرب مرة ثانية.', true);
       // انقطع سيرفر الربط بس واتصالنا بالشاشة شغال: نكمل عادي (قبل كنا نقطع الاتصال الشغال ونطلّع رسالة كل شوي)
       if(st.conn && st.conn.open && /network|server-error|socket-error|disconnected/.test(e.type||'')) return;
@@ -106,6 +124,7 @@
   function fail(msg, toJoin){ status(''); $('#r-err').textContent=msg; if(toJoin){ show('r-join'); localStorage.removeItem('dahoom_last_room'); } else lost(); }
   function lost(why){
     if(!st.room) return;
+    LG('انقطع: '+(typeof why==='string' ? why : (why && why.type) || 'بدون سبب واضح')+' (المحاولة '+st.retry+')');
     const I = window.DAHOOM_ICE;
     // أول مرة: «نرجع نتصل». لو فيه سبب واضح أو تكرر الفشل: نقول له وش يسوي
     status(I && ((why && typeof why!=='function') || st.retry>=2) ? I.why(why || 'ice') : 'انقطع الاتصال… نرجع نتصل', true);
@@ -119,8 +138,14 @@
   window.addEventListener('pagehide', ()=>beatConn('away'));
 
   // ---------- الرسائل ----------
+  let lastPh='';
   function onData(d){
     if(!d) return;
+    // سجل الأحداث: الشاشة تطلب سجلنا (لبلاغ) أو ترد على طلبنا
+    if(d.t==='logreq'){ try{ st.conn.send({t:'logrep', id:d.id, dump:window.DahoomLog ? window.DahoomLog.dump(8000) : ''}); }catch(e){} return; }
+    if(d.t==='logrep'){ const w=logWait.get(d.id); if(w) w(d.list||[]); return; }
+    if(d.t==='state'){ const ph=[d.game, d.phaseKey||'', String(d.phase||'').slice(0,50), d.myTurn?'دوري':''].join(' · '); if(ph!==lastPh){ lastPh=ph; if(ph.replace(/[\s·]/g,'')) LG('الحالة: '+ph); } }
+    else if(d.t!=='stroke' && d.t!=='rsync' && d.t!=='fill') LG('من الشاشة: '+d.t+(d.msg?' — '+String(d.msg).slice(0,60):''));
     if(d.t==='teams'){ st.teamId=null; st.mode=d.mode||'teams'; st.avatars=d.avatars||[]; st.avGroups=d.avatarGroups||null; st.teams=d.teams||[]; st.canCreate=!!d.canCreate;
       if(!$('#r-reg').classList.contains('hidden')) return;
       const m=me(); if(m && m.name && st.autoReg!==st.room){ st.autoReg=st.room; send({t:'register', pid:m.pid, name:m.name, avatar:m.avatar}); return; }

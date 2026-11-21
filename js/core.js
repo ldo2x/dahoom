@@ -234,6 +234,7 @@ window.Dahoom = (function(){
     $$('.toast').forEach(t=>t.remove());
     const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
     setTimeout(()=>t.remove(), ms);
+    try{ window.DahoomLog && window.DahoomLog.trail('تنبيه: '+msg); }catch(e){}
     // وسط المباراة: كل تنبيه ينضاف لسجل الأحداث اللي يشوفه اللاعبين بجوالاتهم
     if(document.querySelector('#game.active, #khaliya.active')) feed({x:String(msg)});
   }
@@ -243,6 +244,7 @@ window.Dahoom = (function(){
     const m=document.createElement('div'); m.className='modal';
     m.innerHTML=`<div class="panel">${html}</div>`;
     $('#overlay-root').appendChild(m);
+    try{ const h=m.querySelector('h2, h3, .eyebrow'); window.DahoomLog && window.DahoomLog.trail('نافذة: '+((h&&h.textContent)||m.textContent||'').trim().slice(0,70)); }catch(e){}
     if(closable) m.addEventListener('click', e=>{ if(e.target===m) m.remove(); });
     if(onMount) onMount(m);
     return m;

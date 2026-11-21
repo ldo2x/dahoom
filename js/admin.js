@@ -30,7 +30,7 @@ const CARD = id => (DATA.cards||[]).find(c=>c.id===id);
 
 // ---------- مصدر البيانات ----------
 let api = null, reports = [], matches = [], tab = 'reports', who = null;
-const ui = { rStatus:'open', rKind:'all', cKind:'q', cMin:3, cFlag:'flag', pSort:'matches', mOpen:null };
+const ui = { eStatus:'open', rStatus:'open', rKind:'all', cKind:'q', cMin:3, cFlag:'flag', pSort:'matches', mOpen:null };
 
 async function boot(){
   if(DEMO){ demoData(); return startApp({ email:'وضع تجريبي' }); }
@@ -79,26 +79,52 @@ async function reload(){
 // ---------- التبويبات ----------
 $$('.ad-tab').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; $$('.ad-tab').forEach(x=>x.classList.toggle('on',x===b)); render(); });
 function render(){
-  const open = reports.filter(r=>(r.status||'open')==='open').length;
+  const open = REP().filter(r=>(r.status||'open')==='open').length;
+  const openErr = ERR().filter(r=>(r.status||'open')==='open');
+  const errTab = $('.ad-tab[data-tab="errors"]'); if(errTab) errTab.textContent = openErr.length ? `الأعطال (${new Set(openErr.map(r=>r.item)).size})` : 'الأعطال';
   const players = new Set(); matches.forEach(m=>(m.teams||[]).forEach(t=>(t.players||[]).forEach(p=>players.add(p.name))));
   const hosts = new Set(matches.map(m=>m.dev));
   $('#ad-kpis').innerHTML = [
-    ['بلاغ مفتوح', open], ['مباراة', matches.length], ['لاعب', players.size], ['جهاز استضاف', hosts.size],
+    ['بلاغ مفتوح', open], ['عطل مفتوح', new Set(openErr.map(r=>r.item)).size], ['مباراة', matches.length], ['لاعب', players.size], ['جهاز استضاف', hosts.size],
   ].map(([k,v])=>`<div class="ad-kpi"><b><bdi>${v}</bdi></b><span>${k}</span></div>`).join('');
-  const f = { reports:renderReports, content:renderContent, cards:renderCards, players:renderPlayers, matches:renderMatches }[tab];
+  const f = { reports:renderReports, errors:renderErrors, content:renderContent, cards:renderCards, players:renderPlayers, matches:renderMatches }[tab];
   $('#ad-body').innerHTML = ''; f($('#ad-body'));
 }
 const seg = (name, opts, cur) => `<div class="ad-seg" data-seg="${name}">${opts.map(([v,l])=>`<button class="${String(v)===String(cur)?'on':''}" data-v="${v}">${l}</button>`).join('')}</div>`;
 function bindSeg(root, name, fn){ $$(`[data-seg="${name}"] button`, root).forEach(b=>b.onclick=()=>{ fn(b.dataset.v); render(); }); }
 
 // ---------- البلاغات ----------
+const REP = () => reports.filter(r=>r.kind!=='err');
+const ERR = () => reports.filter(r=>r.kind==='err');
+// سجل الأحداث اللي ينرسل مع البلاغ: { here:نص, peers:[{who, dump}] }
+const logParts = r => { const L=r && r.log; if(!L) return []; const out=[]; if(L.here) out.push({ who:'الجهاز اللي بلّغ', dump:L.here }); (L.peers||[]).forEach(p=>out.push({ who:p.who||'جهاز', dump:p.dump||'' })); return out; };
+const logHtml = r => { const parts=logParts(r); if(!parts.length) return '';
+  return `<details class="ad-log"><summary>السجل التقني (${parts.length} ${parts.length===1?'جهاز':'أجهزة'})</summary>${parts.map(p=>`<div class="ad-pre-h">${esc(p.who)}</div><pre class="ad-pre">${esc(p.dump)}</pre>`).join('')}</details>`; };
+const logText = r => logParts(r).map(p=>`----- ${p.who} -----\n${p.dump}`).join('\n');
+// أزرار الحالة (تم / تجاهل / رجّع / حذف) لمجموعة بلاغات
+function bindActs(root, groups){
+  $$('[data-act]', root).forEach(b=>b.onclick=async ()=>{
+    const gr = groups.find(g=>g.key===b.dataset.k); const ids = gr.list.map(r=>r._id), act=b.dataset.act;
+    if(act==='del' && !confirm('تحذفها نهائياً؟')) return;
+    b.disabled = true;
+    try{
+      if(api){ if(act==='del') await api.remove('reports', ids); else await api.setStatus(ids, act); }
+      if(act==='del') reports = reports.filter(r=>!ids.includes(r._id)); else gr.list.forEach(r=>r.status=act);
+      render();
+    }catch(e){ alert('ما انحفظ: '+e.message); b.disabled=false; }
+  });
+}
+function copyBtn(btn, txt){
+  const lbl = btn.textContent;
+  navigator.clipboard.writeText(txt).then(()=>{ btn.textContent='انسخت'; setTimeout(()=>btn.textContent=lbl,1600); }).catch(()=>alert('ما قدرنا ننسخ'));
+}
 function groupReports(list){
   const g = new Map();
   list.forEach(r=>{ const k=r.kind+':'+r.item; if(!g.has(k)) g.set(k,{ key:k, kind:r.kind, item:r.item, list:[] }); g.get(k).list.push(r); });
   return [...g.values()].sort((a,b)=>b.list.length-a.list.length || (b.list[0].at||0)-(a.list[0].at||0));
 }
 function renderReports(root){
-  const list = reports.filter(r=>(ui.rStatus==='all' || (r.status||'open')===ui.rStatus) && (ui.rKind==='all' || r.kind===ui.rKind));
+  const list = REP().filter(r=>(ui.rStatus==='all' || (r.status||'open')===ui.rStatus) && (ui.rKind==='all' || r.kind===ui.rKind));
   const groups = groupReports(list);
   root.innerHTML = `<div class="ad-tools">${seg('rs',[['open','مفتوحة'],['done','انعدلت'],['ignored','متجاهلة'],['all','الكل']],ui.rStatus)}
       ${seg('rk',[['all','الكل'],['q','أسئلة'],['c','تمثيل'],['t','تحديات'],['l','حروف'],['w','رسم'],['card','بطايق']],ui.rKind)}
@@ -114,24 +140,48 @@ function renderReports(root){
         ${(now.answer||first.answer)?`<div class="ad-rep-ans">الجواب: <b>${esc(now.answer||first.answer)}</b></div>`:''}
         ${changed?`<div class="fx-tag">انعدل بالبنك بعد البلاغ — كان: ${esc(first.text)}</div>`:''}
         <div class="ad-reasons">${Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,n])=>`<span class="fx-tag bad">${esc(r)} <bdi>×${n}</bdi></span>`).join('')}</div>
-        <ul class="ad-notes">${gr.list.map(r=>`<li><span>${r.note?esc(r.note):'<i class="muted">بدون ملاحظة</i>'}</span><small>${esc(r.by||'')} · ${when(r.at)}${r.status&&r.status!=='open'?` · ${r.status==='done'?'انعدل':'متجاهل'}`:''}</small></li>`).join('')}</ul>
+        <ul class="ad-notes">${gr.list.map(r=>`<li><span>${r.note?esc(r.note):'<i class="muted">بدون ملاحظة</i>'}</span><small>${esc(r.by||'')} · ${when(r.at)}${r.status&&r.status!=='open'?` · ${r.status==='done'?'انعدل':'متجاهل'}`:''}</small>${logHtml(r)}</li>`).join('')}</ul>
         <div class="row"><button class="btn small btn-mint" data-act="done" data-k="${esc(gr.key)}">تم التعديل</button><button class="btn small ghost" data-act="ignored" data-k="${esc(gr.key)}">تجاهل</button><button class="btn small ghost" data-act="open" data-k="${esc(gr.key)}">رجّعها مفتوحة</button><button class="btn small ghost" data-act="del" data-k="${esc(gr.key)}">حذف</button></div>
       </article>`; }).join('') : '<div class="ad-card"><p class="muted">ما فيه بلاغات هنا.</p></div>'}`;
   bindSeg(root,'rs',v=>ui.rStatus=v); bindSeg(root,'rk',v=>ui.rKind=v);
-  $$('[data-act]', root).forEach(b=>b.onclick=async ()=>{
-    const gr = groups.find(g=>g.key===b.dataset.k); const ids = gr.list.map(r=>r._id), act=b.dataset.act;
-    if(act==='del' && !confirm('تحذف البلاغات هذي نهائياً؟')) return;
-    b.disabled = true;
-    try{
-      if(api){ if(act==='del') await api.remove('reports', ids); else await api.setStatus(ids, act); }
-      if(act==='del') reports = reports.filter(r=>!ids.includes(r._id)); else gr.list.forEach(r=>r.status=act);
-      render();
-    }catch(e){ alert('ما انحفظ: '+e.message); b.disabled=false; }
-  });
+  bindActs(root, groups);
+  // النسخ يشمل السجل التقني كامل لكل بلاغ — يكفي لحاله عشان ينصلح
   $('#ad-copy').onclick = ()=>{
-    const txt = groupReports(reports.filter(r=>(r.status||'open')==='open')).map(gr=>{ const now=BANK.get(gr.key)||{}, f=gr.list[0];
-      return `[${KIND_AR[gr.kind]} ${gr.item}${now.d?' · '+DIFF_AR[now.d]:''}${now.tag?' · '+now.tag:''}] ${now.text||f.text}${(now.answer||f.answer)?`\n  الجواب الحالي: ${now.answer||f.answer}`:''}\n  البلاغات: ${gr.list.map(r=>r.reason+(r.note?` («${r.note}»)`:'')).join(' | ')}`; }).join('\n\n');
-    navigator.clipboard.writeText(txt||'ما فيه بلاغات مفتوحة').then(()=>{ $('#ad-copy').textContent='انسخت'; setTimeout(()=>$('#ad-copy').textContent='نسخ المفتوحة (عشان ترسلها لـClaude)',1600); });
+    const txt = groupReports(REP().filter(r=>(r.status||'open')==='open')).map(gr=>{ const now=BANK.get(gr.key)||{}, f=gr.list[0];
+      return `[${KIND_AR[gr.kind]||gr.kind} ${gr.item}${now.d?' · '+DIFF_AR[now.d]:''}${now.tag?' · '+now.tag:''}] ${now.text||f.text}${(now.answer||f.answer)?`\n  الجواب الحالي: ${now.answer||f.answer}`:''}\n  البلاغات: ${gr.list.map(r=>`${r.reason}${r.note?` («${r.note}»)`:''} — ${r.by||''} · ${when(r.at)}`).join(' | ')}`
+        + gr.list.filter(r=>r.log).map(r=>`\n\n===== السجل التقني (${r.by||''} · ${when(r.at)}) =====\n${logText(r)}`).join(''); }).join('\n\n\n');
+    copyBtn($('#ad-copy'), txt||'ما فيه بلاغات مفتوحة');
+  };
+}
+
+// ---------- الأعطال (تنسجل تلقائياً من أجهزة اللاعبين) ----------
+function renderErrors(root){
+  const list = ERR().filter(r=>ui.eStatus==='all' || (r.status||'open')===ui.eStatus);
+  const groups = groupReports(list);
+  const uniq = a => [...new Set(a.filter(Boolean))];
+  const errLines = gr => { const f=gr.list[0], lines=String(f.text||'').split('\n');
+    return { msg:lines[0], stack:lines.slice(1).join('\n'), devs:uniq(gr.list.map(r=>r.dev)).length, where:uniq(gr.list.map(r=>r.by)), ctx:uniq(gr.list.map(r=>r.tag)), brs:uniq(gr.list.map(r=>r.note)),
+      first:gr.list.reduce((a,r)=>!a||(r.at&&r.at<a)?r.at:a,null), last:gr.list.reduce((a,r)=>!a||(r.at&&r.at>a)?r.at:a,null) }; };
+  root.innerHTML = `<div class="ad-tools">${seg('es',[['open','مفتوحة'],['done','انصلحت'],['ignored','متجاهلة'],['all','الكل']],ui.eStatus)}
+      <button class="btn small" id="ad-ecopy">نسخ المفتوحة (عشان ترسلها لـClaude)</button></div>
+    <p class="muted small">تنسجل تلقائياً لما يصير خطأ برمجي بالشاشة أو الجوالات. نفس العطل من نفس الجهاز ينسجل مرة كل ست ساعات.</p>
+    ${groups.length ? groups.map(gr=>{ const e=errLines(gr), f=gr.list[0];
+      return `<article class="ad-rep">
+        <div class="ad-rep-h"><span class="pill">${esc(f.reason||'خطأ')}</span>${e.where.map(w=>`<span class="pill dim">${esc(w)}</span>`).join('')}
+          <span class="ad-count"><bdi>${gr.list.length}</bdi> مرة · <bdi>${e.devs}</bdi> جهاز</span></div>
+        <pre class="ad-pre">${esc(e.msg)}${f.answer?'\n@ '+esc(f.answer):''}${e.stack?'\n'+esc(e.stack):''}</pre>
+        ${e.ctx.length?`<div class="ad-reasons">${e.ctx.map(x=>`<span class="fx-tag">${esc(x)}</span>`).join('')}</div>`:''}
+        <ul class="ad-notes">${gr.list.slice(0,8).map(r=>`<li><span>${esc(r.note||'')}</span><small>${when(r.at)}</small>${logHtml(r)}</li>`).join('')}${gr.list.length>8?`<li class="muted small">و${gr.list.length-8} مرات ثانية</li>`:''}</ul>
+        <p class="muted small">أول مرة ${when(e.first)} · آخر مرة ${when(e.last)}</p>
+        <div class="row"><button class="btn small btn-mint" data-act="done" data-k="${esc(gr.key)}">انصلح</button><button class="btn small ghost" data-act="ignored" data-k="${esc(gr.key)}">تجاهل</button><button class="btn small ghost" data-act="open" data-k="${esc(gr.key)}">رجّعه مفتوح</button><button class="btn small ghost" data-act="del" data-k="${esc(gr.key)}">حذف</button></div>
+      </article>`; }).join('') : '<div class="ad-card"><p class="muted">ما فيه أعطال هنا.</p></div>'}`;
+  bindSeg(root,'es',v=>ui.eStatus=v);
+  bindActs(root, groups);
+  $('#ad-ecopy').onclick = ()=>{
+    const txt = groupReports(ERR().filter(r=>(r.status||'open')==='open')).map(gr=>{ const e=errLines(gr), f=gr.list[0];
+      return `[عطل ×${gr.list.length} · ${e.devs} جهاز · ${e.where.join('، ')}] ${f.text}${f.answer?'\n  المكان: '+f.answer:''}\n  وين: ${e.ctx.join(' | ')||'—'}\n  الأجهزة: ${e.brs.join(' | ')}\n  أول مرة ${when(e.first)} · آخر مرة ${when(e.last)}`
+        + (f.log ? `\n\n===== السجل التقني (آخر مرة) =====\n${logText(f)}` : ''); }).join('\n\n\n');
+    copyBtn($('#ad-ecopy'), txt||'ما فيه أعطال مفتوحة');
   };
 }
 
@@ -268,9 +318,13 @@ function demoData(){
     matches.push({ _id:'m'+i, at, game:i%4===3?'khaliya':'alf', dev:'demo'+(i%3), mins:25+i, rounds:8, teams, items, cards:cl, drawn:[...cl.map(c=>c.id), ...Array.from({length:8},()=>R(cards).id)], buzz:[{ by:R(ps), ms:300+Math.floor(Math.random()*900) }] });
   }
   reports = [
-    { _id:'r1', kind:'q', item:qs[3].id, text:qs[3].q, answer:qs[3].a, reason:'الجواب غلط', note:'الصح شي ثاني', by:'دحوم (الذيابة)', status:'open', at:new Date() },
+    { _id:'r1', kind:'q', item:qs[3].id, text:qs[3].q, answer:qs[3].a, reason:'الجواب غلط', note:'الصح شي ثاني', by:'دحوم (الذيابة)', status:'open', at:new Date(),
+      log:{ here:'== الشاشة ==\nالشاشة · ويندوز · كروم 141\nالجلسة: {"game":"alf","players":[{"name":"دحوم","online":true}]}\n-- آخر الأحداث --\n20:00:01 شاشة: game\n20:00:09 تنبيه: الذيابة جاوبوا صح', peers:[{ who:'دحوم (c1)', dump:'== جوال ==\n20:00:02 الحالة: alf · q' }] } },
     { _id:'r2', kind:'q', item:qs[3].id, text:qs[3].q, answer:qs[3].a, reason:'الجواب غلط', note:'', by:'المضيف', status:'open', at:new Date() },
     { _id:'r3', kind:'card', item:cards[0].id, text:cards[0].name, reason:'قوية زيادة', note:'تقلب المباراة', by:'سارة (الهوامير)', status:'open', at:new Date() },
+    { _id:'e1', kind:'err', item:'e1k2j3', text:"TypeError: Cannot read properties of undefined (reading 'name')\n    at renderMain (/js/remote.js:612:33)\n    at onData (/js/remote.js:141:120)", answer:'/js/remote.js:612:33', tag:'alf · باللعب', reason:'خطأ', note:'آيفون · سفاري 18 · نسخة 202611210729', by:'جوال', dev:'d1', status:'open', at:new Date(Date.now()-36e5),
+      log:{ here:'== جوال ==\nجوال · آيفون · سفاري 18\n-- آخر الأحداث --\n20:01:02 اتصل بالشاشة\n20:01:05 الحالة: alf · q · دوري\n20:01:06 خطأ: TypeError …', peers:[] } },
+    { _id:'e2', kind:'err', item:'e1k2j3', text:"TypeError: Cannot read properties of undefined (reading 'name')", answer:'/js/remote.js:612:33', tag:'alf · باللعب', reason:'خطأ', note:'أندرويد · كروم 141 · نسخة 202611210729', by:'جوال', dev:'d2', status:'open', at:new Date() },
     { _id:'r4', kind:'c', item:cs[2].id, text:cs[2].t, reason:'صعبة تنمثّل', note:'', by:'المضيف', status:'done', at:new Date(Date.now()-864e5) },
   ];
 }

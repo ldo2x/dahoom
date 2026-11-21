@@ -14,6 +14,39 @@ window.DahoomNet = (function(){
   const pending=new Map();             // reqId -> {teamId, cb}
   let reqSeq=0, pushT=0, cidSeq=0;
 
+  // ---------- سجل الأحداث (للبلاغات) ----------
+  const LG = m => { try{ window.DahoomLog && window.DahoomLog.trail(m); }catch(e){} };
+  const who = c => { const p=c && c.pid && D.session.players.find(x=>x.id===c.pid); return `${p?p.name:'جوال'} (${c?c.cid:'?'})`; };
+  // ملخص الرسالة: نوعها وقيمها القصيرة
+  const brief = d => Object.keys(d).filter(k=>k!=='t').slice(0,5).map(k=>{ const v=d[k]; return v==null||typeof v==='object' ? k : `${k}=${String(v).slice(0,20)}`; }).join(' ');
+  const NOLOG = { stroke:1, rsync:1, fill:1 };      // رسائل الرسم كثيرة — ما نسجلها
+  const logWait = new Map();                        // طلبات السجلات من الجوالات: id → { got:[] }
+  // نطلب سجل كل جوال مفتوح (إلا except) وننتظر لين يردون أو تخلص المهلة
+  function collectLogs(ms, except){
+    return new Promise(res=>{
+      const list=[...conns].filter(c=>c.open && c!==except);
+      if(!list.length) return res([]);
+      const id='L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), w={ got:[] };
+      logWait.set(id, w);
+      list.forEach(c=>{ try{ c.send({t:'logreq', id}); }catch(e){} });
+      let iv=0, to=0;
+      const done=()=>{ clearInterval(iv); clearTimeout(to); logWait.delete(id);
+        list.forEach(c=>{ if(!w.got.some(g=>g.c===c)) w.got.push({ c, who:who(c), dump:'(ما رد على طلب السجل — غالباً نسخة قديمة أو الاتصال ضعيف)' }); });
+        res(w.got.map(g=>({ who:g.who, dump:g.dump }))); };
+      iv=setInterval(()=>{ if(w.got.length>=list.length) done(); }, 100);
+      to=setTimeout(done, ms);
+    });
+  }
+  if(window.DahoomLog){
+    window.DahoomLog.setPeers(ms=>collectLogs(ms));
+    window.DahoomLog.addSnap('الجلسة', ()=>{ const ss=D.session, on=onlinePids();
+      return { code, ready, game:ss.game, mode:ss.mode, locked:isLocked(), screen:(document.querySelector('.screen.active')||{}).id,
+        players:ss.players.map(p=>({ name:p.name, online:on.has(p.id), ready:isReady(p.id) })),
+        teams:(ss.teams||[]).map(t=>({ name:t.name, members:(t.members||[]).length })),
+        phones:[...conns].map(c=>({ who:who(c), open:!!c.open, away:!!c.away, hb:!!c.hb, seenAgoS:c.seen?Math.round((Date.now()-c.seen)/1000):null, team:c.teamId||null, owner:!!c.owner })),
+        waiting:waitingFor().map(p=>p.name) }; });
+  }
+
   const genCode = () => Array.from({length:4},()=> 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*31)]).join('');
   const baseUrl = () => /^https?:/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.href.replace(/[^/]*([?#].*)?$/,'') : PUBLIC_URL;
   const joinUrl = () => baseUrl()+'remote.html?room='+code;
@@ -23,16 +56,17 @@ window.DahoomNet = (function(){
     if(peer || !window.Peer) return;
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
-    peer.on('open', ()=>{ ready=true; tries=0; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
+    peer.on('open', ()=>{ LG('الشاشة جاهزة بالكود '+code); ready=true; tries=0; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
     peer.on('connection', c=>{
       c.cid='c'+(++cidSeq);
-      c.on('open', ()=>{ conns.add(c); });
+      c.on('open', ()=>{ conns.add(c); LG('جوال اتصل ('+c.cid+')'); });
       c.on('data', d=>onMsg(c,d));
-      c.on('close', ()=>{ conns.delete(c); refreshUI(); });
-      c.on('error', e=>{ conns.delete(c); refreshUI(); if(e && e.type==='negotiation-failed' && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.MSG.host); });
+      c.on('close', ()=>{ conns.delete(c); LG('انقطع '+who(c)); refreshUI(); });
+      c.on('error', e=>{ conns.delete(c); LG('خطأ اتصال '+who(c)+': '+(e&&e.type||e)); refreshUI(); if(e && e.type==='negotiation-failed' && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.MSG.host); });
     });
-    peer.on('disconnected', ()=>{ ready=false; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
+    peer.on('disconnected', ()=>{ LG('سيرفر الربط انقطع — نرجع نتصل'); ready=false; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
     peer.on('error', e=>{
+      LG('خطأ سيرفر الربط: '+(e&&e.type));
       if(e.type==='unavailable-id'){ // الكود محجوز (غالبًا من تحديث الصفحة) — نعيد المحاولة ثم نغيّره
         peer.destroy(); peer=null; ready=false;
         if(++tries>=4){ sessionStorage.removeItem('dahoom_room'); tries=0; }
@@ -68,8 +102,16 @@ window.DahoomNet = (function(){
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     { const was=alive(c); c.seen=Date.now();
-      if(d.t==='hb' || d.t==='away'){ c.hb=true; c.away = d.t==='away'; if(was!==alive(c)) infoAll(); return; }
+      if(d.t==='hb' || d.t==='away'){ c.hb=true; c.away = d.t==='away'; if(was!==alive(c)){ LG(who(c)+(alive(c)?' رجع':' طلع من الصفحة')); infoAll(); } return; }
       if(c.away){ c.away=false; } if(!was) infoAll(); }
+    // طلب سجل: جوال يبلّغ ويبي سجل الشاشة (و all=سجلات باقي الجوالات بعد)
+    if(d.t==='logreq'){
+      const mine={ who:'الشاشة', dump:window.DahoomLog ? window.DahoomLog.dump(12000) : '' };
+      (d.all ? collectLogs(2000, c) : Promise.resolve([])).then(others=>{ try{ c.send({t:'logrep', id:d.id, list:[mine].concat(others)}); }catch(e){} });
+      return;
+    }
+    if(d.t==='logrep'){ const w=logWait.get(d.id); if(w && !w.got.some(g=>g.c===c)) w.got.push({ c, who:who(c), dump:String(d.dump||'').slice(0,9000) }); return; }
+    if(!NOLOG[d.t]) LG(`من ${who(c)}: ${d.t} ${brief(d)}`);
     // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
     if(d.t==='hello'){ c.pid = c.pid || d.pid || null; if(d.owner) c.owner=true; sendInfo(c); }
     if(isSolo() && (d.t==='hello' || d.t==='register')){
