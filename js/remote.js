@@ -410,7 +410,7 @@
         <div class="ow-h"><span class="ow-crown">${ic('crown')}</span><div><b>جلستك</b><small>اختر اللعبة واضبطها، وأول ما يكون الكل مستعد اضغط ابدأ</small></div><span id="ow-rules"></span></div>
         <div class="ow-sec"><div class="ow-lbl">اللعبة</div><div class="ow-games">${games.map(x=>`<button type="button" class="ow-g" data-g="${x.id}">${ic(x.icon)}<span>${esc(x.name)}</span>${x.tag?`<small class="ow-gtag">${esc(x.tag)}</small>`:''}</button>`).join('')}</div></div>
         <div class="ow-sec"><div class="ow-lbl">اللاعبين</div>
-          <div class="ow-plrow"><span class="ow-n"><b id="ow-n"></b> <span id="ow-nl"></span></span><button type="button" class="btn small" data-copy>${ic('share')} انسخ رابط الدعوة</button></div>
+          <div class="ow-plrow"><span class="ow-n"><b id="ow-n"></b> <span id="ow-nl"></span></span><span class="ow-inv"><button type="button" class="btn small ghost ${canInvite()?'':'hidden'}" data-invfr>${ic('acc-user-plus')} ادعُ صديق</button><button type="button" class="btn small" data-copy>${ic('share')} انسخ رابط الدعوة</button></span></div>
           <div class="ow-pub" role="group" aria-label="من يقدر يدخل الجلسة"><button type="button" data-pub="0">${ic('padlock')}<span><b>جلسة خاصة</b><small>يدخلون بالكود بس</small></span></button><button type="button" data-pub="1">${ic('eye')}<span><b>جلسة عامة</b><small>تطلع بقائمة الجلسات للكل</small></span></button></div>
           ${modes}<div id="ow-teams"></div></div>
         ${secs.length?`<details class="ow-set" ${st.owSetOpen?'open':''}><summary>${ic('gears')}<span>إعدادات ${esc(G.name)}</span><small>اختياري — الافتراضي مضبوط</small></summary>
@@ -503,7 +503,7 @@
       ${needTeam?'<p class="rw-pick">اختر فريقك من القائمة تحت</p>':''}
       ${(I.over||[]).length && !I.locked ? `<p class="rw-note">${(I.over||[]).includes(m.name) ? `اللعبة تكفي ${I.cap} لاعبين — انت تتفرج هالمرة وتلعب الجاية` : `اللعبة تكفي ${I.cap} لاعبين — يتفرجون هالمرة: ${esc(I.over.join('، '))}`}</p>` : ''}
       ${rosterHTML(I, true)}
-      <div class="rw-acts">${!I.locked?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
+      <div class="rw-acts">${canInvite()?`<button type="button" class="btn ghost small" data-invfr>${ic('acc-user-plus')} ادعُ صديق</button>`:''}${!I.locked?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
     </section>`;
     const w=$('#r-wait'); bindRoster(w);
     const e=w.querySelector('[data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
@@ -1170,6 +1170,33 @@
     sheet(`<div class="eyebrow">سحبتوا بطاقة — لا تخلون أحد يشوف</div><div class="r-big r-drawn">${cardHTML(c,{size:'big',anim:true})}</div><div class="r-actions"><button class="btn btn-hype big" data-x>تمام</button></div>`);
     $('#r-sheet [data-x]').onclick=closeSheet;
   }
+
+  // ---------- دعوة صديق لجلستك (للمسجّلين بس) ----------
+  function canInvite(){ const A=window.DahoomAccount, c=A && A.current && A.current(); return !!(c && !c.guest && A.sendInvite && st.room); }
+  async function inviteSheet(){
+    const A=window.DahoomAccount; if(!canInvite()) return;
+    const sent=st.invSent||(st.invSent={});
+    const row = f => { const on=f.pres&&f.pres.on, s=sent[f.uid];
+      return `<li><img src="${esc(A.avatarSrc(f.avatar))}" alt=""><span><b>${esc(f.name)}</b><small class="${on?'on':''}">${esc((f.pres&&f.pres.text)||'')}</small></span><button type="button" class="btn small ${s?'ghost':'btn-hype'}" data-inv="${esc(f.uid)}" ${s?'disabled':''}>${s?'انرسلت':'ادعُ'}</button></li>`; };
+    const draw = list => {
+      sheet(`<div class="eyebrow">${ic('acc-user-plus')} جلستك ${esc(st.room)}</div><h3>ادعُ أصدقاءك</h3><p class="muted small">يطلع لهم إشعار بالموقع، ويدخلون بضغطة</p>
+        ${list===null ? '<p class="muted">نجيب أصدقاءك…</p>' : !list.length ? '<p class="muted">ما عندك أصدقاء للحين. تقدر تضيفهم من ملفك.</p>' : `<ul class="r-invl">${list.map(row).join('')}</ul>`}
+        <button type="button" class="btn ghost" data-x>تم</button>`);
+      $('#r-sheet [data-x]').onclick=closeSheet;
+      $$('#r-sheet [data-inv]').forEach(b=>b.onclick=async()=>{
+        b.disabled=true; vibe(20);
+        const ok=await A.sendInvite(b.dataset.inv, st.room, (st.info||{}).game);
+        if(ok){ sent[b.dataset.inv]=Date.now(); b.textContent='انرسلت'; b.classList.remove('btn-hype'); b.classList.add('ghost'); sfx('good'); }
+        else { b.disabled=false; b.textContent='ما انرسلت — جرّب'; }
+      });
+    };
+    draw(null);
+    const list=await A.listFriends().catch(()=>[]);
+    if(!$('#r-sheet').classList.contains('hidden')) draw(list);
+  }
+  document.addEventListener('click', e=>{ if(e.target.closest('[data-invfr]')){ vibe(10); inviteSheet(); } });
+  // الحساب ممكن يجهز بعد ما انرسمت لوحة صاحب الجلسة
+  setInterval(()=>{ const b=document.querySelector('.ow [data-invfr]'); if(b) b.classList.toggle('hidden', !canInvite()); }, 2000);
 
   function sheet(html, locked){ const s=$('#r-sheet'); $('#r-sheet-in').innerHTML=html; s.classList.remove('hidden'); s.dataset.locked=locked?'1':''; }
   function closeSheet(){ $('#r-sheet').classList.add('hidden'); }

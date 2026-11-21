@@ -402,6 +402,8 @@ window.DahoomAccount = (function(){
         const s=await withTimeout(F.getDocs(q), T); return s.docs.map(d=>Object.assign({ id:d.id }, d.data()));
       },
       async batch(ops){ const b=F.writeBatch(db); ops.forEach(o=>o.del ? b.delete(ref(o.path)) : b.set(ref(o.path), o.data, o.merge?{ merge:true }:{})); await withTimeout(b.commit(), T); },
+      // متابعة مباشرة لمجموعة (ترجع دالة توقفها)
+      watch(p, n, cb){ return F.onSnapshot(F.query(col(p), F.limit(n)), s=>cb(s.docs.map(d=>Object.assign({ id:d.id }, d.data()))), ()=>{}); },
     };
   }
   // سحابة وهمية للاختبار: قاعدة بيانات داخل localStorage، والمستخدم يتحدد بـ window.DAHOOM_ACC_STUB_USER أو يتولّد
@@ -426,6 +428,8 @@ window.DahoomAccount = (function(){
       async list(p, n=100){ await lag(); fail(); const x=db(), pre=p+'/'; return Object.keys(x).filter(k=>k.startsWith(pre) && !k.slice(pre.length).includes('/')).slice(0,n).map(k=>Object.assign({ id:k.slice(pre.length) }, clone(x[k]))); },
       async search(pre, n, field){ await lag(); fail(); const f=field||'nameLower', x=db(); return Object.keys(x).filter(k=>/^users\/[^/]+$/.test(k) && String(x[k][f]||'').startsWith(pre)).sort((a,b)=>x[a][f]<x[b][f]?-1:1).slice(0,n).map(k=>Object.assign({ id:k.slice(6) }, clone(x[k]))); },
       async batch(ops){ await lag(); fail(); const x=db(); ops.forEach(o=>{ if(o.del) delete x[o.path]; else x[o.path] = o.merge ? Object.assign(x[o.path]||{}, clone(o.data)) : clone(o.data); }); save(x); },
+      watch(p, n, cb){ let last=null; const tick=()=>{ const x=db(), pre=p+'/'; const l=Object.keys(x).filter(k=>k.startsWith(pre) && !k.slice(pre.length).includes('/')).slice(0,n).map(k=>Object.assign({ id:k.slice(pre.length) }, clone(x[k]))); const k=JSON.stringify(l); if(k!==last){ last=k; cb(l); } };
+        tick(); const t=setInterval(tick, 1200); return ()=>clearInterval(t); },
     };
   }
   const cloud = STUB ? stubCloud() : firebaseCloud();
@@ -556,7 +560,7 @@ window.DahoomAccount = (function(){
           else if(st.mode==='user'){ st.offline=true; }
         }
       }catch(e){ console.warn('[DahoomAccount] init', e); }
-      st.ready=true; emit();
+      st.ready=true; emit(); watchInvites();
       return current();
     })();
     return initP;
@@ -842,6 +846,62 @@ window.DahoomAccount = (function(){
       await refreshFriendCount(); return true;
     }catch(e){ return false; }
   }
+  // ---------- دعوة صديق لجلستك ----------
+  // users/{الصديق}/invites/{أنا} = { from, name, avatar, code, game, at } — القوانين تسمح بس لو هو صديقك. تنتهي بعد 15 دقيقة
+  const INV_MS = 15*60*1000;
+  async function sendInvite(uid, code, game){
+    try{
+      if(!signedIn() || !uid || uid===st.uid || /^g_/.test(uid) || !/^[A-Z2-9]{4}$/.test(code||'')) return false;
+      if(!await bootCloud()) return false;
+      const p=st.prof;
+      await cloud.set(`users/${uid}/invites/${st.uid}`, { from:st.uid, name:p.name, avatar:p.avatar, code, game:GAMES[game]?game:'', at:Date.now() });
+      return true;
+    }catch(e){ return false; }
+  }
+  async function dropInvite(from){ try{ if(signedIn() && from) await cloud.batch([{ path:`users/${st.uid}/invites/${from}`, del:true }]); }catch(e){} }
+  const hereRoom = () => { try{ return new URLSearchParams(location.search).get('room') || (window.DahoomNet && window.DahoomNet.ready && window.DahoomNet.code) || ''; }catch(e){ return ''; } };
+  let invOff=null, invUid=null, invShown='', invOn=false;
+  const invSkip=new Set();
+  // كرت «فلان يدعوك» يطلع بأي صفحة فيها الحساب (الصفحة الأم بس — مو داخل إطار صاحب الجلسة)
+  function watchInvites(){
+    if(invOn) return; invOn=true;
+    try{ if(window.top!==window) return; }catch(e){ return; }
+    const go = async () => {
+      if(invOff){ try{ invOff(); }catch(e){} invOff=null; }
+      invUid = signedIn() ? st.uid : null; drawInvite(null);
+      if(!invUid || !await bootCloud() || !cloud.watch) return;
+      const uid=invUid;
+      invOff = cloud.watch(`users/${uid}/invites`, 10, l=>{
+        if(uid!==invUid) return;
+        const now=Date.now();
+        l.filter(x=>now-(x.at||0) >= INV_MS).slice(0,5).forEach(x=>dropInvite(x.id));   // القديمة نمسحها
+        const fresh=(l||[]).filter(x=>x && /^[A-Z2-9]{4}$/.test(x.code||'') && now-(x.at||0) < INV_MS)
+          .map(x=>({ from:x.id, name:cleanName(x.name)||'صديقك', avatar:AVATARS.includes(x.avatar)?x.avatar:AVATARS[0], code:x.code, game:GAMES[x.game]?x.game:'', at:x.at }))
+          .sort((a,b)=>b.at-a.at);
+        drawInvite(fresh.find(x=>!invSkip.has(x.from+x.code+x.at) && x.code!==hereRoom()) || null);
+      });
+    };
+    onChange(()=>{ if((signedIn()?st.uid:null)!==invUid) go(); });
+    go();
+  }
+  function drawInvite(x){
+    let el=document.getElementById('dacc-inv');
+    if(!x){ if(el) el.remove(); invShown=''; return; }
+    const k=x.from+x.code+x.at; if(invShown===k && el) return; invShown=k;
+    injectCSS();
+    if(!el){ el=document.createElement('div'); el.id='dacc-inv'; el.className='dacc-inv'; el.setAttribute('role','alert'); document.body.appendChild(el); }
+    const g=GAME_AR(x.game);
+    el.innerHTML=`<img src="${avatarSrc(x.avatar)}" alt="" width="44" height="44"><span class="dacc-inv-t"><small>دعوة من صديقك</small><b>${esc(x.name)} يدعوك ${g?'تلعبون '+esc(g):'لجلسته'}</b></span>
+      <span class="dacc-inv-b"><button type="button" class="dacc-inv-go" data-inv="go">انضم</button><button type="button" class="dacc-inv-no" data-inv="no">مو الحين</button></span>`;
+    el.querySelector('[data-inv=go]').onclick=async()=>{
+      const busy = hereRoom() || (window.DahoomNet && window.DahoomNet.ready);
+      if(busy && !confirm(`تطلع من جلستك الحالية وتدخل جلسة ${x.name}؟`)) return;
+      invSkip.add(k); await dropInvite(x.from); location.href='remote.html?room='+encodeURIComponent(x.code);
+    };
+    el.querySelector('[data-inv=no]').onclick=()=>{ invSkip.add(k); dropInvite(x.from); drawInvite(null); };
+    try{ navigator.vibrate && navigator.vibrate([30,40,30]); }catch(e){}
+  }
+
   async function refreshFriendCount(list){
     try{
       if(!list) list=await cloud.list(`users/${st.uid}/friends`, 300);
@@ -971,7 +1031,17 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
 .dacc-ti{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--rc);color:var(--ink);flex:none;font-style:normal}
 .dacc-ti .ic{width:24px;height:24px}
 @keyframes daccIn{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.dacc-toast{animation:none}.dacc-toast.out{transition:none}}`;
+.dacc-inv{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));margin-inline:auto;max-width:440px;z-index:95;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);color:var(--text);border:1px solid var(--line);border-inline-start:5px solid var(--hype);border-radius:var(--r-m);padding:12px 14px;box-shadow:var(--shadow-2);animation:daccUp .4s cubic-bezier(.2,1.2,.3,1)}
+.dacc-inv img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--surface-2)}
+.dacc-inv-t{display:flex;flex-direction:column;line-height:1.35;flex:1;min-width:11em}
+.dacc-inv-t small{color:var(--mute);font-weight:700;font-size:.8rem}
+.dacc-inv-b{display:flex;gap:8px;margin-inline-start:auto}
+.dacc-inv button{font:inherit;font-weight:800;border-radius:999px;padding:8px 18px;cursor:pointer;border:1px solid var(--line);min-height:40px}
+.dacc-inv-go{background:var(--hype);color:var(--ink);border-color:transparent!important}
+.dacc-inv-no{background:transparent;color:var(--text)}
+.dacc-inv button:focus-visible{outline:3px solid var(--text);outline-offset:2px}
+@keyframes daccUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dacc-toast,.dacc-inv{animation:none}.dacc-toast.out{transition:none}}`;
     (document.head || document.documentElement).appendChild(s);
   }
 
@@ -981,7 +1051,7 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
     getProfile, searchUsers, sendFriendRequest, respondFriendRequest, listFriends, listRequests, removeFriend,
     // اليوزرنيم وكلمة السر والحالة
     textProblem, checkUsername, setUsername, unameWait, findByUsername, signUpWithPassword, signInWithPassword, setPassword, hasPassword,
-    setActivity, getPresence, listFriendsOf, unameProblem, UNAME_GAP,
+    setActivity, getPresence, listFriendsOf, unameProblem, UNAME_GAP, sendInvite, watchInvites,
     // الكتالوجات
     ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, AVATAR_GROUPS, COLORS,
     // أدوات للعرض

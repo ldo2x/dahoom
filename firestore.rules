@@ -10,6 +10,7 @@ rules_version = '2';
 //   rooms/{code}                     اللوبي العام (REST بدون تسجيل): قراءة وإنشاء وتحديث للكل بشروط، بدون حذف
 //   users/{uid}                      الملف العام: يقراه الكل، يكتبه صاحبه بس
 //   users/{uid}/requests/{fromUid}   طلبات الصداقة: ينشئها المرسل بس
+//   users/{uid}/invites/{fromUid}    دعوة لجلسة: يكتبها صديقك بس (لازم يكون بقائمة أصدقائك)، تقراها وتمسحها انت أو هو
 //   users/{uid}/friends/{friendUid}  الأصدقاء: يقراها أي مسجّل (عشان أصدقاء الصديق والمشتركين)، يكتبها صاحب القائمة أو الصديق وقت القبول/الحذف
 //   usernames/{username}             حجز اليوزرنيم: { uid, em?, at } — يقراه الكل (للدخول باليوزرنيم)، يحجزه صاحب الحساب بس
 //   presence/{uid}                   الحالة (متصل / بجلسة / يلعب): يقراها الكل، يكتبها صاحبها
@@ -36,6 +37,13 @@ service cloud.firestore {
     function isInt(v, lo, hi) { return v is int && v >= lo && v <= hi; }
     function optStr(d, k, max) { return !(k in d) || isStr(d[k], max); }
 
+    // السجل التقني اللي يجي مع البلاغ: { here: نص، peers: [{ who, dump }] } — محدود عشان ما أحد يعبّي القاعدة
+    function validLog(d) {
+      return !('log' in d) || (d.log is map && d.log.keys().hasOnly(['here','peers'])
+        && optStr(d.log, 'here', 16000)
+        && (!('peers' in d.log) || (d.log.peers is list && d.log.peers.size() <= 16)));
+    }
+
     // ---------------- البلاغات (telemetry.js) ----------------
     match /reports/{id} {
       allow create: if request.resource.data.size() <= 20
@@ -48,6 +56,7 @@ service cloud.firestore {
         && optStr(request.resource.data, 'note', 400)
         && optStr(request.resource.data, 'by', 30)
         && optStr(request.resource.data, 'dev', 20)
+        && validLog(request.resource.data)
         && (!('status' in request.resource.data) || request.resource.data.status == 'open');
       allow read, update, delete: if isAdmin();
     }
@@ -154,6 +163,21 @@ service cloud.firestore {
           && isInt(request.resource.data.level, 1, 99)
           && isNum(request.resource.data.at, 0, 9999999999999);
         allow update: if false;
+        allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == fromUid);
+      }
+
+      // دعوة لجلسة من fromUid إلى uid — لازم يكون fromUid بقائمة أصدقاء uid
+      match /invites/{fromUid} {
+        allow read: if signedIn() && (request.auth.uid == uid || request.auth.uid == fromUid);
+        allow create, update: if signedIn() && request.auth.uid == fromUid && fromUid != uid
+          && exists(/databases/$(database)/documents/users/$(uid)/friends/$(fromUid))
+          && request.resource.data.keys().hasOnly(['from','name','avatar','code','game','at'])
+          && request.resource.data.from == fromUid
+          && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+          && isStr(request.resource.data.avatar, 40)
+          && request.resource.data.code is string && request.resource.data.code.matches('^[A-Z2-9]{4}$')
+          && isStr(request.resource.data.game, 12)
+          && isNum(request.resource.data.at, 0, 9999999999999);
         allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == fromUid);
       }
 

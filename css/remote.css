@@ -1076,3 +1076,14 @@ body.is-owner .r-bar{display:none}
 .r-khok{background:var(--c);color:#fff;font-weight:900;font-size:1.1rem;padding:14px;border:0}
 .rr-ref .rr-th b{display:inline-flex;align-items:center;gap:6px}
 .rr-refnote{margin:2px 0 6px;font-size:.78rem;color:var(--mute);line-height:1.5}
+
+/* دعوة صديق */
+.ow-inv{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.r-invl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:55dvh;overflow:auto}
+.r-invl li{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface-2)}
+.r-invl img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:none}
+.r-invl span{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3}
+.r-invl b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-invl small{color:var(--mute);font-size:.8rem;font-weight:600}
+.r-invl small.on{color:var(--ok-ink)}
+.r-invl .btn{flex:none;min-width:5.5em}
