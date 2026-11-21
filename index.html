@@ -32,11 +32,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611220100">
-<link rel="stylesheet" href="css/draw.css?v=202611220100">
-<link rel="stylesheet" href="css/hawamir.css?v=202611220100">
-<link rel="stylesheet" href="css/sadq.css?v=202611220100">
-<link rel="stylesheet" href="css/rules.css?v=202611220100">
+<link rel="stylesheet" href="css/style.css?v=202611220300">
+<link rel="stylesheet" href="css/draw.css?v=202611220300">
+<link rel="stylesheet" href="css/hawamir.css?v=202611220300">
+<link rel="stylesheet" href="css/sadq.css?v=202611220300">
+<link rel="stylesheet" href="css/rules.css?v=202611220300">
 </head>
 <body>
 
@@ -599,16 +599,16 @@
     </div>
   </div>
   <div class="sq-table-wrap">
-    <div class="sq-main">
-      <div class="sq-seats" id="sq-seats"></div>
-      <div class="sq-center">
+    <div class="sq-majlis" id="sq-majlis">
+      <div class="sq-rug"><div class="sq-rug-in">
         <div class="sq-stage" id="sq-stage"></div>
         <div class="sq-wait" id="sq-wait"></div>
-      </div>
+        <div class="sq-rugfoot"><div class="sq-chest" id="sq-chest"></div><div class="sq-deckpile" id="sq-deckpile"></div></div>
+      </div></div>
+      <div class="sq-seats" id="sq-seats"></div>
     </div>
     <aside class="sq-side">
       <div class="sq-event" id="sq-event"></div>
-      <div class="sq-bank"><div><i class="ic" style="--i:url(../assets/icons/hm-building-bank.svg)"></i><span>صندوق المجلس</span><b id="sq-pot">0</b></div><div><i class="ic" style="--i:url(../assets/icons/cards.svg)"></i><span>الكومة</span><b id="sq-deck">0</b></div></div>
       <div class="sq-logbox"><div class="sq-logh">وش صار</div><div class="sq-log" id="sq-log"></div></div>
     </aside>
   </div>
@@ -636,33 +636,34 @@
 <div id="overlay-root"></div>
 <canvas class="confetti-canvas" id="confetti"></canvas>
 
-<script src="data/tags.js?v=202611220100"></script>
-<script src="data/cards.js?v=202611220100"></script>
-<script src="data/memes.js?v=202611220100"></script>
-<script src="data/hawamir.js?v=202611220100"></script>
-<script src="data/sadq.js?v=202611220100"></script>
-<script src="js/vendor/peerjs.min.js?v=202611220100"></script>
-<script src="js/ice.js?v=202611220100"></script>
-<script src="js/vendor/qrcode.min.js?v=202611220100"></script>
-<script src="js/busy.js?v=202611220100"></script>
-<script src="js/lazy.js?v=202611220100"></script>
-<script src="js/avatars.js?v=202611220100"></script>
-<script src="js/core.js?v=202611220100"></script>
-<script src="js/config.js?v=202611220100"></script>
-<script src="js/badwords.js?v=202611220100"></script>
-<script src="js/account.js?v=202611220100"></script>
-<script src="js/telemetry.js?v=202611220100"></script>
-<script src="js/lobby.js?v=202611220100"></script>
-<script src="js/net.js?v=202611220100"></script>
-<script src="js/owner.js?v=202611220100"></script>
-<script src="js/stats.js?v=202611220100"></script>
-<script src="js/cardfx.js?v=202611220100"></script>
-<script src="js/alf.js?v=202611220100"></script>
-<script src="js/draw.js?v=202611220100"></script>
-<script src="js/khaliya.js?v=202611220100"></script>
-<script src="js/rasm.js?v=202611220100"></script>
-<script src="js/hawamir.js?v=202611220100"></script>
-<script src="js/sadq.js?v=202611220100"></script>
-<script src="js/rules.js?v=202611220100"></script>
+<script src="data/tags.js?v=202611220300"></script>
+<script src="data/cards.js?v=202611220300"></script>
+<script src="data/memes.js?v=202611220300"></script>
+<script src="data/hawamir.js?v=202611220300"></script>
+<script src="data/sadq.js?v=202611220300"></script>
+<script src="js/vendor/peerjs.min.js?v=202611220300"></script>
+<script src="js/ice.js?v=202611220300"></script>
+<script src="js/vendor/qrcode.min.js?v=202611220300"></script>
+<script src="js/busy.js?v=202611220300"></script>
+<script src="js/lazy.js?v=202611220300"></script>
+<script src="js/avatars.js?v=202611220300"></script>
+<script src="js/core.js?v=202611220300"></script>
+<script src="js/config.js?v=202611220300"></script>
+<script src="js/badwords.js?v=202611220300"></script>
+<script src="js/account.js?v=202611220300"></script>
+<script src="js/telemetry.js?v=202611220300"></script>
+<script src="js/lobby.js?v=202611220300"></script>
+<script src="js/net.js?v=202611220300"></script>
+<script src="js/owner.js?v=202611220300"></script>
+<script src="js/stats.js?v=202611220300"></script>
+<script src="js/cardfx.js?v=202611220300"></script>
+<script src="js/alf.js?v=202611220300"></script>
+<script src="js/draw.js?v=202611220300"></script>
+<script src="js/khaliya.js?v=202611220300"></script>
+<script src="js/rasm.js?v=202611220300"></script>
+<script src="js/hawamir.js?v=202611220300"></script>
+<script src="js/sqart.js?v=202611220300"></script>
+<script src="js/sadq.js?v=202611220300"></script>
+<script src="js/rules.js?v=202611220300"></script>
 </body>
 </html>

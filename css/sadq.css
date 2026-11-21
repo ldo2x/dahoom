@@ -196,3 +196,119 @@
 /* الحركة اللي شخصيتها عندك فعلًا (صادق) */
 .sq-qa.have{border-color:color-mix(in srgb,var(--rc) 70%,transparent);background:color-mix(in srgb,var(--rc) 10%,var(--surface-2))}
 .sq-have{font-style:normal;font-size:.68rem;font-weight:800;background:var(--ok);color:#fff;border-radius:99px;padding:0 7px;margin-inline-start:auto}
+
+/* =====================================================================
+   المجلس (تحديث الشكل): اللاعبين قاعدين حول سجادة، وبالوسط الصندوق والكومة،
+   ولحظة الادعاء والكشف بورقة كبيرة برسمة الشخصية
+   ===================================================================== */
+.sq-table-wrap{grid-template-columns:minmax(0,1fr) minmax(260px,300px)}
+.sq-majlis{position:relative;min-height:calc(100dvh - 130px);border-radius:var(--r-l);
+  background:radial-gradient(70% 60% at 50% 50%,color-mix(in srgb,var(--sq-brass) 10%,transparent),transparent 70%),var(--surface-2);border:1px solid var(--line)}
+.sq-rug{position:absolute;left:26%;right:26%;top:24%;bottom:24%;border-radius:22px;padding:12px;background:var(--sadu-weave) 0 0/26px 26px,var(--sq-rug);box-shadow:0 24px 50px -24px rgba(0,0,0,.55)}
+.sq-rug-in{position:relative;height:100%;border-radius:14px;overflow:hidden;color:var(--sq-paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 16px 92px;
+  background:radial-gradient(110% 90% at 50% 30%,rgba(255,255,255,.09),transparent 60%),var(--sq-rug);box-shadow:inset 0 0 0 2px rgba(227,164,58,.55),inset 0 0 60px rgba(0,0,0,.45)}
+.sq-rug-in::before{content:'';position:absolute;inset:8px;border:1.5px dashed rgba(227,164,58,.25);border-radius:9px;pointer-events:none}
+.sq-seats{position:absolute;inset:0;display:block;pointer-events:none}
+.sq-seat{position:absolute;left:calc(var(--x) * 1%);top:calc(var(--y) * 1%);transform:translate(-50%,-50%);width:clamp(220px,19vw,290px);padding:9px 11px;gap:6px 10px;pointer-events:auto;border-top:0;border-bottom:6px solid var(--c);
+  display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"h h" "c f" "c k";align-content:start}
+.sq-seat .sq-sh{grid-area:h}.sq-seat .sq-cards{grid-area:c}.sq-seat .sq-sf{grid-area:f;align-self:end}.sq-seat .sq-claims{grid-area:k;align-self:start}
+.sq-seat.turn{transform:translate(-50%,-50%) scale(1.05);z-index:2}
+.sq-seat.out{transform:translate(-50%,-50%)}
+.sq-seat .sq-cards{gap:6px}
+.sq-seat .sq-card{width:58px;height:81px}
+.sq-card.face{border-top:0;padding:0;justify-content:flex-end;background:var(--rc)}
+.sq-card.face .sq-art{position:absolute;inset:0;width:100%;height:100%}
+.sq-card.face b{position:relative;width:100%;text-align:center;font-size:.78rem;color:#fff;padding:12px 2px 4px;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.sq-claims{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.72rem}
+.sq-claims small{color:var(--mute);font-weight:700}
+.sq-cl{background:color-mix(in srgb,var(--rc) 16%,var(--surface));color:var(--text);border-inline-start:3px solid var(--rc);border-radius:6px;padding:1px 6px;font-weight:700}
+.sq-cl i{font-style:normal;font-family:var(--num);margin-inline-start:3px;color:var(--mute)}
+/* الصندوق والكومة بزوايا السجادة */
+.sq-rugfoot{position:absolute;left:14px;right:14px;bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+.sq-chest,.sq-deckpile{display:flex;align-items:flex-end;gap:8px}
+.sq-chest-svg{width:86px;height:64px;display:block;filter:drop-shadow(0 6px 8px rgba(0,0,0,.4))}
+.sq-chest-n{display:flex;flex-direction:column;line-height:1.1;padding-bottom:6px}
+.sq-chest-n small{font-size:.72rem;font-weight:700;color:rgba(246,238,220,.7)}
+.sq-chest-n b{font-family:var(--num);font-weight:900;font-size:1.7rem;color:var(--sq-brass)}
+.sq-pile{position:relative;width:46px;height:62px;margin-bottom:4px}
+.sq-pile i{position:absolute;inset:0;border-radius:6px;border:2px solid var(--sq-brass);background:var(--sadu-weave) 0 0/14px 14px,var(--sq-night)}
+.sq-pile i:nth-child(2){transform:translate(-3px,-3px)}.sq-pile i:nth-child(3){transform:translate(-6px,-6px)}.sq-pile i:nth-child(4){transform:translate(-9px,-9px)}
+/* البخور: شريط الوقت يحترق وطرفه جمرة */
+.sq-wait i.sq-incense{height:6px;background:rgba(0,0,0,.4);overflow:visible;position:relative}
+.sq-wait i.sq-incense b{position:relative;width:100%;border-radius:99px;background:linear-gradient(90deg,#FF6A2B,var(--sq-brass) 30%,#F1D9A6);transform:none}
+.sq-wait i.sq-incense b::before{content:'';position:absolute;left:-5px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:radial-gradient(circle,#FFE9A8 0 25%,#FF6A2B 55%,rgba(255,106,43,0) 72%);box-shadow:0 0 14px 4px rgba(255,106,43,.55);animation:sqEmber 1s ease-in-out infinite alternate}
+.sq-wait i.sq-incense b::after{content:'';position:absolute;left:-3px;bottom:8px;width:8px;height:22px;border-radius:50%;background:linear-gradient(transparent,rgba(246,238,220,.28));filter:blur(3px);animation:sqSmoke 1.8s ease-out infinite}
+@keyframes sqEmber{from{transform:scale(.85)}to{transform:scale(1.15)}}
+@keyframes sqSmoke{0%{opacity:0;transform:translateY(4px) scaleY(.6)}30%{opacity:1}100%{opacity:0;transform:translate(-6px,-16px) scaleY(1.3)}}
+/* لحظة الادعاء والكشف */
+.sq-stage{width:100%;display:flex;justify-content:center}
+.sq-claim{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2.2vw,30px);animation:fadeUp .35s both}
+.sq-big{position:relative;flex:none;width:clamp(96px,9.5vw,138px);aspect-ratio:5/7;border-radius:14px;overflow:hidden;background:var(--rc);box-shadow:0 0 0 3px rgba(246,238,220,.9),0 18px 34px -12px rgba(0,0,0,.7);display:flex;flex-direction:column;justify-content:flex-end}
+.sq-big .sq-art{position:absolute;inset:0;width:100%;height:100%}
+.sq-big>b,.sq-ff>b{position:relative;text-align:center;color:#fff;font-weight:800;font-size:clamp(.85rem,1.1vw,1.1rem);padding:18px 4px 7px;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.sq-big.back{background:var(--sadu-weave) 0 0/24px 24px,var(--sq-night);box-shadow:0 0 0 3px var(--sq-brass),0 18px 34px -12px rgba(0,0,0,.7);align-items:center;justify-content:center}
+.sq-big.back i{width:40%;aspect-ratio:1;border-radius:50%;border:3px solid var(--sq-brass);background:var(--sq-night)}
+.sq-big.dead .sq-art{filter:grayscale(.9) brightness(.8)}
+.sq-big.dead::after{content:'انكشفت';position:absolute;left:-12%;right:-12%;top:42%;background:var(--bad);color:#fff;font-weight:800;text-align:center;transform:rotate(-14deg);padding:3px 0}
+.sq-claim-t{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:start;max-width:min(380px,60%)}
+.sq-claim-t>span{font-size:clamp(1rem,1.5vw,1.35rem);font-weight:700}
+.sq-claim-t strong{font-family:var(--display);font-weight:400;font-size:clamp(2rem,3.6vw,3.4rem);line-height:1.1;color:var(--rc,var(--sq-paper))}
+.sq-claim-t em{font-style:normal;font-size:clamp(.95rem,1.3vw,1.2rem);color:rgba(246,238,220,.82);font-weight:600}
+.sq-claim.lost strong,.sq-claim.rev.lie strong{color:#FFB3A6}
+.sq-claim.rev.truth strong{color:#9FE8BD}
+.sq-callout{color:#FFB3A6!important;animation:sqSlam .4s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes sqSlam{from{transform:scale(1.8);opacity:0}to{transform:none;opacity:1}}
+.sq-claim.sus .sq-big{animation:sqShake .5s ease-in-out infinite}
+.sq-claim.sus.roll .sq-big{animation-duration:.14s}
+@keyframes sqShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+/* القلبة */
+.sq-big.flip{perspective:700px;background:transparent;box-shadow:none;overflow:visible}
+.sq-fb,.sq-ff{position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;animation:sqFlipA .7s cubic-bezier(.3,.7,.3,1) both}
+.sq-fb{background:var(--sadu-weave) 0 0/24px 24px,var(--sq-night);box-shadow:0 0 0 3px var(--sq-brass);display:grid;place-items:center}
+.sq-fb i{width:40%;aspect-ratio:1;border-radius:50%;border:3px solid var(--sq-brass);background:var(--sq-night)}
+.sq-ff{background:var(--rc);box-shadow:0 0 0 3px rgba(246,238,220,.9),0 18px 34px -12px rgba(0,0,0,.7);display:flex;flex-direction:column;justify-content:flex-end;animation-name:sqFlipB}
+.sq-ff .sq-art{position:absolute;inset:0;width:100%;height:100%}
+.sq-claim.lie .sq-ff .sq-art{filter:grayscale(.85) brightness(.75)}
+@keyframes sqFlipA{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+@keyframes sqFlipB{from{transform:rotateY(-180deg)}to{transform:rotateY(0)}}
+.sq-stamp{position:absolute;left:50%;top:44%;z-index:2;font-family:var(--display);font-size:clamp(1.3rem,2vw,1.9rem);padding:2px 14px;border:4px solid currentColor;border-radius:10px;background:rgba(255,255,255,.92);
+  transform:translate(-50%,-50%) rotate(-14deg);animation:sqStamp .45s .62s cubic-bezier(.2,1.5,.4,1) both;white-space:nowrap}
+.sq-claim.truth .sq-stamp{color:#1C8A4E}
+.sq-claim.lie .sq-stamp{color:#C62F2F}
+@keyframes sqStamp{from{opacity:0;transform:translate(-50%,-50%) rotate(-14deg) scale(2.4)}to{opacity:1;transform:translate(-50%,-50%) rotate(-14deg) scale(1)}}
+/* الشرح برسمة */
+.sq-rart{margin:-10px -10px 0;height:124px;overflow:hidden;border-radius:12px 12px 0 0;background:var(--rc)}
+.sq-rart .sq-art{width:100%;height:100%;display:block}
+.sq-rcard{border-top:0}
+/* شاشات صغيرة: المقاعد شبكة والسجادة تحتها */
+@media (max-width:1000px){
+  .sq-majlis{min-height:0;display:flex;flex-direction:column-reverse;gap:12px;padding:12px}
+  .sq-rug{position:relative;inset:auto;min-height:330px}
+  .sq-seats{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .sq-seat,.sq-seat.turn,.sq-seat.out{position:static;transform:none;width:auto}
+  .sq-rug-in{padding-bottom:96px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sq-claim,.sq-callout,.sq-claim.sus .sq-big,.sq-fb,.sq-ff,.sq-stamp,.sq-wait i.sq-incense b::before,.sq-wait i.sq-incense b::after{animation:none}
+  .sq-fb{display:none}
+}
+
+/* ---------- الجوال: أوراقك برسمة، ومغطاة لين تضغط مطوّل ---------- */
+.sq-hc-art{position:relative;height:132px;background:var(--rc);display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.sq-hc-art .sq-art{position:absolute;inset:0;width:100%;height:100%}
+.sq-hc-art b{position:relative;width:100%;text-align:center;color:#fff;font-family:var(--display);font-weight:400;font-size:1.4rem;line-height:1.1;padding:20px 6px 6px;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.sq-hc.dead .sq-hc-art .sq-art{filter:grayscale(.9)}
+.sq-rcards{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.sq-hc-cov{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(246,238,220,.85);font-weight:700;border-radius:14px;border:3px solid var(--sq-brass);background:var(--sq-night);overflow:hidden}
+.sq-hc-cov::before{content:'';position:absolute;inset:0;background:var(--sadu-weave) 0 0/28px 28px;opacity:.3}
+.sq-hc-cov>*{position:relative}
+.sq-hc-cov i{width:44px;height:44px;border-radius:50%;border:3px solid var(--sq-brass);background:var(--sq-night)}
+.sq-hc-cov span{background:var(--sq-night);padding:2px 10px;border-radius:99px}
+.sq-rcards.cover .sq-hc-cov{display:flex}
+.sq-rcards.cover.peek .sq-hc-cov{display:none}
+.sq-rhint{margin:0;color:var(--mute);font-size:.82rem;font-weight:600;text-align:center}
+.sq-ra-art{flex:none;width:44px;height:56px;border-radius:9px;overflow:hidden;display:block}
+.sq-ra-art .sq-art{width:100%;height:100%;display:block}
+.sq-rp-cl{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.sq-rp-cl small{color:var(--mute);font-size:.7rem;font-weight:700}
+.sq-rp-cl i{font-style:normal;font-size:.72rem;font-weight:700;background:color-mix(in srgb,var(--rc) 16%,var(--surface));border-inline-start:3px solid var(--rc);border-radius:6px;padding:0 6px}

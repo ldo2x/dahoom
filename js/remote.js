@@ -818,7 +818,9 @@
   }
 
   // ---------- ما أصدقك: أوراقك السرية والقرارات ----------
-  const sq = { built:false, hide:false, Q:null };
+  // الأوراق مغطاة افتراضياً: تضغط مطوّل تشوفها، أو «خلّها مكشوفة»
+  const sq = { built:false, open:false, Q:null };
+  const SQART = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
   function buildSQ(){
     $('#r-sq').innerHTML=`<div class="sq-r">
       <div class="sq-rmain">
@@ -828,12 +830,16 @@
         <div class="sq-rask" id="sq-rask"></div>
       </div>
       <div class="sq-rside">
-        <section class="sq-rhand"><div class="sq-rhh"><b>أوراقك</b><span id="sq-rme"></span><button type="button" class="btn ghost small" id="sq-rhide"></button></div><div class="sq-rcards" id="sq-rcards"></div></section>
+        <section class="sq-rhand"><div class="sq-rhh"><b>أوراقك</b><span id="sq-rme"></span><button type="button" class="btn ghost small" id="sq-rhide"></button></div><div class="sq-rcards cover" id="sq-rcards"></div><p class="sq-rhint" id="sq-rhint">اضغط مطوّل على أوراقك تشوفها — وارفع إصبعك تتغطى</p></section>
         <section class="sq-rpl" id="sq-rpl"></section>
         <details class="sq-rref"><summary>${ic('book')} الشخصيات وحركاتها</summary><div id="sq-rref"></div></details>
         <section class="sq-rlogw"><div class="lbl">وش صار</div><div class="sq-rlog" id="sq-rlog"></div></section>
       </div></div>`;
-    $('#sq-rhide').onclick=()=>{ vibe(8); sq.hide=!sq.hide; if(sq.Q) renderSQ(sq.Q, true); };
+    $('#sq-rhide').onclick=()=>{ vibe(8); sq.open=!sq.open; if(sq.Q) renderSQ(sq.Q, true); const a=$('#sq-rask'); if(a) a.dataset.k=''; renderSQAsk(); };
+    const rc=$('#sq-rcards'), on=e=>{ if(sq.open) return; rc.classList.add('peek'); vibe(8); }, off=()=>rc.classList.remove('peek');
+    rc.addEventListener('pointerdown', on); ['pointerup','pointercancel','pointerleave','blur'].forEach(ev=>rc.addEventListener(ev, off));
+    rc.addEventListener('contextmenu', e=>e.preventDefault());
+    document.addEventListener('visibilitychange', off);
     sq.built=true;
   }
   const sqRole = (Q, k) => (Q.roles||[]).find(r=>r.k===k) || { name:k, icon:'masks', color:'#888' };
@@ -848,24 +854,25 @@
     const A=Q.act, pl=id=>Q.pl.find(x=>x.id===id), turnP=Q.pl.find(x=>x.turn);
     let act='';
     if(A){ const st={ ch:'ينتظر: أحد ما يصدقه؟', 'block-ch':'ينتظر: أحد ما يصدق الصد؟', block:`${esc(A.t)} يقرر يصد ولا لا`, blocked:`${esc(A.blk)} صدّها — يقول إنه ${esc(A.blkRole)}`, done:'' }[A.stage]||'';
-      act=`<div class="sq-ra-l"><span class="sq-ra-ic" style="--rc:${A.claimC||'var(--line)'}">${ic(A.icon)}</span><span><b style="color:${A.byC}">${esc(A.by)}</b> ${A.claim?`يقول إنه <b style="color:${A.claimC}">${esc(A.claim)}</b> و`:''}يسوي <b>${esc(A.name)}</b>${A.t?` على <b style="color:${A.tC}">${esc(A.t)}</b>`:''}</span></div>
+      act=`<div class="sq-ra-l">${A.claimK?`<span class="sq-ra-art">${SQART(A.claimK)}</span>`:`<span class="sq-ra-ic" style="--rc:${A.claimC||'var(--line)'}">${ic(A.icon)}</span>`}<span><b style="color:${A.byC}">${esc(A.by)}</b> ${A.claim?`يقول إنه <b style="color:${A.claimC}">${esc(A.claim)}</b> و`:''}يسوي <b>${esc(A.name)}</b>${A.t?` على <b style="color:${A.tC}">${esc(A.t)}</b>`:''}</span></div>
         ${A.ch?`<div class="sq-ra-x">${ic('search')} ${esc(A.ch)} قال: ما أصدقك!</div>`:''}${A.reveal?`<div class="sq-ra-x good">${ic('check')} طلع صادق — عنده ${esc(A.reveal)}</div>`:''}${st?`<div class="sq-ra-s">${st}</div>`:''}`; }
     else act=`<div class="sq-ra-l"><span class="sq-ra-ic">${ic('hourglass')}</span><span>${turnP?`دور <b style="color:${turnP.color}">${esc(turnP.name)}</b>`:'استنوا'}</span></div>`;
     const ae=$('#sq-ract'); if(ae.dataset.h!==act){ ae.dataset.h=act; ae.innerHTML=act; }
     // أوراقي
     $('#sq-rme').innerHTML=`<span class="sq-chip">${ic('coins')} <b>${Q.coins}</b> ريال</span>${Q.loan?`<span class="sq-chip bad">${ic('hm-cash')} عليك سلفة</span>`:''}${Q.coins>=Q.forceAt?`<span class="sq-chip bad">لازم تطرد</span>`:''}`;
-    $('#sq-rhide').textContent = sq.hide ? 'اكشفها' : 'غطّها';
-    const ck=JSON.stringify([Q.cards, sq.hide]);
+    $('#sq-rhide').textContent = sq.open ? 'غطّها' : 'خلّها مكشوفة';
+    $('#sq-rcards').classList.toggle('cover', !sq.open); $('#sq-rhint').classList.toggle('r-hide', sq.open || Q.cards.every(c=>c.up));
+    const ck=JSON.stringify(Q.cards);
     const ce=$('#sq-rcards'); if(force || ce.dataset.k!==ck){ ce.dataset.k=ck;
       ce.innerHTML = Q.cards.map(c=>{ const r=sqRole(Q,c.r);
-        if(sq.hide && !c.up) return `<div class="sq-hc back"><i></i><span>مغطاة</span></div>`;
-        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}"><div class="sq-hc-h">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
+        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}">${c.up?'':'<div class="sq-hc-cov"><i></i><span>مغطاة</span></div>'}<div class="sq-hc-art">${SQART(c.r)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
           <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
     // اللاعبين
     $('#sq-rpl').innerHTML=Q.pl.map(x=>`<div class="sq-rp ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" style="--c:${x.color}">
       ${x.av?`<img src="${avSrc(x.av)}" alt="">`:'<i class="sq-rp-av"></i>'}<span class="sq-rp-n"><b>${esc(x.name)}${x.id===Q.me?' <i>(انت)</i>':''}</b><small>${x.out?`${ic('skull')} طلع`:`${ic('coins')} ${x.coins}${x.loan?` · ${ic('hm-cash')} سلفة`:''}`}</small></span>
-      <span class="sq-rp-c">${Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('')}${x.up.map(k=>{ const r=sqRole(Q,k); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('')}</span></div>`).join('');
-    if(!$('#sq-rref').innerHTML) $('#sq-rref').innerHTML=`<div class="sq-ref">${(Q.roles||[]).map(r=>`<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small><div class="sq-rl"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}</div>`).join('')}</div>`;
+      <span class="sq-rp-c">${Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('')}${x.up.map(k=>{ const r=sqRole(Q,k); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('')}</span>
+      ${Object.keys(x.claims||{}).length?`<span class="sq-rp-cl"><small>ادّعى</small>${Object.entries(x.claims).sort((a,b)=>b[1]-a[1]).map(([k,n])=>{ const r=sqRole(Q,k); return `<i style="--rc:${r.color}">${esc(r.name)}${n>1?` ×${n}`:''}</i>`; }).join('')}</span>`:''}</div>`).join('');
+    if(!$('#sq-rref').innerHTML) $('#sq-rref').innerHTML=`<div class="sq-ref">${(Q.roles||[]).map(r=>`<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rart">${SQART(r.k)}</div><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small><div class="sq-rl"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}</div>`).join('')}</div>`;
     const lg=(Q.log||[]).slice().reverse(), lk=lg.length+(lg[0]?lg[0].ts:'');
     const le=$('#sq-rlog'); if(le.dataset.k!==String(lk)){ le.dataset.k=lk; le.innerHTML=lg.map(e=>`<div class="sq-lg ${e.k}" style="--c:${e.c||'var(--line)'}">${e.ic?`<i>${ic(e.ic)}</i>`:''}<span>${e.n?`<b>${esc(e.n)}</b> `:''}${esc(e.x)}</span></div>`).join(''); }
     renderSQAsk();
@@ -881,7 +888,7 @@
     const k='a:'+A.reqId; if(box.dataset.k===k) return; box.dataset.k=k;
     const { reqId, spec }=A; box.className='sq-rask on';
     const mineR = new Set(Q ? Q.cards.filter(c=>!c.up).map(c=>c.r) : []);
-    const opt=(o,i)=>{ const role=o.role && Q ? sqRole(Q,o.role) : null, have = o.role && mineR.has(o.role);
+    const opt=(o,i)=>{ const role=o.role && Q ? sqRole(Q,o.role) : null, have = sq.open && o.role && mineR.has(o.role);
       return spec.grid
         ? `<button class="sq-qa ${o.dis?'dis':''} ${have?'have':''}" data-o="${i}" ${o.dis?'disabled':''} style="--rc:${o.color||'var(--line)'}"><span class="sq-qa-ic">${ic(o.icon||'star')}</span><span class="sq-qa-t"><b>${esc(o.label)}</b>${role?`<em>${esc(role.name)}</em>`:'<em class="any">أي أحد</em>'}${have?'<i class="sq-have">عندك</i>':''}</span><small>${esc(o.sub||'')}</small></button>`
         : `<button class="btn ${o.cls||'btn-hype'} ${o.color?'sq-qc':''}" data-o="${i}" ${o.dis?'disabled':''} ${o.color?`style="--rc:${o.color}"`:''}>${o.icon?ic(o.icon):''}<span>${esc(o.label)}</span>${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`; };

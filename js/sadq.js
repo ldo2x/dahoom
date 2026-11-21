@@ -25,6 +25,34 @@ window.DahoomSadq = (function(){
   const winMs = () => (FAST() ? 30 : (S.speed||10)*1000);
   const roleChip = k => `<span class="sq-rchip" style="--rc:${RL(k).color}">${ic(RL(k).icon)}${esc(RL(k).name)}</span>`;
   const who = p => `<b class="sq-who" style="--c:${p.color}">${esc(p.name)}</b>`;
+  const ART = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
+  // الورقة الكبيرة بوسط السجادة
+  const big = (k, cls='') => `<div class="sq-big ${cls}" style="--rc:${RL(k).color}">${ART(k)}<b>${esc(RL(k).name)}</b></div>`;
+  function claimHTML(p, role, note){
+    return `<div class="sq-claim">${big(role)}<div class="sq-claim-t"><span>${who(p)} يقول إنه</span><strong style="--rc:${RL(role).color}">${esc(RL(role).name)}</strong><em>${note||''}</em></div></div>`;
+  }
+  function suspenseHTML(claimer, role, ch, note, roll){
+    return `<div class="sq-claim sus ${roll?'roll':''}"><div class="sq-big back"><i></i></div><div class="sq-claim-t"><span>${who(ch)} قال لـ ${who(claimer)}</span><strong class="sq-callout">ما أصدقك!</strong><em>${note}</em></div></div>`;
+  }
+  function revealHTML(claimer, role, truth){
+    return `<div class="sq-claim rev ${truth?'truth':'lie'}"><div class="sq-big flip" style="--rc:${RL(role).color}"><span class="sq-fb"><i></i></span><span class="sq-ff">${ART(role)}<b>${esc(RL(role).name)}</b></span><span class="sq-stamp">${truth?'صادق':'كذّاب'}</span></div>
+      <div class="sq-claim-t"><span>${who(claimer)}</span><strong>${truth?'طلع صادق!':'انكشف!'}</strong><em>${truth?`عنده ${roleChip(role)} فعلاً`:`ما عنده ${roleChip(role)}`}</em></div></div>`;
+  }
+  // صندوق المجلس: كومة ريالات تكبر فوق الصندوق
+  const COINS=[[44,40],[64,41],[80,39],[54,35],[72,34],[60,29],[32,41],[90,41],[46,30],[78,29],[62,24],[54,19]];
+  function chestHTML(pot){
+    const n=Math.min(pot, COINS.length);
+    return `<svg class="sq-chest-svg" viewBox="0 0 120 90" aria-hidden="true"><path d="M20 47L27 20H93L100 47Z" fill="#4A2814"/><path d="M27 20H93" stroke="#E3A43A" stroke-width="3"/>
+      ${COINS.slice(0,n).map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="9" ry="3.6" fill="#F2C14E" stroke="#B9831F" stroke-width="1.3"/>`).join('')}
+      <rect x="16" y="46" width="88" height="38" rx="5" fill="#7A4626"/><rect x="16" y="46" width="88" height="7" rx="2" fill="#5A3119"/><rect x="30" y="46" width="6" height="38" fill="#E3A43A"/><rect x="84" y="46" width="6" height="38" fill="#E3A43A"/><rect x="53" y="58" width="14" height="13" rx="2" fill="#E3A43A"/><circle cx="60" cy="63.5" r="2.2" fill="#4A2814"/></svg>
+      <span class="sq-chest-n"><small>صندوق المجلس</small><b id="sq-pot">${pot}</b></span>`;
+  }
+  // أماكن الجلسة حول السجادة: أول لاعب تحت، وبعدين مع عقارب الساعة
+  const seatPos = (i, n) => { const a=Math.PI/2 + i*2*Math.PI/n; return [50+38*Math.cos(a), 50+39*Math.sin(a)]; };
+  function claimsHTML(p){
+    const e=Object.entries(p.claims||{}).sort((a,b)=>b[1]-a[1]); if(!e.length) return '';
+    return `<div class="sq-claims"><small>ادّعى</small>${e.map(([k,n])=>`<span class="sq-cl" style="--rc:${RL(k).color}">${esc(RL(k).name)}${n>1?`<i>×${n}</i>`:''}</span>`).join('')}</div>`;
+  }
 
   // ---------- السجل ----------
   function log(p, x, k, ic2){
@@ -50,25 +78,25 @@ window.DahoomSadq = (function(){
   function renderWait(){
     const el=$('#sq-wait'); if(!el) return; cancelAnimationFrame(waitRaf);
     if(!G || !G.wait){ el.innerHTML=''; el.classList.remove('on'); return; }
-    el.classList.add('on'); el.innerHTML=`<span>${esc(G.wait.label)}</span><i><b id="sq-wbar"></b></i>`;
-    const f=()=>{ if(!G || !G.wait) return; const left=Math.max(0, G.wait.until-Date.now()); const b=$('#sq-wbar'); if(b) b.style.transform=`scaleX(${(left/G.wait.ms).toFixed(3)})`; if(left>0) waitRaf=requestAnimationFrame(f); };
+    el.classList.add('on'); el.innerHTML=`<span>${esc(G.wait.label)}</span><i class="sq-incense"><b id="sq-wbar"></b></i>`;
+    const f=()=>{ if(!G || !G.wait) return; const left=Math.max(0, G.wait.until-Date.now()); const b=$('#sq-wbar'); if(b) b.style.width=(left/G.wait.ms*100).toFixed(2)+'%'; if(left>0) waitRaf=requestAnimationFrame(f); };
     waitRaf=requestAnimationFrame(f);
   }
   function cardHTML(c, opts={}){
     if(!c.up && !opts.show) return `<span class="sq-card back" aria-label="ورقة مقلوبة"><i></i></span>`;
     const r=RL(c.r);
-    return `<span class="sq-card ${c.up?'dead':''}" style="--rc:${r.color}"><span class="sq-cic">${ic(r.icon)}</span><b>${esc(r.name)}</b></span>`;
+    return `<span class="sq-card face ${c.up?'dead':''}" style="--rc:${r.color}">${ART(c.r)}<b>${esc(r.name)}</b></span>`;
   }
   function render(){
     if(!G) return;
     const el=$('#sq-seats'); if(el){
-      el.innerHTML=G.players.map(p=>`<div class="sq-seat ${p===cur()&&!G.over?'turn':''} ${p.out?'out':''} ${G.act&&G.act.target===p.id?'aim':''}" style="--c:${p.color}">
+      el.innerHTML=G.players.map((p,i)=>{ const [x,y]=seatPos(i, G.players.length); return `<div class="sq-seat ${p===cur()&&!G.over?'turn':''} ${p.out?'out':''} ${G.act&&G.act.target===p.id?'aim':''}" style="--c:${p.color};--x:${x.toFixed(1)};--y:${y.toFixed(1)}">
         <div class="sq-sh">${p.avatar?`<img src="${D.avatarSrc(p.avatar)}" alt="">`:''}<b>${esc(p.name)}</b>${phoneOf(p)?'':`<em class="sq-nophone">${ic('phone')} ما اتصل</em>`}</div>
         <div class="sq-cards">${p.cards.map(c=>cardHTML(c)).join('')}</div>
-        <div class="sq-sf"><span class="sq-coins">${ic('coins')}<b>${p.coins}</b></span>${p.loan?`<span class="sq-tag bad">${ic('hm-cash')} عليه سلفة</span>`:''}${p.out?`<span class="sq-tag">${ic('skull')} طلع</span>`:''}</div></div>`).join('');
+        <div class="sq-sf"><span class="sq-coins">${ic('coins')}<b>${p.coins}</b></span>${p.loan?`<span class="sq-tag bad">${ic('hm-cash')} عليه سلفة</span>`:''}${p.out?`<span class="sq-tag">${ic('skull')} طلع</span>`:''}</div>${claimsHTML(p)}</div>`; }).join('');
     }
-    const pot=$('#sq-pot'); if(pot) pot.textContent=G.pot;
-    const dk=$('#sq-deck'); if(dk) dk.textContent=G.deck.length;
+    const chest=$('#sq-chest'); if(chest && chest.dataset.n!==String(G.pot)){ chest.dataset.n=G.pot; chest.innerHTML=chestHTML(G.pot); }
+    const dk=$('#sq-deckpile'); if(dk) dk.innerHTML=`<span class="sq-pile">${'<i></i>'.repeat(Math.max(1, Math.min(4, Math.ceil(G.deck.length/4))))}</span><span class="sq-chest-n"><small>الكومة</small><b>${G.deck.length}</b></span>`;
     const rd=$('#sq-round'); if(rd) rd.textContent='اللفة '+G.round;
     const evb=$('#sq-event'); if(evb){ const E=G.event; evb.innerHTML = E ? `<span class="sq-evi">${ic(E.icon)}</span><span><small>حدث المجلس</small><b>${esc(E.name)}</b><em>${esc(E.desc)}</em></span>` : `<span class="sq-evi">${ic('star')}</span><span><small>حدث المجلس</small><b>اللفة الأولى</b><em>الأحداث تبدأ من اللفة الثانية</em></span>`; evb.classList.toggle('off', !S.events); }
     renderLog(); pushAll();
@@ -126,7 +154,7 @@ window.DahoomSadq = (function(){
     }
     c.up=true; p.stats.lost++; play('fail',{volume:.55});
     log(p, `خسر ورقة: ${RL(c.r).name} — ${why}`, 'bad', RL(c.r).icon);
-    stage(`<div class="sq-msg bad">${who(p)} خسر ورقة ${roleChip(c.r)}</div>`);
+    stage(`<div class="sq-claim lost">${big(c.r, 'dead')}<div class="sq-claim-t"><span>${who(p)}</span><strong>خسر ورقة</strong><em>${esc(why)}</em></div></div>`);
     if(!hidden(p).length){ p.out=true; G.outOrder.push(p.id); log(p, 'طلع من المجلس — ما بقى له أوراق', 'bad', 'skull'); play('out',{volume:.6}); tell(p, 'طلعت من المجلس — تابع الباقين'); }
     wait(null); render(); await sleep(1300);
   }
@@ -137,7 +165,8 @@ window.DahoomSadq = (function(){
     const others=alive().filter(x=>x!==claimer);
     G.act.stage = isBlock ? 'block-ch' : 'ch'; render();
     wait(`أحد يقول «ما أصدقك» على ${claimer.name}؟`, winMs());
-    stage(`<div class="sq-msg">${who(claimer)} يقول إنه ${roleChip(role)} — أحد ما يصدقه؟</div>`);
+    { const A0=AC(G.act.k), t0=G.act.target?byId(G.act.target):null;
+      stage(claimHTML(claimer, role, isBlock ? `يصد ${esc(A0.name)} — أحد ما يصدقه؟` : `${esc(A0.name)}${t0?` على ${who(t0)}`:''} — أحد ما يصدقه؟`)); }
     const r=await askAll(others, p=>({ title:`${claimer.name} يقول إنه ${RL(role).name}`, text: isBlock ? `يبي يصد الحركة. تصدقه؟` : `${AC(G.act.k).name}${G.act.target?` على ${byId(G.act.target).name}`:''}. تصدقه؟`, claim:role,
       options:[{ v:'ch', label:'ما أصدقك', icon:'search', cls:'btn-bad' },{ v:'pass', label:'أصدقه', cls:'plain' }] }), winMs());
     wait(null);
@@ -148,7 +177,7 @@ window.DahoomSadq = (function(){
     const wit=alive().filter(x=>x!==claimer && x!==ch);
     let votes=new Map();
     if(wit.length){
-      stage(`<div class="sq-msg">${who(ch)} يقول لـ ${who(claimer)}: ما أصدقك! الشهود يقررون…</div>`);
+      stage(suspenseHTML(claimer, role, ch, 'الشهود يقررون: صادق ولا كذّاب؟'));
       wait('الشهود: صادق ولا كذّاب؟', Math.round(winMs()*0.7));
       votes=await askCollect(wit, p=>({ title:`${ch.name} كشف ${claimer.name}`, text:`${claimer.name} يقول إنه ${RL(role).name}. تشهد؟ اللي يشهد صح ياخذ 1، واللي يشهد غلط يدفع 1 للصندوق.`, claim:role,
         options:[{ v:'t', label:'صادق', icon:'check', cls:'btn-mint' },{ v:'f', label:'كذّاب', icon:'cancel', cls:'btn-bad' },{ v:'pass', label:'ما أشهد', cls:'plain' }] }), Math.round(winMs()*0.7));
@@ -156,6 +185,9 @@ window.DahoomSadq = (function(){
     }
     if(!G || G.over) return null;
     const card=hidden(claimer).find(c=>c.r===role), truth=!!card;
+    // لحظة الحقيقة: طبل، والورقة ترجف، وبعدين تنقلب
+    stage(suspenseHTML(claimer, role, ch, `يقول إنه ${roleChip(role)}… نشوف`, true)); play('drumroll',{volume:.6}); await sleep(1400);
+    if(!G || G.over) return null;
     // الشهود
     votes.forEach((v,id)=>{ const w=byId(id); if(!w) return; const right=(v==='t')===truth;
       if(right){ w.coins+=1; w.stats.witRight++; } else { const pay=Math.min(1,w.coins); w.coins-=pay; G.pot+=pay; w.stats.witWrong++; } });
@@ -163,7 +195,7 @@ window.DahoomSadq = (function(){
       log(null, `الشهود: ${R.length?R.join('، ')+(R.length>1?' شهدوا':' شهد')+' صح (+1)':''}${R.length&&W.length?' · ':''}${W.length?W.join('، ')+(W.length>1?' شهدوا':' شهد')+' غلط (−1)':''}`, 'info', 'team'); }
     if(truth){
       G.act.reveal=role; claimer.stats.truthCaught++; ch.stats.chLost++;
-      stage(`<div class="sq-msg good">${who(claimer)} صادق! عنده ${roleChip(role)}</div>`); play('correct',{volume:.6});
+      stage(revealHTML(claimer, role, true)); play('correct',{volume:.6});
       log(claimer, `كان صادق — عنده ${RL(role).name}`, 'good', RL(role).icon);
       // الورقة ترجع للكومة ويسحب بدالها
       claimer.cards.splice(claimer.cards.indexOf(card),1); toDeck(role); claimer.cards.push({ r:draw(), up:false });
@@ -174,9 +206,9 @@ window.DahoomSadq = (function(){
       return 'truth';
     }
     ch.stats.chWon++; claimer.stats.liesCaught++;
-    stage(`<div class="sq-msg bad">${who(claimer)} كذّاب! ما عنده ${roleChip(role)}</div>`); play('wrong',{volume:.6});
+    stage(revealHTML(claimer, role, false)); play('wrong',{volume:.6});
     log(claimer, `انفضح — ما عنده ${RL(role).name}`, 'bad', 'cancel');
-    ch.stats.taken++; await sleep(900);
+    ch.stats.taken++; await sleep(1800);
     await loseCard(claimer, `انكشف كذبه`);
     return 'lie';
   }
@@ -222,10 +254,10 @@ window.DahoomSadq = (function(){
     G.act={ by:p.id, k:a.k, target:t?t.id:null, claim:A.role, stage:'declare' };
     const cost = a.k==='tard' ? tardCost() : (A.cost||0);
     if(cost){ p.coins-=cost; G.pot+=cost; }
-    if(A.role){ if(!hidden(p).some(c=>c.r===A.role)) p.stats.lies++; else p.stats.truths++; }
+    if(A.role){ if(!hidden(p).some(c=>c.r===A.role)) p.stats.lies++; else p.stats.truths++; p.claims[A.role]=(p.claims[A.role]||0)+1; }
     play('card',{volume:.6});
     if(A.role || t || cost) log(p, `${A.role?`يقول إنه ${RL(A.role).name} ويسوي `:''}${A.name}${t?` على ${t.name}`:''}${cost?` (دفع ${cost} للصندوق)`:''}`, 'act', A.icon);
-    stage(`<div class="sq-msg">${who(p)} ${A.role?`يقول إنه ${roleChip(A.role)} — `:''}<b>${esc(A.name)}</b>${t?` على ${who(t)}`:''}</div>`);
+    stage(A.role ? claimHTML(p, A.role, `${esc(A.name)}${t?` على ${who(t)}`:''}`) : `<div class="sq-msg">${who(p)} <b>${esc(A.name)}</b>${t?` على ${who(t)}`:''}</div>`);
     render(); await sleep(900);
     if(A.role){ const r=await challengeWindow(p, A.role, false); if(r==='lie' || p.out || !G || G.over) return; }
     if(A.blockedBy && t && !t.out){
@@ -239,8 +271,9 @@ window.DahoomSadq = (function(){
       if(b){
         G.act.blocker=t.id; G.act.stage='blocked';
         if(!hidden(t).some(c=>c.r===A.blockedBy)) t.stats.lies++; else t.stats.truths++;
+        t.claims[A.blockedBy]=(t.claims[A.blockedBy]||0)+1;
         log(t, `صد الحركة — يقول إنه ${RL(A.blockedBy).name}`, 'act', RL(A.blockedBy).icon);
-        stage(`<div class="sq-msg">${who(t)} يصد: يقول إنه ${roleChip(A.blockedBy)}</div>`); play('fx_deny',{volume:.5}); render(); await sleep(800);
+        stage(claimHTML(t, A.blockedBy, `يصد ${esc(A.name)}`)); play('fx_deny',{volume:.5}); render(); await sleep(800);
         const r=await challengeWindow(t, A.blockedBy, true);
         if(!G || G.over) return;
         if(r!=='lie'){ log(null, `${A.name} انصدّت`, 'info', 'defense'); stage(`<div class="sq-msg">${esc(A.name)} انصدّت</div>`); await sleep(900); return; }
@@ -327,7 +360,7 @@ window.DahoomSadq = (function(){
     const n=NET(); const noPhone=comps.filter(c=>!(n && n.hasPhone(c.id)));
     if(noPhone.length && !window.DAHOOM_SQ_FAST){ toast(`الأوراق سرية — لازم كل لاعب يدخل من جواله: ${noPhone.map(c=>c.name).join('، ')}`, 5000); return; }
     $('#overlay-root').innerHTML='';
-    G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], coins:S.startCoins, cards:[], out:false, loan:false,
+    G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], coins:S.startCoins, cards:[], out:false, loan:false, claims:{},
           stats:{ lies:0, truths:0, liesCaught:0, truthCaught:0, chWon:0, chLost:0, witRight:0, witWrong:0, taken:0, lost:0, earned:0 } }))),
         deck:newDeck(), pot:DATA.potStart, turn:0, round:1, event:null, act:null, log:[], outOrder:[], finishers:[], stageHtml:'', wait:null, over:false, t0:Date.now() };
     G.players.forEach(p=>{ p.cards=[{ r:draw(), up:false }, { r:draw(), up:false }]; });
@@ -386,7 +419,7 @@ window.DahoomSadq = (function(){
   const ROLES_STATIC = () => DATA.order.map(k=>{ const r=RL(k); return { k, name:r.name, icon:r.icon, color:r.color, line:r.line, act:AC(r.act).name, actDesc:AC(r.act).desc, block:r.block?AC(r.block).name:'' }; });
   function actView(){
     const a=G.act; if(!a) return null; const A=AC(a.k), by=byId(a.by), t=a.target?byId(a.target):null;
-    return { k:a.k, name:A.name, icon:A.icon, by:by.name, byC:by.color, t:t?t.name:'', tC:t?t.color:'', claim:a.claim?RL(a.claim).name:'', claimC:a.claim?RL(a.claim).color:'', stage:a.stage,
+    return { k:a.k, claimK:a.claim||'', name:A.name, icon:A.icon, by:by.name, byC:by.color, t:t?t.name:'', tC:t?t.color:'', claim:a.claim?RL(a.claim).name:'', claimC:a.claim?RL(a.claim).color:'', stage:a.stage,
       ch:a.challenger?byId(a.challenger).name:'', blk:a.blocker?byId(a.blocker).name:'', blkRole:a.blocker&&A.blockedBy?RL(A.blockedBy).name:'', reveal:a.reveal?RL(a.reveal).name:'' };
   }
   function phoneState(id){
@@ -397,7 +430,7 @@ window.DahoomSadq = (function(){
       scores:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, score:x.coins, turn:!G.over && x===cur() })),
       sq:{ me:p.id, cards:p.cards.map(c=>({ r:c.r, up:c.up })), coins:p.coins, loan:p.loan, out:p.out, pot:G.pot, deck:G.deck.length, round:G.round,
         event:G.event?{ name:G.event.name, desc:G.event.desc, icon:G.event.icon }:null, events:S.events,
-        pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan })),
+        pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan, claims:x.claims||{} })),
         act:actView(), wait:G.wait?{ label:G.wait.label, left:Math.max(0,G.wait.until-Date.now()), ms:G.wait.ms }:null,
         log:G.log.slice(-30), roles:ROLES_STATIC(), forceAt:DATA.forceAt } };
     if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, mid:G.t0, stats:{ caught:p.stats.chWon|0, lies:p.stats.lies|0, wit:p.stats.witRight|0 }, awards:[], all:finalAll(p), rows:[['كذبات',String(p.stats.lies)],['انفضح',String(p.stats.liesCaught)],['كشف صح',String(p.stats.chWon)],['شهادات صح',String(p.stats.witRight)]] }; }
@@ -414,7 +447,7 @@ window.DahoomSadq = (function(){
     const rl=$('#sadq-roles'); if(rl) rl.innerHTML=rolesHTML();
   }
   function rolesHTML(){
-    return `<div class="sq-ref">${DATA.order.map(k=>{ const r=RL(k), A=AC(r.act); return `<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
+    return `<div class="sq-ref">${DATA.order.map(k=>{ const r=RL(k), A=AC(r.act); return `<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rart">${ART(k)}</div><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small>
       <div class="sq-rl"><span>حركته</span><b>${esc(A.name)}</b><em>${esc(A.desc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(AC(r.block).name)}</b></div>`:''}</div>`; }).join('')}</div>`;
   }
   function helpModal(){
