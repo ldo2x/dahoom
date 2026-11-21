@@ -11,7 +11,7 @@ window.DahoomOwner = (function(){
   let on=false, mode='me', frameRoom=null;
 
   const dock = () => $('#own-dock'), wrap = () => $('#own');
-  const JUDGED = ['alf','khaliya'];   // ألعاب المضيف فيها حَكَم (يضغط صح/غلط) — تحتاج لوحة الحكم
+  const JUDGED = ['alf'];   // ألعاب المضيف فيها حَكَم (يضغط صح/غلط) — تحتاج لوحة الحكم
   const scrNow = () => (document.querySelector('.screen.active')||{}).id||'';
   // الشريط فوق: الشعار (يرجّعك للرئيسية) + كود الجلسة + نسخ الدعوة + عامة/خاصة.
   // أثناء اللعب بس: زر «لوحة الحكم» (ألف نقطة وخلية الحروف) أو «شاشة العرض» (للتلفزيون) — والإدارة نفسها صارت بشاشتك.
@@ -109,7 +109,8 @@ window.DahoomOwner = (function(){
     const g=D.session.game, comps=D.competitors();
     if(g==='khaliya' && comps.length!==2) return 'خلية الحروف تبي فريقين بالضبط — وزّع الفرق أول';
     if(comps.length<2) return D.session.mode==='solo' ? 'نحتاج لاعبين اثنين على الأقل — أرسل رابط الدعوة للشباب' : 'نحتاج فريقين فيهم لاعبين — وزّع الفرق أول';
-    const loose = D.session.mode!=='solo' && g!=='hawamir' && g!=='sadq' ? D.session.players.filter(p=>!D.session.teams.some(t=>t.members.includes(p.id))) : [];
+    if(g==='khaliya' && D.refOn && D.refOn() && !D.refPid()) return 'وضع الحكم البشري: واحد لازم ينضم لخانة «الحكم» أول';
+    const loose = D.session.mode!=='solo' && g!=='hawamir' && g!=='sadq' ? D.session.players.filter(p=>!D.session.teams.some(t=>t.members.includes(p.id)) && !(D.refPid && p.id===D.refPid())) : [];
     if(loose.length) return 'فيه لاعبين بدون فريق: '+loose.map(p=>p.name).join('، ');
     const wait=(NET() && NET().waitingFor) ? NET().waitingFor() : [];
     if(wait.length) return 'ننتظر يضغطون «مستعد»: '+wait.join('، ');

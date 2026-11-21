@@ -1165,3 +1165,20 @@ label.sm-row,.sm-link{cursor:pointer}
 /* تاق «للجمعات الحضورية» على بطاقة اللعبة */
 .gt-tag{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;color:var(--gold-ink);background:color-mix(in srgb,var(--gold) 16%,transparent);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);border-radius:999px;padding:3px 10px;margin-bottom:6px}
 .gt-tag .ic{width:14px;height:14px}
+
+/* ===== خلية الحروف: الشاشة عرض بس — ترتيب الجرس ومحاولات الجواب ===== */
+.kh-queue{flex-direction:column;align-items:stretch;width:100%;max-width:420px;margin:0 auto}
+.kh-queue .bz-row{justify-content:space-between}
+.kh-queue .bz-n{flex:1;display:flex;flex-direction:column;line-height:1.2;text-align:start}
+.kh-queue .bz-n small{font-weight:600;font-size:.78rem;color:var(--mute)}
+.kh-tries{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}
+.kh-try{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--r-s);background:var(--surface-2);border-inline-start:5px solid var(--c);font-size:1.02rem}
+.kh-try.ok{background:color-mix(in srgb,var(--ok,#2FBF71) 18%,var(--surface))}
+.kh-try.no{color:var(--mute);text-decoration:line-through}
+.kh-timer{width:90px;height:90px}
+.kh-timer .num{font-size:2rem}
+.kh-count{font-family:var(--num);font-weight:900;font-size:4.5rem;line-height:1;color:var(--accent)}
+.kh-hot{color:var(--steal-ink)}
+.kh-wait{font-size:1.4rem;color:var(--mute)}
+.ref-box .head{gap:10px;flex-wrap:wrap}
+.ref-t{font-family:var(--display);font-weight:400;font-size:1.35rem;display:inline-flex;align-items:center;gap:6px}

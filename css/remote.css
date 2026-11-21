@@ -1035,6 +1035,44 @@ body.is-owner .r-bar{display:none}
 .r-khx:disabled{opacity:.7}
 .r-khb.can .r-khx:not(:disabled){background:color-mix(in srgb, var(--team,var(--brand)) 16%, var(--hex,var(--surface-2)))}
 .r-khb.can .r-khx:not(:disabled):active{transform:scale(.9);background:var(--team,var(--accent))}
-.r-khx.own{background:var(--o);color:#fff;opacity:1}
+.r-khx.taken{background:var(--o);color:#fff;opacity:1}
 .r-khx.sel{background:var(--team,var(--brand));color:#fff;opacity:1}
 @media (max-width:360px){ .r-khx{width:36px;height:40px;font-size:.95rem} .r-khr.odd{transform:translateX(19px)} }
+
+/* ===== خلية الحروف: السؤال، ترتيب الجرس، الجواب، وأزرار الحكم ===== */
+.r-khb.mini{max-width:230px;opacity:.9}
+.r-khb.mini .r-khx{width:28px;height:31px;font-size:.78rem}
+.r-khb.mini .r-khr.odd{transform:translateX(15px)}
+.r-kh{display:flex;flex-direction:column;gap:10px;margin:8px 0 4px}
+.r-khq{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.r-khq p{margin:0;font-size:1.15rem;font-weight:800;line-height:1.55;text-wrap:balance}
+.r-khq.ready p{font-weight:700;color:var(--mute)}
+.r-khans{display:flex;flex-direction:column;gap:2px;border-top:1px dashed var(--line);padding-top:8px;width:100%}
+.r-khans small{color:var(--mute);font-size:.8rem}
+.r-khans b{font-size:1.25rem;color:var(--ok-ink,var(--text))}
+.r-khwho{text-align:center;font-weight:800;padding:8px 12px;border-radius:var(--r-s);background:var(--surface-2);border-inline-start:5px solid var(--c,var(--line))}
+.r-khwho.mine{background:color-mix(in srgb,var(--c) 22%,var(--surface));font-size:1.1rem}
+.r-khwho.hot{color:var(--accent);border-inline-start-color:var(--accent)}
+.r-khbanner{text-align:center;font-weight:900;font-size:1.15rem;padding:10px;border-radius:var(--r-s);background:color-mix(in srgb,var(--c) 22%,var(--surface));border:1px solid var(--c)}
+.r-khbanner.none{--c:var(--line);background:var(--surface-2)}
+.r-khform{display:flex;gap:8px}
+.r-khform input{flex:1;min-width:0;font:inherit;font-size:1.1rem;padding:12px 14px;border-radius:var(--r-s);border:2px solid var(--team,var(--accent));background:var(--surface);color:var(--text)}
+.r-khform.sent{opacity:.6}
+.r-khqueue{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.r-khqueue li{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--r-s);background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--c)}
+.r-khqueue li:first-child{background:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.r-khqueue li.me{box-shadow:0 0 0 2px var(--c)}
+.r-khqueue b{font-family:var(--num);font-weight:900;font-size:1.1rem;min-width:1.2em;text-align:center}
+.r-khqueue span{flex:1;display:flex;flex-direction:column;font-weight:800;line-height:1.2}
+.r-khqueue small{color:var(--mute);font-weight:600;font-size:.75rem}
+.r-khqueue i{font-style:normal;font-family:var(--num);font-weight:800;color:var(--mute)}
+.r-khqueue li:first-child i{color:var(--ok-ink,var(--text))}
+.r-khtries{display:flex;flex-direction:column;gap:4px}
+.r-khtries span{display:flex;align-items:center;gap:6px;font-size:.92rem;padding:4px 10px;border-radius:var(--r-s);background:var(--surface-2);border-inline-start:4px solid var(--c)}
+.r-khtries span.ok{background:color-mix(in srgb,var(--ok,#2FBF71) 16%,var(--surface))}
+.r-khtries span.no{color:var(--mute)}
+.r-khacts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.r-khacts .btn{width:100%}
+.r-khok{background:var(--c);color:#fff;font-weight:900;font-size:1.1rem;padding:14px;border:0}
+.rr-ref .rr-th b{display:inline-flex;align-items:center;gap:6px}
+.rr-refnote{margin:2px 0 6px;font-size:.78rem;color:var(--mute);line-height:1.5}

@@ -32,11 +32,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=202611211000">
-<link rel="stylesheet" href="css/draw.css?v=202611211000">
-<link rel="stylesheet" href="css/hawamir.css?v=202611211000">
-<link rel="stylesheet" href="css/sadq.css?v=202611211000">
-<link rel="stylesheet" href="css/rules.css?v=202611211000">
+<link rel="stylesheet" href="css/style.css?v=202611211100">
+<link rel="stylesheet" href="css/draw.css?v=202611211100">
+<link rel="stylesheet" href="css/hawamir.css?v=202611211100">
+<link rel="stylesheet" href="css/sadq.css?v=202611211100">
+<link rel="stylesheet" href="css/rules.css?v=202611211100">
 </head>
 <body>
 
@@ -395,13 +395,21 @@
       <label class="field">صعوبة الأسئلة
         <select data-k="difficulty"><option value="easy">سهلة</option><option value="hard">صعبة</option><option value="mixed">مخلوطة</option></select>
       </label>
-      <label class="field">وقت الإجابة بعد البز (ثواني) <input type="number" data-k="buzzTime" min="2"></label>
+    </div>
+    <div class="panel stack">
+      <h3>نظام التحكيم</h3>
+      <label class="field">مين يحكم؟
+        <select data-k="judge"><option value="auto">تلقائي — النظام يدير كل شي</option><option value="human">حكم بشري — لاعب يدير الجولة من جواله</option></select>
+      </label>
+      <p class="muted small" id="kh-judge-note"></p>
+      <label class="field" id="kh-f-ans">وقت كتابة الجواب (ثواني) <input type="number" data-k="ansTime" min="5" max="60"></label>
+      <label class="field" id="kh-f-buzz">وقت الجواب بعد الجرس (ثواني) <input type="number" data-k="buzzTime" min="2"></label>
     </div>
     <div class="panel stack">
       <h3>الفريقين</h3>
       <p class="muted small">أول فريقين من شاشة اللاعبين. غيّر الأسماء والألوان من هناك.</p>
       <div id="khaliya-teams-preview" class="stack"></div>
-      <p class="muted small">الفريق الأول يوصل من فوق لتحت، والثاني من اليمين لليسار. بعد ما يقرأ المضيف السؤال، اللي يبز أول يجاوب. الكيبورد: <kbd>1</kbd> للفريق الأول و<kbd>2</kbd> للثاني.</p>
+      <p class="muted small">الفريق الأول يوصل من فوق لتحت، والثاني من اليمين لليسار. الكل يضغط الجرس من جواله، والأسرع يجاوب. لو فريق ما عنده جوال: الكيبورد <kbd>1</kbd> للفريق الأول و<kbd>2</kbd> للثاني.</p>
     </div>
   </div>
   <div class="row center mt">
@@ -418,7 +426,7 @@
       <button class="btn ghost small" data-net><span class="net-dot"></span><i class="ic" style="--i:url(../assets/icons/phone.svg)"></i> الجوالات</button>
       <button class="btn ghost small" data-report title="بلّغ عن آخر سؤال أو تحدي"><i class="ic" style="--i:url(../assets/icons/flag.svg)"></i> بلّغ</button>
       <button class="btn ghost small" id="kh-help"><i class="ic" style="--i:url(../assets/icons/help.svg)"></i> القوانين</button>
-      <button class="btn ghost small" id="kh-edit"><i class="ic" style="--i:url(../assets/icons/pencil.svg)"></i> تعديل الخلايا</button>
+      <button class="btn ghost small" id="kh-edit"><i class="ic" style="--i:url(../assets/icons/pencil.svg)"></i> تصحيح خلية</button>
       <button class="btn ghost small btn-theme" aria-label="تبديل الوضع"></button>
       <button class="btn ghost small" id="kh-quit"><i class="ic" style="--i:url(../assets/icons/exit.svg)"></i> إنهاء</button>
     </div>
@@ -628,33 +636,33 @@
 <div id="overlay-root"></div>
 <canvas class="confetti-canvas" id="confetti"></canvas>
 
-<script src="data/tags.js?v=202611211000"></script>
-<script src="data/cards.js?v=202611211000"></script>
-<script src="data/memes.js?v=202611211000"></script>
-<script src="data/hawamir.js?v=202611211000"></script>
-<script src="data/sadq.js?v=202611211000"></script>
-<script src="js/vendor/peerjs.min.js?v=202611211000"></script>
-<script src="js/ice.js?v=202611211000"></script>
-<script src="js/vendor/qrcode.min.js?v=202611211000"></script>
-<script src="js/busy.js?v=202611211000"></script>
-<script src="js/lazy.js?v=202611211000"></script>
-<script src="js/avatars.js?v=202611211000"></script>
-<script src="js/core.js?v=202611211000"></script>
-<script src="js/config.js?v=202611211000"></script>
-<script src="js/badwords.js?v=202611211000"></script>
-<script src="js/account.js?v=202611211000"></script>
-<script src="js/telemetry.js?v=202611211000"></script>
-<script src="js/lobby.js?v=202611211000"></script>
-<script src="js/net.js?v=202611211000"></script>
-<script src="js/owner.js?v=202611211000"></script>
-<script src="js/stats.js?v=202611211000"></script>
-<script src="js/cardfx.js?v=202611211000"></script>
-<script src="js/alf.js?v=202611211000"></script>
-<script src="js/draw.js?v=202611211000"></script>
-<script src="js/khaliya.js?v=202611211000"></script>
-<script src="js/rasm.js?v=202611211000"></script>
-<script src="js/hawamir.js?v=202611211000"></script>
-<script src="js/sadq.js?v=202611211000"></script>
-<script src="js/rules.js?v=202611211000"></script>
+<script src="data/tags.js?v=202611211100"></script>
+<script src="data/cards.js?v=202611211100"></script>
+<script src="data/memes.js?v=202611211100"></script>
+<script src="data/hawamir.js?v=202611211100"></script>
+<script src="data/sadq.js?v=202611211100"></script>
+<script src="js/vendor/peerjs.min.js?v=202611211100"></script>
+<script src="js/ice.js?v=202611211100"></script>
+<script src="js/vendor/qrcode.min.js?v=202611211100"></script>
+<script src="js/busy.js?v=202611211100"></script>
+<script src="js/lazy.js?v=202611211100"></script>
+<script src="js/avatars.js?v=202611211100"></script>
+<script src="js/core.js?v=202611211100"></script>
+<script src="js/config.js?v=202611211100"></script>
+<script src="js/badwords.js?v=202611211100"></script>
+<script src="js/account.js?v=202611211100"></script>
+<script src="js/telemetry.js?v=202611211100"></script>
+<script src="js/lobby.js?v=202611211100"></script>
+<script src="js/net.js?v=202611211100"></script>
+<script src="js/owner.js?v=202611211100"></script>
+<script src="js/stats.js?v=202611211100"></script>
+<script src="js/cardfx.js?v=202611211100"></script>
+<script src="js/alf.js?v=202611211100"></script>
+<script src="js/draw.js?v=202611211100"></script>
+<script src="js/khaliya.js?v=202611211100"></script>
+<script src="js/rasm.js?v=202611211100"></script>
+<script src="js/hawamir.js?v=202611211100"></script>
+<script src="js/sadq.js?v=202611211100"></script>
+<script src="js/rules.js?v=202611211100"></script>
 </body>
 </html>

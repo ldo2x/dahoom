@@ -127,9 +127,17 @@ window.DahoomNet = (function(){
     // وضع الفرق: اللاعب يسجّل اسمه وصورته أول (بدون فريق)، وبعدها يختار فريقه من شاشة الانتظار
     if(d.t==='register' && !isSolo() && !c.teamId){
       const pl=D.joinPlayer({pid:d.pid, name:freeName(d.name, d.pid), avatar:d.avatar});
-      if(pl){ c.pid=pl.id; const home=homeTeamOf(pl.id); c.teamId = home ? home.id : null;
+      if(pl){ c.pid=pl.id; c.teamId = homeId(pl.id);
         c.send(Object.assign(regMsg(pl), { teamId:c.teamId, teamless:!c.teamId })); if(H && H.roster) H.roster(); push(c); refreshUI(); }
       return; }
+    // ياخذ خانة الحكم (خلية الحروف بوضع الحكم البشري، قبل البداية)
+    if(d.t==='ref'){
+      if(isLocked()){ c.send({t:'notice', msg:'تغيير الدور بعد ما تخلص المباراة'}); return; }
+      const p=c.pid && D.session.players.find(x=>x.id===c.pid);
+      if(!p || !D.refOn || !D.refOn()){ c.send({t:'notice', msg:'وضع الحكم البشري مو مفعّل'}); return; }
+      const old=D.refPid(); D.setRef(p.id); c.teamId='ref';
+      if(old && old!==p.id) toast(`${p.name} صار الحكم بدال ${(D.session.players.find(x=>x.id===old)||{}).name||''}`); else toast(`${p.name} صار الحكم`);
+      c.send({t:'joined', teamId:'ref', mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true}); push(c); infoAll(); refreshUI(); return; }
     // يختار فريق أو يبدّل (قبل البداية)
     if(d.t==='team'){
       if(isLocked()){ c.send({t:'notice', msg:'تغيير الفريق بعد ما تخلص المباراة'}); return; }
@@ -148,11 +156,11 @@ window.DahoomNet = (function(){
       refreshUI(); return;
     }
     if(d.t==='hello'){
-      if(isLocked() && d.pid){ const home=homeTeamOf(d.pid); if(home && d.teamId!==home.id){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${home.name}`}); d.teamId=home.id; } }
+      if(isLocked() && d.pid){ const hid=homeId(d.pid); if(hid && d.teamId!==hid){ if(d.teamId) c.send({t:'notice', msg:`ما تقدر تغيّر فريقك وسط اللعبة — انت مع ${teamName(hid)}`}); d.teamId=hid; } }
       const teams = teamList();
       const known = d.pid && D.session.players.find(p=>p.id===d.pid);
-      if(known && !isLocked()){ const home=homeTeamOf(known.id); d.teamId = home ? home.id : null; }
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams, known:!!known}); push(c); resendAsks(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      if(known && !isLocked()){ d.teamId = homeId(known.id); }
+      if(d.teamId && (teams.some(t=>t.id===d.teamId) || (d.teamId==='ref' && known && isRefPid(known.id)))){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams, known:!!known}); push(c); resendAsks(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else if(known){ c.pid=known.id; c.teamId=null; c.send(regMsg(known)); push(c); }
       else c.send(lobbyMsg());
       refreshUI(); return;
@@ -168,7 +176,10 @@ window.DahoomNet = (function(){
       if(pl){ c.pid=pl.id; c.send({t:'registered', pid:pl.id, name:pl.name, avatar:pl.avatar}); if(H && H.roster) H.roster(); push(c); refreshUI(); }
       return; }
     if(!H) return;
-    if(d.t==='buzz' && H.buzz) H.buzz(c.teamId, c.pid);
+    if(d.t==='buzz' && H.buzz) H.buzz(c.teamId, c.pid, d);
+    // خلية الحروف: جواب مكتوب (الحكم التلقائي) وأوامر الحكم البشري
+    if(d.t==='khans' && H.khans && c.teamId!=='ref') H.khans(c.teamId, String(d.text||'').slice(0,60), c.pid);
+    if(d.t==='khref' && H.ref && c.teamId==='ref') H.ref({ a:String(d.a||''), i:Number.isInteger(d.i)?d.i:undefined });
     if(d.t==='play' && H.play) H.play(c.teamId, d.idx);
     if(d.t==='fuse' && H.fuse) H.fuse(c.teamId);
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
@@ -186,7 +197,10 @@ window.DahoomNet = (function(){
   // وسط المباراة: ممنوع تغيير الفريق (قبلها وبعدها عادي)
   const isLocked = () => !!document.querySelector('#game.active, #khaliya.active, #rasm.active, #hawamir.active, #sadq.active');
   const homeTeamOf = pid => pid ? D.session.teams.find(t=>t.members.includes(pid)) : null;
-  const teamName = id => ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
+  // مكان اللاعب: فريقه، أو 'ref' لو هو الحكم (خلية الحروف بوضع الحكم البشري)
+  const isRefPid = pid => !!pid && !!D.refPid && D.refPid()===pid;
+  const homeId = pid => isRefPid(pid) ? 'ref' : ((homeTeamOf(pid)||{}).id || null);
+  const teamName = id => id==='ref' ? 'الحكم' : ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
   const hasPhone = id => phonesOf(id).length>0;
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
@@ -228,7 +242,7 @@ window.DahoomNet = (function(){
   function seatSync(){
     if(isLocked() || isSolo()) return;
     conns.forEach(c=>{ if(!c.open || !c.pid) return; const p=D.session.players.find(x=>x.id===c.pid); if(!p) return;
-      const home=homeTeamOf(c.pid), tid=home ? home.id : null; if(tid===c.teamId) return;
+      const tid=homeId(c.pid); if(tid===c.teamId) return;
       c.teamId=tid; try{ c.send(tid ? {t:'joined', teamId:tid, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true} : regMsg(p)); }catch(e){} push(c); });
   }
 
@@ -261,8 +275,11 @@ window.DahoomNet = (function(){
     if(rdGame!==ss.game+':'+ss.mode){ rdGame=ss.game+':'+ss.mode; RD.clear(); }   // تغيّرت اللعبة أو الطريقة = الكل يعيد «مستعد»
     const online=onlinePids();
     const teamOf=pid=>ss.teams.find(t=>t.members.includes(pid));
+    const refOn = !solo && !!D.refOn && D.refOn();
     return { t:'info', code, game:ss.game, gameName:GAME_AR[ss.game]||'', host:hostName(), mode:solo?'solo':'teams', where:where(), locked:isLocked(),
-      players: ss.players.map(p=>{ const tm=solo?null:teamOf(p.id); const oc=ownerConn(); return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:tm?tm.name:null, tid:tm?tm.id:null, tc:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id), rd:isReady(p.id) }; }),
+      ref: refOn ? { color:D.REF_COLOR } : null,
+      players: ss.players.map(p=>{ const rf=refOn && isRefPid(p.id), tm=solo||rf?null:teamOf(p.id); const oc=ownerConn();
+        return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:rf?'الحكم':tm?tm.name:null, tid:rf?'ref':tm?tm.id:null, tc:rf?D.REF_COLOR:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id), rd:isReady(p.id) }; }),
       teams: solo ? [] : ss.teams.map(t=>({ id:t.id, name:t.name, color:t.color, n:t.members.length })), phones:[...conns].filter(c=>c.open).length,
       canCreate:canCreate(), maxTeams: ss.game==='khaliya' ? 2 : 6, pub:isPublic(), wait:waitingFor().map(p=>p.name),
       cap: solo && CAP[ss.game] || 0, over: overCap() };

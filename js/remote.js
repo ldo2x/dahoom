@@ -265,11 +265,12 @@
     if(S.myTurn && !st.wasTurn && !S.final) sfx('turn'); st.wasTurn=!!S.myTurn;
     const m=me();
     $('#r-head').innerHTML=`${m&&m.avatar?`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
-      <span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>
+      ${t.id==='ref' ? '' : `<span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>`}
       ${S.myTurn?`<span class="r-turn">${st.mode==='solo'?'دورك':'دوركم'}</span>`:''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=()=>{ if(S.locked){ status('تعديل الاسم والصورة بعد ما تخلص المباراة'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),2500); return; } openReg(); };
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
     renderKB(S.game==='khaliya' && !S.final ? S.kb : null);
+    renderKH(S.game==='khaliya' && !S.final ? S.kh : null);
     // نهاية المباراة: مركز الفريق وجوائزه وأرقامه
     const fin=$('#r-final'), done=!!S.final;
     fin.classList.toggle('hidden', !done);
@@ -297,7 +298,7 @@
     b.className='r-buzz'; b.disabled=true;
     if(z.open && z.can){ b.disabled=false; b.classList.add('live'); sub.textContent= z.first ? `${z.first} سبقكم — اضغط تاخذ دورك` : 'اضغط أول!'; }
     else if(z.mine){ b.classList.add('won'); sub.textContent= z.rank>1 ? `دوركم تجاوبون (ترتيبكم #${z.rank})` : 'بزّيت أول! جاوب'; }
-    else if(z.rank){ b.classList.add('lost'); sub.textContent=`ترتيبكم #${z.rank} · متأخرين ${z.gap.toFixed(3)} ث`; }
+    else if(z.rank){ b.classList.add('lost'); sub.textContent=`ترتيبك #${z.rank} · متأخر ${Math.round(z.gap*1000)}ms`; }
     else if(z.first){ b.classList.add('lost'); sub.textContent=`${z.first} سبقكم`; }
     else if(z.open){ sub.textContent='مو متاح لكم الحين'; }
     else sub.textContent='البز يفتح لما يجي وقته';
@@ -311,7 +312,7 @@
     // خانة الفعل: وحدة بارتفاع ثابت — البز لما يكون له داعي، وإلا اليد لما دوركم تلعبون بطاقة، وإلا سطر حالة هادي
     const slot=$('#r-slot'), hand=isAlf ? (S.hand||[]).map((id,i)=>({ c:C(id), i })).filter(x=>x.c) : [];
     const mode = !isAlf || soon || z.open || z.mine || z.rank ? 'buzz' : S.canPlay && hand.length ? 'play' : 'idle';
-    tog('#r-slot', !done && !['rasm','hawamir','sadq'].includes(S.game));
+    tog('#r-slot', !done && !['rasm','hawamir','sadq'].includes(S.game) && !(S.kh && S.kh.ref));
     slot.dataset.mode=mode; slot.classList.toggle('has-hand', hand.length>0);
     if(mode==='idle'){
       const tn=(scoresL.find(x=>x.turn)||{}).name, solo=st.mode==='solo';
@@ -467,6 +468,11 @@
       return `<div class="rr-team ${mine?'mine':''}" style="--c:${t.color}"><div class="rr-th"><i></i><b>${esc(t.name)}</b><small>${mem.length}</small>
         ${mine?'<span class="rr-mine">فريقك</span>':(!I.locked && canJoin && m.pid?`<button type="button" class="btn small rr-join" data-join="${esc(t.id)}">${myT?'انتقل له':'انضم'}</button>`:'')}</div>
         <ul class="rr-list">${mem.map(pl).join('')||'<li class="rr-empty">فاضي</li>'}</ul></div>`; }).join('');
+    if(I.ref){ const rf=P.filter(p=>p.tid==='ref'), mine=myT==='ref';
+      h+=`<div class="rr-team rr-ref ${mine?'mine':''}" style="--c:${I.ref.color}"><div class="rr-th"><i></i><b>${ic('whistle')} الحكم</b><small>${rf.length}</small>
+        ${mine?'<span class="rr-mine">انت الحكم</span>':(!I.locked && canJoin && m.pid?`<button type="button" class="btn small rr-join" data-ref>${rf.length?'خذ مكانه':'كن الحكم'}</button>`:'')}</div>
+        <p class="rr-refnote">يدير الجولة من جواله: يأكد الحرف، ويحكم مين جاوب صح — وما يلعب مع أحد</p>
+        <ul class="rr-list">${rf.map(pl).join('')||'<li class="rr-empty">ما فيه حكم للحين</li>'}</ul></div>`; }
     const loose=P.filter(p=>!p.tid);
     if(loose.length) h+=`<div class="rr-team loose"><div class="rr-th"><i></i><b>بدون فريق</b><small>${loose.length}</small></div><ul class="rr-list">${loose.map(pl).join('')}</ul></div>`;
     if(!(I.teams||[]).length) h+='<p class="rr-empty">ما فيه فرق للحين</p>';
@@ -476,6 +482,7 @@
   function bindRoster(root){
     if(!root) return;
     $$('[data-join]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'team', id:b.dataset.join}); });
+    $$('[data-ref]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'ref'}); });
     const nt=root.querySelector('[data-newteam]'); if(nt) nt.onclick=()=>{ const n=prompt('اسم الفريق؟'); if(n===null) return; vibe(15); send({t:'newteam', name:n}); };
     $$('[data-rules]', root).forEach(b=>b.onclick=()=>{ vibe(8); const g=b.dataset.rules; if(window.DahoomRules && g) window.DahoomRules.open(g); });
   }
@@ -1032,7 +1039,8 @@
     const b=e.currentTarget; if(b.disabled) return;
     const now=Date.now(); if(now-buzzSent<400) return; buzzSent=now;
     vibe([60,30,60]); b.classList.add('pressed'); setTimeout(()=>b.classList.remove('pressed'),250);
-    send({t:'buzz'});
+    const S=st.S||{}, q=st.khQ;
+    send(S.game==='khaliya' && q && S.kh && S.kh.qid===q.qid ? {t:'buzz', dt:Math.round(performance.now()-q.at), qid:q.qid} : {t:'buzz'});
   });
 
   // ---------- عرض بطاقة / لعبها ----------
@@ -1058,12 +1066,48 @@
     for(let r=0;r<kb.n;r++){
       rows+=`<div class="r-khr ${r%2?'odd':''}">`;
       for(let c=0;c<kb.n;c++){ const idx=r*kb.n+c, [l,o]=kb.cells[idx]||['',-1];
-        rows+=`<button type="button" class="r-khx ${o>=0?'own':''} ${idx===kb.sel?'sel':''}" data-kx="${idx}" ${kb.can && o<0 ? '' : 'disabled'} ${o>=0?`style="--o:${kb.colors[o]}"`:''} aria-label="حرف ${esc(l)}">${esc(l)}</button>`; }
+        rows+=`<button type="button" class="r-khx ${o>=0?'taken':''} ${idx===kb.sel?'sel':''}" data-kx="${idx}" ${kb.can && (o<0 || kb.edit) ? '' : 'disabled'} ${o>=0?`style="--o:${kb.colors[o]}"`:''} aria-label="حرف ${esc(l)}">${esc(l)}</button>`; }
       rows+='</div>';
     }
     box.classList.toggle('can', !!kb.can);
-    box.innerHTML=`${kb.can?`<p class="r-khh">${st.mode==='solo'?'دورك':'دوركم'} — اختاروا حرف</p>`:''}<div class="r-khg">${rows}</div>`;
-    $$('[data-kx]', box).forEach(b=>b.onclick=()=>{ vibe(20); sfx('tick'); send({t:'khpick', i:+b.dataset.kx}); box.classList.remove('can'); $$('[data-kx]', box).forEach(x=>x.disabled=true); });
+    const isRef = st.teamId==='ref';
+    const hint = kb.edit ? 'اضغط أي خلية تغيّر لونها' : isRef ? 'اختر حرف للفريق اللي عليه الدور' : `${st.mode==='solo'?'دورك':'دوركم'} — اختاروا حرف`;
+    box.innerHTML=`${kb.can?`<p class="r-khh">${hint}</p>`:''}<div class="r-khg">${rows}</div>`;
+    $$('[data-kx]', box).forEach(b=>b.onclick=()=>{ vibe(20); sfx('tick'); send({t:'khpick', i:+b.dataset.kx}); if(!kb.edit){ box.classList.remove('can'); $$('[data-kx]', box).forEach(x=>x.disabled=true); } });
+  }
+  // ---------- خلية الحروف: السؤال + ترتيب الجرس + الجواب + أزرار الحكم ----------
+  // st.khQ: متى طلع السؤال بهالجوال — ضغطة الجرس تنقاس منه (عشان اللي نته أبطأ ما ينظلم)
+  function renderKH(V){
+    let box=$('#r-kh');
+    if(!box){ box=document.createElement('div'); box.id='r-kh'; box.className='r-kh'; $('#r-phase').after(box); const kb=$('#r-khb'); if(kb) box.after(kb); }
+    box.classList.toggle('hidden', !V);
+    { const kb=$('#r-khb'); if(kb) kb.classList.toggle('mini', !!V && ['ready','buzz','answer','open','reveal'].includes(V.phase) && !V.edit); }
+    if(!V){ box.dataset.k=''; box.innerHTML=''; st.khQ=null; return; }
+    if(V.q && V.qid && (!st.khQ || st.khQ.qid!==V.qid)) st.khQ={ qid:V.qid, at:performance.now() };
+    // الهيكل يتبنى لما تتغير المرحلة أو السؤال — عشان ما تنمسح الكتابة بخانة الجواب مع كل تحديث
+    const key=[V.qid, V.phase, V.canType, V.ref, !!V.answer, V.edit, V.over, (V.answering||{}).name, (V.tries||[]).length, JSON.stringify(V.acts||[])].join('|');
+    if(box.dataset.k!==key){ box.dataset.k=key;
+      const typing = V.canType;
+      box.innerHTML=`<div class="r-khres" id="r-khres"></div>
+        ${V.q ? `<div class="r-khq"><span class="r-letter">${esc(V.letter||'')}</span><p>${esc(V.q)}</p>${V.answer?`<div class="r-khans ${V.ref?'ref':''}"><small>${V.ref?'الجواب (يطلع لك بس)':'الجواب'}</small><b>${esc(V.answer)}</b></div>`:''}</div>`
+          : V.phase==='ready' ? `<div class="r-khq ready"><span class="r-letter">${esc(V.letter||'')}</span><p>استعدوا… السؤال جاي</p></div>`
+          : V.phase==='selected' ? `<div class="r-khq ready"><span class="r-letter">${esc(V.letter||'')}</span><p>${V.ref?'الفريق اختار هالحرف — أكّده أو غيّره':'ننتظر الحكم يأكد الحرف'}</p></div>` : ''}
+        <div class="r-khst" id="r-khst"></div>
+        ${typing ? `<form class="r-khform" id="r-khform" autocomplete="off"><input id="r-khin" maxlength="40" placeholder="اكتب الجواب" enterkeyhint="send" aria-label="الجواب"><button class="btn btn-hype" type="submit">أرسل</button></form>` : ''}
+        <div id="r-khqueue"></div><div id="r-khtries"></div>
+        ${V.ref && V.acts ? `<div class="r-khacts">${V.acts.map((x,k)=>x.a==='hint' ? `<p class="muted small">${esc(x.t)}</p>` : `<button type="button" class="btn ${x.k==='hype'?'btn-hype big':x.k==='bad'?'btn-bad':x.k==='ok'?'r-khok':'ghost small'}" data-ka="${k}" ${x.c?`style="--c:${x.c}"`:''}>${esc(x.t)}</button>`).join('')}</div>` : ''}`;
+      const f=$('#r-khform'); if(f){ const inp=$('#r-khin'); setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 60);
+        f.onsubmit=e=>{ e.preventDefault(); const v=inp.value.trim(); if(!v) return; vibe(30); sfx('tick'); send({t:'khans', text:v}); inp.value=''; inp.blur(); f.classList.add('sent'); f.querySelector('button').disabled=true; }; }
+      $$('[data-ka]', box).forEach(b=>b.onclick=()=>{ const x=V.acts[+b.dataset.ka]; if(!x) return; vibe(25); sfx('tick'); send(Object.assign({t:'khref', a:x.a}, x.i!=null?{i:x.i}:{})); });
+    }
+    // الأجزاء المتغيرة
+    const a=V.answering, rs=V.result;
+    $('#r-khres').innerHTML = rs ? (rs.none ? `<div class="r-khbanner none">ما أحد جابها</div>` : `<div class="r-khbanner" style="--c:${rs.color}">${ic('check')} ${esc(rs.name)} ${rs.mine?'— جبتوها!':'جابوها'}</div>`) : '';
+    $('#r-khst').innerHTML = V.phase==='answer' && a ? `<div class="r-khwho ${a.mine?'mine':''}" style="--c:${a.color}">${a.mine ? (V.judge==='human'?'دوركم! قولوا الجواب بصوت عالي':'دوركم! اكتبوا الجواب') : V.ref ? `يجاوب: <b>${esc(a.name)}</b>${V.timeUp?' — خلص الوقت':''}` : `يجاوب: <b>${esc(a.name)}</b>`}</div>`
+      : V.phase==='open' ? `<div class="r-khwho">مفتوح للفريقين${V.judge==='human'?' — قولوا الجواب':V.canType?' — اكتبوا بسرعة':''}</div>`
+      : V.phase==='buzz' ? `<div class="r-khwho hot">${V.ref?'ننتظر الجرس…':'اضغط الجرس تحت!'}</div>` : '';
+    $('#r-khqueue').innerHTML = V.queue && V.queue.length ? `<ol class="r-khqueue">${V.queue.map((o,k)=>`<li class="${o.me?'me':''}" style="--c:${o.color}"><b>${k+1}</b><span>${esc(o.name)}<small>${esc(o.team)}</small></span><i dir="ltr">${o.gap==null?(o.dt/1000).toFixed(2)+'s':'+'+o.gap+'ms'}</i></li>`).join('')}</ol>` : '';
+    $('#r-khtries').innerHTML = V.tries && V.tries.length ? `<div class="r-khtries">${V.tries.map(t=>`<span class="${t.ok?'ok':'no'}" style="--c:${t.color}">${ic(t.ok?'check':'cancel')}<b>${esc(t.name)}</b> ${t.text?`«${esc(t.text)}»`:t.ok?"— صح بحكم الحكم":"— غلط بحكم الحكم"}</span>`).join('')}</div>` : '';
   }
   function openAsk(reqId, spec){
     sfx('ask');

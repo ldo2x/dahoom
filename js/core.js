@@ -347,9 +347,19 @@ window.Dahoom = (function(){
     teams: store.get('teams', []),
     mode: store.get('mode','teams'),
     phoneTeams: store.get('phoneTeams', false),   // اللاعبين ينشئون فرق من جوالاتهم؟ (المضيف يفعّلها)
+    ref: store.get('khRef', null),                 // خلية الحروف بوضع الحكم البشري: رقم اللاعب الحكم
     game: 'alf',
-    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); store.set('phoneTeams',!!this.phoneTeams); document.dispatchEvent(new CustomEvent('dahoom:session')); }
+    save(){ store.set('players',this.players); store.set('teams',this.teams); store.set('mode',this.mode); store.set('phoneTeams',!!this.phoneTeams); store.set('khRef',this.ref||null); document.dispatchEvent(new CustomEvent('dahoom:session')); }
   };
+  // ---------- الحكم (خلية الحروف — وضع الحكم البشري) ----------
+  // خانة «الحكم» تطلع بالانتظار كأنها فريق ثالث: لاعب واحد بس، وما يلعب مع أي فريق
+  const REF_COLOR = '#E9B949';
+  const refOn = () => { try{ return session.game==='khaliya' && !!window.DahoomKH && window.DahoomKH.judge()==='human'; }catch(e){ return false; } };
+  const refPid = () => refOn() && session.ref && session.players.some(p=>p.id===session.ref) ? session.ref : null;
+  function setRef(pid){
+    if(pid){ session.teams.forEach(t=>t.members=t.members.filter(m=>m!==pid)); }
+    session.ref = pid || null; session.save(); renderTeams();
+  }
   let pick = { color: COLORS[0], avatar: AVATARS[0] };
   let selectedPlayer = null;
   const TEAM_NAMES = ['الذيابة','الصقور','الهوامير','الكواسر','النشامى','الفرسان'];
@@ -370,7 +380,7 @@ window.Dahoom = (function(){
     if(!p){ if(session.players.length>=16){ toast('الحد الأقصى 16 لاعب'); return null; }
       p={id:'p'+Date.now()+Math.floor(Math.random()*999), name, color: team?team.color:nextFreeColor(), avatar}; session.players.push(p); toast(`${name} دخل من جواله`); play('unlock',{volume:.7}); }
     else { p.name=name; p.avatar=avatar; }
-    if(team && session.mode==='teams'){ session.teams.forEach(t=>t.members=t.members.filter(m=>m!==p.id)); team.members.push(p.id); }
+    if(team && session.mode==='teams'){ session.teams.forEach(t=>t.members=t.members.filter(m=>m!==p.id)); team.members.push(p.id); if(session.ref===p.id) session.ref=null; }
     session.save(); renderPlayers(); renderTeams();
     return p;
   }
@@ -389,6 +399,7 @@ window.Dahoom = (function(){
   function removePlayer(id){
     session.players=session.players.filter(p=>p.id!==id);
     session.teams.forEach(t=>t.members=t.members.filter(m=>m!==id));
+    if(session.ref===id) session.ref=null;
     session.save(); renderPlayers(); renderTeams();
   }
   function renderPlayers(){
@@ -420,6 +431,8 @@ window.Dahoom = (function(){
   }
   function removeTeam(id){ session.teams=session.teams.filter(t=>t.id!==id); session.save(); renderTeams(); }
   function assign(pid, tid){
+    if(tid==='__ref'){ selectedPlayer=null; setRef(pid); play('tick',{volume:.5}); return; }
+    if(session.ref===pid) session.ref=null;
     session.teams.forEach(t=>t.members=t.members.filter(m=>m!==pid));
     if(tid){ const t=session.teams.find(t=>t.id===tid); if(t) t.members.push(pid); }
     selectedPlayer=null; session.save(); renderTeams(); play('tick',{volume:.5});
@@ -428,7 +441,8 @@ window.Dahoom = (function(){
     while(session.teams.length<2) session.teams.push(newTeam());
     session.teams.forEach(t=>t.members=[]);
     const n = session.game==='khaliya' ? 2 : session.teams.length;
-    shuffle(session.players).forEach((p,i)=>session.teams[i%n].members.push(p.id));
+    const rp=refPid();
+    shuffle(session.players.filter(p=>p.id!==rp)).forEach((p,i)=>session.teams[i%n].members.push(p.id));
     session.save(); renderTeams(); play('drums',{volume:.6});
   }
   function miniChip(p){
@@ -457,7 +471,8 @@ window.Dahoom = (function(){
     { const pt=$('#opt-phone-teams'); if(pt){ pt.checked=!!session.phoneTeams; pt.closest('label').style.display = solo ? 'none' : ''; } }
     if(solo) return;
     const pool=$('#pool'); const fresh=pool.cloneNode(false); pool.replaceWith(fresh);
-    session.players.filter(p=>!teamOf(p.id)).forEach(p=>fresh.appendChild(miniChip(p)));
+    const rp=refPid();
+    session.players.filter(p=>!teamOf(p.id) && p.id!==rp).forEach(p=>fresh.appendChild(miniChip(p)));
     if(!fresh.children.length) fresh.innerHTML='<span class="muted small">الكل موزّع</span>';
     dropZone(fresh, null);
     const g=$('#teams-grid'); g.innerHTML='';
@@ -475,6 +490,15 @@ window.Dahoom = (function(){
       dropZone(d, t.id);
       g.appendChild(d);
     });
+    // خانة الحكم (خلية الحروف بوضع الحكم البشري)
+    if(kh && refOn()){
+      const d=document.createElement('div'); d.className='team-box ref-box'; d.style.setProperty('--c',REF_COLOR);
+      const rp=session.players.find(p=>p.id===refPid());
+      d.innerHTML=`<div class="head"><b class="ref-t">${ic('whistle')} الحكم</b><span class="muted small">يدير الجولة من جواله — ما يلعب مع أحد</span></div><div class="members"></div>`;
+      const mem=d.querySelector('.members');
+      if(rp) mem.appendChild(miniChip(rp)); else mem.innerHTML='<span class="muted small">اسحب لاعب هنا، أو ينضم من جواله</span>';
+      dropZone(d, '__ref'); g.appendChild(d);
+    }
     if(window.DahoomNet && window.DahoomNet.refresh) window.DahoomNet.refresh();
   }
   function validateLobby(){
@@ -485,7 +509,8 @@ window.Dahoom = (function(){
     const teams=session.teams.filter(t=>t.members.length);
     if(teams.length<2){ toast('نحتاج فريقين على الأقل فيهم لاعبين'); return false; }
     if(session.game==='khaliya' && teams.length!==2){ toast('خلية الحروف فريقين بالضبط'); return false; }
-    const loose=session.players.filter(p=>!teamOf(p.id));
+    if(refOn() && !refPid()){ toast('وضع الحكم البشري: اختاروا حكم أول'); return false; }
+    const loose=session.players.filter(p=>!teamOf(p.id) && p.id!==refPid());
     if(loose.length){ toast('فيه لاعبين بدون فريق: '+loose.map(p=>p.name).join('، ')); return false; }
     return true;
   }
@@ -609,7 +634,7 @@ window.Dahoom = (function(){
   }
   document.addEventListener('DOMContentLoaded', init);
 
-  return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, feed, joinPlayer, joinable, createTeam, AVATARS, AVATAR_GROUPS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
+  return { refreshLobby:()=>{ renderPlayers(); renderTeams(); }, refOn, refPid, setRef, REF_COLOR, feed, joinPlayer, joinable, createTeam, AVATARS, AVATAR_GROUPS, $, $$, rnd, shuffle, sleep, esc, ic, store, play, stop, stopAll, memeSound, go, toast, modal, confirmBox, confetti, reaction, flash,
     session, competitors, avatarSrc, picks, SYN, ALIAS, resolve, renderSyn, COLORS, setVolume, toggleTheme, applyTheme, cardHTML, TIER_AR, TARGET_AR,
     setReactions(v){ reactOn=!!v; } };
 })();
