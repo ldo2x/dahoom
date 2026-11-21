@@ -154,7 +154,7 @@ merged: [ <ids دفعات الضيف اللي اندمجت> ], created, updated
 على `localhost` بس: `profile.html?accstub=1` (أو `localStorage.dahoom_acc_stub='1'` أو `window.DAHOOM_ACC_STUB=true` قبل السكربت) يبدّل Firebase بسحابة وهمية داخل localStorage بنفس المنطق. `window.DAHOOM_ACC_STUB_USER={uid,name}` يحدد مين يسجّل، و`window.DAHOOM_ACC_STUB_FAIL=true` يحاكي انقطاع السحابة.
 
 ## خطوات صاحب المشروع في Firebase Console
-1. **القوانين:** افتح `firestore.rules`، بدّل `'ADMIN_EMAIL'` بإيميل حساب قوقل حقك (نفس اللي تدخل فيه admin.html)، وانسخ الملف كامل في Firestore Database > Rules > Publish.
+1. **القوانين:** افتح `firestore.rules`، بدّل `'ADMIN_EMAIL'` بإيميل حساب قوقل حقك و`'ADMIN_UID'` برقم حسابك (يطلع لك بلوحة الإدارة لو ما تعرّفت عليك — لو حطيت كلمة سر لحسابك إيميله يتغيّر، فالرقم هو الأضمن)، وانسخ الملف كامل في Firestore Database > Rules > Publish.
 2. **الدومين:** Authentication > Settings > Authorized domains > تأكد إن `ldo2x.github.io` موجود (وأضف `localhost` للتجربة لو مو موجود).
 3. **تسجيل قوقل:** Authentication > Sign-in method > Google مفعّل (مفعّل من قبل للوحة المراجعة).
 3ب. **الدخول باليوزرنيم:** Authentication > Sign-in method > Email/Password مفعّل (بدون Email link). الحسابات تستخدم إيميل داخلي وهمي على نطاق `login.dahoom.invalid` (ما يوصله بريد).

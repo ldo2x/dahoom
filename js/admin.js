@@ -29,7 +29,7 @@ const BANK = new Map();
 const CARD = id => (DATA.cards||[]).find(c=>c.id===id);
 
 // ---------- مصدر البيانات ----------
-let api = null, reports = [], matches = [], tab = 'reports';
+let api = null, reports = [], matches = [], tab = 'reports', who = null;
 const ui = { rStatus:'open', rKind:'all', cKind:'q', cMin:3, cFlag:'flag', pSort:'matches', mOpen:null };
 
 async function boot(){
@@ -61,6 +61,7 @@ async function boot(){
 }
 
 async function startApp(user){
+  who = user;
   $('#ad-login').classList.add('hidden');
   $('#ad-user').innerHTML = `<span class="pill dim">${esc(user.email)}</span><button class="btn ghost small" id="ad-reload">تحديث</button>${api?'<button class="btn ghost small" id="ad-out">خروج</button>':''}`;
   $('#ad-reload').onclick = reload;
@@ -71,7 +72,7 @@ async function startApp(user){
 async function reload(){
   $('#ad-body').innerHTML = '<p class="muted">نحمّل…</p>';
   try{ if(api) await api.load(); }
-  catch(e){ $('#ad-body').innerHTML = `<div class="ad-card"><h3>ما قدرنا نقرا البيانات</h3><p class="muted">${e.code==='permission-denied'?'هالحساب مو صاحب المشروع — تأكد إن إيميلك نفسه اللي بقوانين Firestore.':esc(e.message)}</p></div>`; return; }
+  catch(e){ $('#ad-body').innerHTML = `<div class="ad-card"><h3>ما قدرنا نقرا البيانات</h3><p class="muted">${e.code==='permission-denied'?'هالحساب مو صاحب المشروع — تأكد إن رقم حسابك (أو إيميلك) نفسه اللي بقوانين Firestore.'+(who&&who.uid?'<br>رقم حسابك: <code>'+esc(who.uid)+'</code>':''):esc(e.message)}</p></div>`; return; }
   render();
 }
 

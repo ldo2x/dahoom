@@ -20,12 +20,15 @@ service cloud.firestore {
     //  !!! صاحب المشروع: حط إيميل حساب قوقل حقك هنا (نفس اللي تدخل فيه admin.html) !!!
     // ============================================================
     function adminEmail() { return 'ADMIN_EMAIL'; }
+    // ورقم حسابك (uid) — يبان بلوحة الإدارة. لازم: لو حطيت كلمة سر لحسابك (الدخول باليوزرنيم)
+    // إيميل الحساب يتغيّر لإيميل الدخول الداخلي، فالإيميل لحاله ما يكفي
+    function adminUid() { return 'ADMIN_UID'; }
 
     function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return signedIn()
-        && request.auth.token.email == adminEmail()
-        && request.auth.token.email_verified == true;
+      return signedIn() && (
+        request.auth.uid == adminUid()
+        || (request.auth.token.email == adminEmail() && request.auth.token.email_verified == true));
     }
     function isStr(v, max) { return v is string && v.size() <= max; }
     function isNum(v, lo, hi) { return (v is int || v is float) && v >= lo && v <= hi; }
