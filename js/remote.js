@@ -97,8 +97,11 @@
     });
     peer.on('error', e=>{
       if(e.type==='peer-unavailable') return fail('الكود غلط أو الجلسة انقفلت. تأكد من الكود وجرب مرة ثانية.', true);
+      // انقطع سيرفر الربط بس واتصالنا بالشاشة شغال: نكمل عادي (قبل كنا نقطع الاتصال الشغال ونطلّع رسالة كل شوي)
+      if(st.conn && st.conn.open && /network|server-error|socket-error|disconnected/.test(e.type||'')) return;
       lost(e);
     });
+    peer.on('disconnected', ()=>{ if(st.conn && st.conn.open) setTimeout(()=>{ try{ if(peer.disconnected && !peer.destroyed && st.peer===peer) peer.reconnect(); }catch(err){} }, 3000); });
   }
   function fail(msg, toJoin){ status(''); $('#r-err').textContent=msg; if(toJoin){ show('r-join'); localStorage.removeItem('dahoom_last_room'); } else lost(); }
   function lost(why){
@@ -240,6 +243,7 @@
       ${S.myTurn?`<span class="r-turn">${st.mode==='solo'?'دورك':'دوركم'}</span>`:''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=()=>{ if(S.locked){ status('تعديل الاسم والصورة بعد ما تخلص المباراة'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),2500); return; } openReg(); };
     $('#r-phase').innerHTML = S.letter ? `<span class="r-letter">${esc(S.letter)}</span> ${esc(S.phase||'')}` : esc(S.phase||'');
+    renderKB(S.game==='khaliya' && !S.final ? S.kb : null);
     // نهاية المباراة: مركز الفريق وجوائزه وأرقامه
     const fin=$('#r-final'), done=!!S.final;
     fin.classList.toggle('hidden', !done);
@@ -1017,6 +1021,24 @@
   }
 
   // ---------- أسئلة الشاشة ----------
+  // خلية الحروف: اللوحة مصغّرة بالجوال — اللي عليهم الدور يضغطون الحرف بدل ما ينادون المضيف
+  function renderKB(kb){
+    let box=$('#r-khb');
+    if(!box){ box=document.createElement('div'); box.id='r-khb'; box.className='r-khb'; $('#r-phase').after(box); }
+    box.classList.toggle('hidden', !kb);
+    if(!kb){ box.dataset.k=''; box.innerHTML=''; return; }
+    const key=JSON.stringify(kb); if(box.dataset.k===key) return; box.dataset.k=key;
+    let rows='';
+    for(let r=0;r<kb.n;r++){
+      rows+=`<div class="r-khr ${r%2?'odd':''}">`;
+      for(let c=0;c<kb.n;c++){ const idx=r*kb.n+c, [l,o]=kb.cells[idx]||['',-1];
+        rows+=`<button type="button" class="r-khx ${o>=0?'own':''} ${idx===kb.sel?'sel':''}" data-kx="${idx}" ${kb.can && o<0 ? '' : 'disabled'} ${o>=0?`style="--o:${kb.colors[o]}"`:''} aria-label="حرف ${esc(l)}">${esc(l)}</button>`; }
+      rows+='</div>';
+    }
+    box.classList.toggle('can', !!kb.can);
+    box.innerHTML=`${kb.can?`<p class="r-khh">${st.mode==='solo'?'دورك':'دوركم'} — اختاروا حرف</p>`:''}<div class="r-khg">${rows}</div>`;
+    $$('[data-kx]', box).forEach(b=>b.onclick=()=>{ vibe(20); sfx('tick'); send({t:'khpick', i:+b.dataset.kx}); box.classList.remove('can'); $$('[data-kx]', box).forEach(x=>x.disabled=true); });
+  }
   function openAsk(reqId, spec){
     sfx('ask');
     st.askId=reqId; vibe([80,40,80]);

@@ -34,7 +34,9 @@
     G.stats = G.teams.map(()=>({cells:0, ok:0, wrong:0, buzz:[]}));
     G.log = { t0:Date.now(), items:[] }; window.DAHOOM_ITEM=null;
     const net=window.DahoomNet;
-    if(net) net.use({ teams:()=>G.teams, state:khState, report:onReport, buzz:id=>{ const i=G.teams.findIndex(t=>t.id===id); if(i>=0) buzz(i); }, onPhones:()=>{} });
+    if(net) net.use({ teams:()=>G.teams, state:khState, report:onReport, buzz:id=>{ const i=G.teams.findIndex(t=>t.id===id); if(i>=0) buzz(i); }, onPhones:()=>{},
+      // الفريق اللي عليه الدور يختار الحرف من جواله
+      pick:(id,idx)=>{ const i=G.teams.findIndex(t=>t.id===id); if(G.over || i!==G.turn || G.phase!=='pick') return; const k=G.cells[idx]; if(k && k.owner==null) onCell(k); } });
     go('khaliya');
     newRound(true);
   }
@@ -101,6 +103,9 @@
         return G.phase==='buzz' ? { open:true, can:!G.tried.includes(i)&&k<0, first:null, mine:false, ...r }
           : ans ? { open:true, can:k<0, first:ans.name, mine:ans===t, ...r } : { open:false }; })(),
       letter: G.sel ? G.sel.l : null,
+      // اللوحة على الجوال: الكل يشوفها، واللي عليهم الدور يختارون منها
+      kb: G.over ? null : { n:S.size, can: G.phase==='pick' && i===G.turn, sel: G.sel ? G.cells.indexOf(G.sel) : -1,
+        cells: G.cells.map(k=>[k.l, k.owner==null ? -1 : k.owner]), colors: G.teams.map(x=>x.color) },
       item: window.DAHOOM_ITEM ? { kind:'l', id:window.DAHOOM_ITEM.id, label:window.DAHOOM_ITEM.text } : null,
       phase: G.phase==='buzz' ? 'السؤال مقروء — بز!' : G.phase==='pick' ? `دور ${G.teams[G.turn].name} يختار حرف` : G.phase==='open' ? 'السؤال مفتوح للفريقين' : '' };
   }

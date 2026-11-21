@@ -662,6 +662,8 @@ window.DahoomHawamir = (function(){
           jail:0, stats:{ rentIn:0, rentOut:0, bought:0, auctions:0, trades:0, built:0, pot:0, stocks:0, takes:0, jailed:0 } }))),
         turn:0, round:1, owner:{}, level:{}, mort:{}, debt:null, deck:[], feed:[], trades:[], trSeq:0, sent:new Set(), stageHtml:'', pot:20000, lastRoll:7, open:!S.minutes, endAt:S.minutes ? Date.now()+S.minutes*60000 : 0, t0:Date.now(), timeUp:false, lastRound:false, over:false, focus:null };
     G.players.forEach((p,k)=>{ p.cash+=k*(DATA.seatBonus||0); });      // اللي يلعب متأخر ياخذ زيادة بسيطة تعوّضه
+    // نوضّحها بالسجل: كانوا يحسبونها غلط («بدينا بفلوس مختلفة»)
+    if(DATA.seatBonus) G.players.forEach((p,k)=>{ if(k) logE(p, `تعويض الدور: يلعب رقم ${k+1} فبدأ بزيادة`, k*DATA.seatBonus, 'info'); });
     const n=NET(); if(n) n.use({ teams:()=>G.players, state:hmState, onPhones:()=>renderSide(), roster:()=>{}, trade:(id,d)=>onPhoneTrade(id,d), hmDeed:i=>T[i]&&T[i].price?deed(i):'' });
     go('hawamir'); $('#hm-round').textContent='اللفة 1'; $('#hm-ask').innerHTML='';
     const bd=$('#hm-board'); if(bd) bd.style.setProperty('--felt', MAP.felt);

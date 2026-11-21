@@ -18,11 +18,12 @@ window.DahoomNet = (function(){
   const baseUrl = () => /^https?:/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.href.replace(/[^/]*([?#].*)?$/,'') : PUBLIC_URL;
   const joinUrl = () => baseUrl()+'remote.html?room='+code;
 
+  let sigT=0;
   function start(){
     if(peer || !window.Peer) return;
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
-    peer.on('open', ()=>{ ready=true; tries=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
+    peer.on('open', ()=>{ ready=true; tries=0; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
     peer.on('connection', c=>{
       c.cid='c'+(++cidSeq);
       c.on('open', ()=>{ conns.add(c); });
@@ -37,7 +38,10 @@ window.DahoomNet = (function(){
         if(++tries>=4){ sessionStorage.removeItem('dahoom_room'); tries=0; }
         setTimeout(start, 2000); return;
       }
-      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=false; refreshUI(); if(window.DAHOOM_ICE) toast(window.DAHOOM_ICE.why('signal')); }
+      // سيرفر الربط يقطع كل شوي ونرجع نتصل لحالنا — الجوالات المتصلة ما تتأثر. ننبّه بس لو ما رجع خلال ٢٠ ثانية
+      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=false; refreshUI();
+        if(!sigT) sigT=setTimeout(()=>{ sigT=0; if(!ready && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.why('signal')+' (اللي متصلين يكملون عادي — بس محد جديد يقدر يدخل)', 6000); }, 20000);
+        setTimeout(()=>{ try{ if(peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(err){} }, 3000); }
     });
   }
 
@@ -58,7 +62,7 @@ window.DahoomNet = (function(){
     for(let i=2;i<30;i++){ const n=name.slice(0,13)+' '+i; if(!P.some(p=>p.name===n && p.id!==pid)) return n; }
     return name;
   }
-  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList()}); push(c); sendInfo(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+  function seat(c, teamId){ c.teamId=teamId; c.send({t:'joined', teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList()}); push(c); sendInfo(c); resendAsks(c); toast(`جوال ${teamName(teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     { const was=alive(c); c.seen=Date.now();
@@ -103,7 +107,7 @@ window.DahoomNet = (function(){
       const teams = teamList();
       const known = d.pid && D.session.players.find(p=>p.id===d.pid);
       if(known && !isLocked()){ const home=homeTeamOf(known.id); d.teamId = home ? home.id : null; }
-      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams, known:!!known}); push(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
+      if(d.teamId && teams.some(t=>t.id===d.teamId)){ if(known) c.pid=known.id; c.teamId=d.teamId; c.send({t:'joined', teamId:c.teamId, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams, known:!!known}); push(c); resendAsks(c); toast(`جوال ${teamName(c.teamId)} اتصل`); play('game:g_oneup',{volume:.5}); }
       else if(known){ c.pid=known.id; c.teamId=null; c.send(regMsg(known)); push(c); }
       else c.send(lobbyMsg());
       refreshUI(); return;
@@ -125,6 +129,7 @@ window.DahoomNet = (function(){
     if(d.t==='claim' && H.claim) H.claim(c.teamId, c.cid, c.pid);
     if(H.msg && (d.t==='guess' || d.t==='stroke' || d.t==='fill' || d.t==='undo' || d.t==='clear' || d.t==='rpick' || d.t==='rate' || d.t==='rsync')) H.msg(c, d);
     if(d.t==='hmtrade' && H.trade) H.trade(c.teamId, d);
+    if(d.t==='khpick' && H.pick && Number.isInteger(d.i)) H.pick(c.teamId, d.i);
     if(d.t==='report'){ const ok = H.report ? H.report(c.teamId, c.pid, d) : false; try{ c.send({t:'notice', msg: ok ? 'وصل البلاغ — شكراً' : 'ما قدرنا نرسل البلاغ'}); }catch(e){} }
   }
   // كل فريق: عدد لاعبينه وصورهم (عشان الجوال يعرضهم بقائمة الاختيار)
@@ -147,9 +152,11 @@ window.DahoomNet = (function(){
 
   // سؤال لجوال فريق — يرجع reqId، والنتيجة تجي عن طريق cb
   function ask(teamId, spec, cb){
-    const reqId='r'+(++reqSeq); pending.set(reqId,{teamId,cb});
+    const reqId='r'+(++reqSeq); pending.set(reqId,{teamId,cb,spec});
     send(teamId, {t:'ask', reqId, spec}); return reqId;
   }
+  // جوال رجع اتصل (قفل الشاشة / طلع ورجع) وهو عليه سؤال: نرسله له مرة ثانية — قبل كان السؤال يضيع واللعبة «تعلق»
+  function resendAsks(c){ if(!c || !c.teamId) return; pending.forEach((p,reqId)=>{ if(p.teamId===c.teamId && p.spec){ try{ c.send({t:'ask', reqId, spec:p.spec}); }catch(e){} } }); }
   function cancel(reqId){ if(pending.delete(reqId)) closeAsk(reqId); }
   function closeAsk(reqId){ conns.forEach(c=>{ try{ c.send({t:'close', reqId}); }catch(e){} }); }
   function notify(teamId, msg){ send(teamId, msg); }

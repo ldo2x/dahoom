@@ -1022,3 +1022,19 @@ body.is-owner .r-bar{display:none}
 @media (max-width:420px){ .ow-pub button small{display:none} }
 
 .ow-gtag{font-size:.68rem;font-weight:800;color:var(--gold-ink);line-height:1.2;text-align:center}
+
+/* خلية الحروف: اللوحة المصغّرة بالجوال */
+.r-khb{margin:10px auto 4px;max-width:340px;width:100%}
+.r-khh{margin:0 0 8px;text-align:center;font-weight:800;color:var(--team,var(--accent))}
+.r-khg{display:flex;flex-direction:column;gap:2px;align-items:center}
+.r-khr{display:flex;gap:3px}
+.r-khr.odd{transform:translateX(22px)}
+.r-khx{width:42px;height:46px;border:0;padding:0;font:inherit;font-weight:800;font-size:1.05rem;color:var(--text);cursor:pointer;
+  background:var(--surface-3);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);transition:transform .12s, background .12s}
+.r-khx:disabled{cursor:default}
+.r-khx:disabled{opacity:.7}
+.r-khb.can .r-khx:not(:disabled){background:color-mix(in srgb, var(--team,var(--brand)) 16%, var(--hex,var(--surface-2)))}
+.r-khb.can .r-khx:not(:disabled):active{transform:scale(.9);background:var(--team,var(--accent))}
+.r-khx.own{background:var(--o);color:#fff;opacity:1}
+.r-khx.sel{background:var(--team,var(--brand));color:#fff;opacity:1}
+@media (max-width:360px){ .r-khx{width:36px;height:40px;font-size:.95rem} .r-khr.odd{transform:translateX(19px)} }
