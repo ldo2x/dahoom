@@ -49,6 +49,18 @@ window.DahoomSadq = (function(){
   }
   // أماكن الجلسة حول السجادة: أول لاعب تحت، وبعدين مع عقارب الساعة
   const seatPos = (i, n) => { const a=Math.PI/2 + i*2*Math.PI/n; return [50+38*Math.cos(a), 50+39*Math.sin(a)]; };
+  function layoutSeats(){
+    const M=$('#sq-majlis'); if(!M || !G) return;
+    if(matchMedia('(max-width:1000px)').matches){ M.querySelectorAll('.sq-seat').forEach(s=>{ s.style.left=s.style.top=''; }); return; }
+    const W=M.clientWidth, H=M.clientHeight, seats=[...M.querySelectorAll('.sq-seat')], n=seats.length; if(!n || !W) return;
+    const gap=18, w=Math.max(...seats.map(s=>s.offsetWidth)), h=Math.max(...seats.map(s=>s.offsetHeight));
+    const R=Math.max(150, Math.min(W/2-w-gap-8, H/2-h-gap-8, 330));
+    M.style.setProperty('--rr', R+'px');
+    seats.forEach((s,i)=>{ const a=Math.PI/2 + i*2*Math.PI/n, c=Math.cos(a), sn=Math.sin(a);
+      const d=R+gap+(s.offsetWidth/2)*Math.abs(c)+(s.offsetHeight/2)*Math.abs(sn);
+      s.style.left=(W/2+d*c).toFixed(1)+'px'; s.style.top=(H/2+d*sn).toFixed(1)+'px'; });
+  }
+  window.addEventListener('resize', ()=>{ if(G) layoutSeats(); });
   function claimsHTML(p){
     const e=Object.entries(p.claims||{}).sort((a,b)=>b[1]-a[1]); if(!e.length) return '';
     return `<div class="sq-claims"><small>ادّعى</small>${e.map(([k,n])=>`<span class="sq-cl" style="--rc:${RL(k).color}">${esc(RL(k).name)}${n>1?`<i>×${n}</i>`:''}</span>`).join('')}</div>`;
@@ -94,6 +106,7 @@ window.DahoomSadq = (function(){
         <div class="sq-sh">${p.avatar?`<img src="${D.avatarSrc(p.avatar)}" alt="">`:''}<b>${esc(p.name)}</b>${phoneOf(p)?'':`<em class="sq-nophone">${ic('phone')} ما اتصل</em>`}</div>
         <div class="sq-cards">${p.cards.map(c=>cardHTML(c)).join('')}</div>
         <div class="sq-sf"><span class="sq-coins">${ic('coins')}<b>${p.coins}</b></span>${p.loan?`<span class="sq-tag bad">${ic('hm-cash')} عليه سلفة</span>`:''}${p.out?`<span class="sq-tag">${ic('skull')} طلع</span>`:''}</div>${claimsHTML(p)}</div>`; }).join('');
+      layoutSeats();
     }
     const chest=$('#sq-chest'); if(chest && chest.dataset.n!==String(G.pot)){ chest.dataset.n=G.pot; chest.innerHTML=chestHTML(G.pot); }
     const dk=$('#sq-deckpile'); if(dk) dk.innerHTML=`<span class="sq-pile">${'<i></i>'.repeat(Math.max(1, Math.min(4, Math.ceil(G.deck.length/4))))}</span><span class="sq-chest-n"><small>الكومة</small><b>${G.deck.length}</b></span>`;
