@@ -556,13 +556,18 @@ window.Dahoom = (function(){
     // أسئلة اللعبة (البنوك الكبيرة) تبدأ تتحمّل بالخلفية أول ما تنختار اللعبة — وقت الانتظار يكفيها غالباً
     const openGame=g=>{ closeSettingsMenu(); session.game=g; renderTeams(); go('lobby'); if(window.DahoomLazy) window.DahoomLazy.need(g).catch(()=>{}); if(window.DahoomOwner) window.DahoomOwner.enter(); };
     // لو ضغطوا «ابدأ» قبل ما تكمل الأسئلة: نوقف الضغطة، نعرض «نجهّز الأسئلة» وبعدها نكمل تلقائي
+    let blockedAt=null;
     const START_OF = { 'btn-start':'alf', 'btn-khaliya-start':'khaliya', 'btn-rasm-start':'rasm', 'btn-hawamir-start':'hawamir', 'btn-sadq-start':'sadq' };
     document.addEventListener('click', e=>{
       const b=e.target.closest && e.target.closest('button[id]'); const g=b && (START_OF[b.id] || (b.id==='btn-again' ? session.game : null)), L=window.DahoomLazy;
       if(!g) return;
-      // كل اللاعبين المتصلين لازم يكونون ضاغطين «مستعد»
-      const N=window.DahoomNet, wait=N && N.waitingFor ? N.waitingFor() : [];
-      if(wait.length){ e.stopImmediatePropagation(); e.preventDefault(); toast('ننتظر يضغطون مستعد: '+wait.join('، '), 3500); play('fx_deny',{volume:.5}); return; }
+      // كل اللاعبين المتصلين لازم يكونون ضاغطين «مستعد» — بس «العبوا مرة ثانية» لا: توهم لاعبين،
+      // وجوالاتهم بشاشة النتيجة ما فيها زر «مستعد» (كان الزر يعلّق)
+      const N=window.DahoomNet, wait=b.id!=='btn-again' && N && N.waitingFor ? N.waitingFor() : [];
+      if(wait.length){
+        if(blockedAt && blockedAt.id===b.id && Date.now()-blockedAt.t<8000 && N.forceReady){ blockedAt=null; N.forceReady(); }
+        else { blockedAt={ id:b.id, t:Date.now() }; e.stopImmediatePropagation(); e.preventDefault(); toast('ننتظر يضغطون مستعد: '+wait.join('، ')+' — اضغط مرة ثانية تبدأ بدونهم', 4500); play('fx_deny',{volume:.5}); return; }
+      }
       if(!L || L.ready(g)) return;
       e.stopImmediatePropagation(); e.preventDefault();
       const B=window.DahoomBusy, job=L.need(g);

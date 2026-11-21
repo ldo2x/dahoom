@@ -652,7 +652,9 @@ window.DahoomHawamir = (function(){
 
   // ---------- البداية والنهاية ----------
   function startMatch(){
-    const comps=D.competitors().slice(0,6);
+    // المتصلين بجوالاتهم أول، وبعدهم اللي على الشاشة — أول ستة يلعبون
+    const n0=NET(), all=D.competitors(), live=n0 ? all.filter(c=>n0.hasPhone(c.id)) : [];
+    const comps=live.concat(all.filter(c=>!live.includes(c))).slice(0,6);
     if(comps.length<2){ toast('نحتاج لاعبين اثنين على الأقل'); go('lobby'); return; }
     $('#overlay-root').innerHTML='';
     MAP = DATA.maps.find(m=>m.id===S.map) || DATA.maps[0]; T = buildTiles(MAP);

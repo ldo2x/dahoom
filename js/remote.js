@@ -90,7 +90,7 @@
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
       if(window.DAHOOM_ICE) window.DAHOOM_ICE.watch(conn, lost);
       const to = setTimeout(()=>{ if(!conn.open){ const I=window.DAHOOM_ICE; if(I) lost(I.diagnose(peer, conn)); else fail('ما قدرنا نوصل للشاشة — تأكد إن الشاشة فاتحة ومتصلة بالنت'); } }, 9000);
-      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); });
+      conn.on('open', ()=>{ clearTimeout(to); st.retry=0; status(''); conn.send({t:'hello', teamId: localStorage.getItem(teamKey()), pid:(me()||{}).pid, owner:OWNER?1:0}); conn.send({t:'hb'}); });
       conn.on('data', onData);
       conn.on('close', lost);
       conn.on('error', lost);
@@ -109,6 +109,11 @@
     clearTimeout(st.rt); st.rt=setTimeout(()=>{ if(!st.conn || !st.conn.open) connect(); }, Math.min(8000, 1500*(++st.retry)));
   }
   function send(msg){ if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
+  // نبض: الشاشة تعرف إن الجوال لسا معها. بدونه الجوال اللي انقفل أو طلع يبقى «متصل» ويوقف البداية
+  const beatConn = t => { try{ if(st.conn && st.conn.open) st.conn.send({t}); }catch(e){} };
+  setInterval(()=>{ if(document.visibilityState==='visible') beatConn('hb'); }, 4000);
+  document.addEventListener('visibilitychange', ()=>beatConn(document.visibilityState==='visible' ? 'hb' : 'away'));
+  window.addEventListener('pagehide', ()=>beatConn('away'));
 
   // ---------- الرسائل ----------
   function onData(d){
@@ -379,7 +384,7 @@
           ${modes}<div id="ow-teams"></div></div>
         ${secs.length?`<details class="ow-set" ${st.owSetOpen?'open':''}><summary>${ic('gears')}<span>إعدادات ${esc(G.name)}</span><small>اختياري — الافتراضي مضبوط</small></summary>
           ${secs.map(s=>`<div class="ow-ss"><div class="ow-lbl">${esc(s.t)}</div>${s.f.map(field).join('')}${chips(s.f.filter(f=>f.type==='chip'||f.type==='pick'))}</div>`).join('')}</details>`:''}
-        <p class="r-err" id="ow-err"></p>
+        <p class="r-err" id="ow-err"></p><p class="rw-note hidden" id="ow-over"></p><button type="button" class="btn ghost small hidden" id="ow-force">ابدأ بدون اللي ما ضغطوا مستعد</button>
         <button type="button" class="btn btn-hype big ow-start" data-start>${ic('play')} <span id="ow-start-l">ابدأ ${esc(G.name)}</span></button>
         <div class="ow-more"><button type="button" class="btn ghost small" data-table>${ic('podium')} اعرض الطاولة على شاشة ثانية</button><button type="button" class="btn ghost small" data-leave>${ic('cancel')} ما بلعب — أخلي الجهاز شاشة عرض</button><button type="button" class="btn ghost small ow-end" data-end>${ic('door')} أنهِ الجلسة</button></div>
       </section>`;
@@ -405,6 +410,8 @@
     $$('.ow [data-pub]').forEach(b=>{ const on=(b.dataset.pub==='1')===!!A.pub(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     { const r=$('#ow-rules'); if(r && r.dataset.g!==g){ r.dataset.g=g; r.innerHTML=rulesBtn(g); bindRoster(r); } }
     { const sb=$('.ow [data-start]'), sl=$('#ow-start-l'); if(sb && sl){ sb.classList.toggle('is-wait', wait.length>0); sl.textContent = wait.length ? `ننتظر ${wait.length===1?'لاعب واحد':wait.length+' لاعبين'} يضغطون مستعد` : `ابدأ ${G.name}`; } }
+    { const f=$('#ow-force'); if(f){ f.classList.toggle('hidden', !wait.length); if(!f.onclick) f.onclick=()=>{ vibe(30); const err=A.start(true); $('#ow-err').textContent=err||''; }; } }
+    { const o=$('#ow-over'), ov=I.over||[]; if(o){ o.classList.toggle('hidden', !ov.length); o.textContent = ov.length ? `${G.name} تكفي ${I.cap} لاعبين — يتفرجون هالمرة: ${ov.join('، ')}` : ''; } }
     const tb=$('#ow-teams'); if(tb){
       const sig2=JSON.stringify([I.players,I.teams,solo,A.phoneTeams(),I.canCreate]);
       if(tb.dataset.sig!==sig2){ tb.dataset.sig=sig2;
@@ -457,6 +464,7 @@
       </button>
       <div class="rw-count">${nRd} من ${nOn} مستعدين</div>`}
       ${needTeam?'<p class="rw-pick">اختر فريقك من القائمة تحت</p>':''}
+      ${(I.over||[]).length && !I.locked ? `<p class="rw-note">${(I.over||[]).includes(m.name) ? `اللعبة تكفي ${I.cap} لاعبين — انت تتفرج هالمرة وتلعب الجاية` : `اللعبة تكفي ${I.cap} لاعبين — يتفرجون هالمرة: ${esc(I.over.join('، '))}`}</p>` : ''}
       ${rosterHTML(I, true)}
       <div class="rw-acts">${!I.locked?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
     </section>`;

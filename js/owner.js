@@ -104,7 +104,8 @@ window.DahoomOwner = (function(){
   function prepare(){ const g=D.session.game, sc=SET_SCREEN[g], cur=scrNow(); if(sc && cur!==sc && !GAME_SCREENS.includes(cur) && cur!=='results') D.go(sc); }
   function chooseGame(g){ const c=document.getElementById('card-'+g); if(c){ c.click(); } setTimeout(prepare, 50); }
   function setPlayMode(m){ const r=document.querySelector(`input[name=mode][value="${m}"]`); if(r){ r.checked=true; r.dispatchEvent(new Event('change',{bubbles:true})); } }
-  function start(){
+  function start(force){
+    if(force && NET() && NET().forceReady) NET().forceReady();
     const g=D.session.game, comps=D.competitors();
     if(g==='khaliya' && comps.length!==2) return 'خلية الحروف تبي فريقين بالضبط — وزّع الفرق أول';
     if(comps.length<2) return D.session.mode==='solo' ? 'نحتاج لاعبين اثنين على الأقل — أرسل رابط الدعوة للشباب' : 'نحتاج فريقين فيهم لاعبين — وزّع الفرق أول';

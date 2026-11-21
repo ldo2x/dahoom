@@ -320,7 +320,9 @@ window.DahoomSadq = (function(){
 
   // ---------- البداية والنهاية ----------
   function startMatch(){
-    const comps=D.competitors().slice(0,6);
+    // اللي جوالاتهم متصلة الحين أول — لاعبين قدامى من جلسة قبل (مو متصلين) كانوا ياخذون مكان ويوقفون البداية
+    const n0=NET(), all=D.competitors(), live=n0 ? all.filter(c=>n0.hasPhone(c.id)) : [];
+    const comps=(live.length>=2 ? live : all).slice(0,6);
     if(comps.length<2){ toast('نحتاج لاعبين اثنين على الأقل'); go('lobby'); return; }
     const n=NET(); const noPhone=comps.filter(c=>!(n && n.hasPhone(c.id)));
     if(noPhone.length && !window.DAHOOM_SQ_FAST){ toast(`الأوراق سرية — لازم كل لاعب يدخل من جواله: ${noPhone.map(c=>c.name).join('، ')}`, 5000); return; }
