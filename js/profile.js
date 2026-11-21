@@ -107,6 +107,7 @@
         h.textContent='نتأكد…'; h.className='pf-hint'; ck=setTimeout(async()=>{ const r=await A.checkUsername(v); if($('#gu-u') && $('#gu-u').value===v){ h.textContent=r.ok?'متاح':r.why; h.className='pf-hint '+(r.ok?'ok':'bad'); } }, 450); };
       gu.onsubmit=async e=>{ e.preventDefault(); const btn=$('button[type=submit]',gu); $('#gu-err').textContent='';
         const n=$('#gu-n').value.trim(); if(!n){ $('#gu-err').textContent='اكتب اسمك'; $('#gu-n').focus(); return; }
+        if(A.textProblem && A.textProblem(n)){ $('#gu-err').textContent=A.textProblem(n); $('#gu-n').focus(); return; }
         btn.disabled=true; const r=await busy(A.signUpWithPassword($('#gu-u').value, $('#gu-p').value, { name:n, avatar:gateAv }), 'نسوي حسابك…'); btn.disabled=false;
         if(r.ok) toast(r.why || ('هلا '+n+'، حسابك جاهز')); else $('#gu-err').textContent=r.why; }; }
     bindRadio($('.pf-avs', root), v=>{ gateAv=v; });
@@ -410,6 +411,7 @@
     $('#e-cancel').onclick=()=>{ V.editing=false; V.draft=null; render(); };
     $('#e-save').onclick=async()=>{
       if(!d.name.trim()){ $('#e-err').textContent='الاسم ما يصير فاضي'; $('#e-name').focus(); return; }
+      { const bad=A.textProblem && (A.textProblem(d.name) || (A.textProblem(d.bio||'') && 'النبذة فيها كلمة ما تصلح — عدّلها')); if(bad){ $('#e-err').textContent=bad; return; } }
       const ok=await A.saveProfile(d);
       if(!ok){ $('#e-err').textContent='ما قدرنا نحفظ، تأكد من الاسم والاختيارات'; return; }
       V.editing=false; V.draft=null; V.prof=await A.getProfile(); render(); toast('انحفظ ملفك'); const e=$('#pf-edit'); if(e) e.focus();

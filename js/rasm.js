@@ -242,6 +242,7 @@
     const now=Date.now(); if(now-(G.lastGuessAt[cid]||0)<900) return; G.lastGuessAt[cid]=now;
     text=String(text||'').trim().slice(0,40); if(!text) return;
     const name=nameOf(t,pid)||t.name, res=check(G.word, text);
+    if(res!==2 && window.DahoomBad) text=window.DahoomBad.clean(text);   // اللي يطلع بالسجل للكل
     if(res===2) return win(teamId, name);
     if(res===1){ G.feed.push({name, color:t.color, text, close:true}); NET().send(teamId,{t:'notice', msg:`«${text}» قريب جداً!`}); play('notify',{volume:.7}); }
     else { G.feed.push({name, color:t.color, text}); G.stats.wrong++; tally(G.stats.wrongBy, name); play('pop',{volume:.35}); }

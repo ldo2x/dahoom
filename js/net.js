@@ -56,7 +56,9 @@ window.DahoomNet = (function(){
   // نفس الاسم لاعب مو متصل = نفس الشخص راجع من جهاز ثاني (نخليه ياخذ مكانه)
   function freeName(name, pid){
     name=String(name||'').trim().slice(0,16); if(!name) return name;
-    const on=onlinePids(), P=D.session.players;
+    const P=D.session.players;
+    if(window.DahoomBad && window.DahoomBad.has(name)){ name='لاعب'; for(let i=2;i<99 && P.some(p=>p.name===name && p.id!==pid);i++) name='لاعب '+i; }
+    const on=onlinePids();
     const clash=n=>P.some(p=>p.name===n && p.id!==pid && on.has(p.id));
     if(!clash(name)) return name;
     for(let i=2;i<30;i++){ const n=name.slice(0,13)+' '+i; if(!P.some(p=>p.name===n && p.id!==pid)) return n; }
@@ -94,6 +96,7 @@ window.DahoomNet = (function(){
       D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id;
       c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true}); push(c); refreshUI(); return; }
     // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار) — وينتقل له لو كان مسجّل
+    if(d.t==='newteam' && window.DahoomBad && window.DahoomBad.has(d.name)){ c.send({t:'notice', msg:'اسم الفريق فيه كلمة ما تصلح — اختر غيره'}); return; }
     if(d.t==='newteam' && !isLocked()){
       const t = canCreate() ? D.createTeam(d.name) : null;
       if(!t){ c.send({t:'notice', msg:'إنشاء الفرق مقفل — كلّم المضيف'}); return; }

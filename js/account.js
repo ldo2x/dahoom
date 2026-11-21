@@ -271,8 +271,12 @@ window.DahoomAccount = (function(){
   const UNAME_GAP = 2*3600*1000;   // تغيير اليوزرنيم: مرة كل ساعتين
   const LOGIN_DOMAIN = 'login.dahoom.invalid';   // نطاق محجوز ما يستقبل بريد — للإيميل الداخلي حق الدخول باليوزرنيم
   const cleanUname = s => String(s||'').trim().replace(/^@/,'').toLowerCase();
+  const isBad = s => { try{ return !!(window.DahoomBad && window.DahoomBad.has(s)); }catch(e){ return false; } };
+  // مشكلة باسم أو نبذة (كلام ما يصلح) — '' = تمام
+  const textProblem = s => isBad(s) ? 'فيه كلمة ما تصلح — اختر اسم ثاني' : '';
   function unameProblem(u){
     if(!u) return 'اكتب يوزرنيم';
+    if(isBad(u)) return 'اليوزرنيم فيه كلمة ما تصلح — اختر غيره';
     if(u.length<3) return 'اليوزرنيم لازم 3 حروف أو أكثر';
     if(u.length>20) return 'اليوزرنيم أقصاه 20 حرف';
     if(!UNAME_RE.test(u)) return 'استخدم حروف إنجليزية صغيرة وأرقام و _ و . بس';
@@ -581,6 +585,7 @@ window.DahoomAccount = (function(){
   function continueAsGuest(o={}){
     try{
       let g=guestRec();
+      if(o.name && isBad(o.name)) o=Object.assign({}, o, { name:'' });   // اسم ما يصلح: ناخذ الاسم الافتراضي
       if(!g){ g=normProfile(newProfile({ name:o.name, avatar:o.avatar, color:o.color })); g.id='g_'+rid(10); }
       else { if(o.name && cleanName(o.name)) g.name=cleanName(o.name); if(AVATARS.includes(o.avatar)) g.avatar=o.avatar; }
       saveGuest(g);
@@ -592,8 +597,8 @@ window.DahoomAccount = (function(){
     try{
       if(!st.prof || st.mode==='none') return false;
       const p=st.prof, out={};
-      if('name' in patch){ const n=cleanName(patch.name); if(!n) return false; out.name=n; }
-      if('bio' in patch) out.bio=cleanBio(patch.bio);
+      if('name' in patch){ const n=cleanName(patch.name); if(!n || isBad(n)) return false; out.name=n; }
+      if('bio' in patch){ out.bio=cleanBio(patch.bio); if(isBad(out.bio)) return false; }
       if('avatar' in patch){ if(!AVATARS.includes(patch.avatar)) return false; out.avatar=patch.avatar; }
       if('color' in patch){ if(!/^#[0-9a-f]{6}$/i.test(patch.color||'')) return false; out.color=patch.color.toUpperCase(); }
       for(const k of ['banner','frame','title']) if(k in patch){ if(!isUnlocked(k, patch[k], p)) return false; out[k]=patch[k]; }
@@ -975,7 +980,7 @@ a.dacc-badge:focus-visible,.dacc-gav:focus-visible{outline:3px solid var(--info)
     init, current, onChange, signInGoogle, signOut, continueAsGuest, saveProfile, recordMatch,
     getProfile, searchUsers, sendFriendRequest, respondFriendRequest, listFriends, listRequests, removeFriend,
     // اليوزرنيم وكلمة السر والحالة
-    checkUsername, setUsername, unameWait, findByUsername, signUpWithPassword, signInWithPassword, setPassword, hasPassword,
+    textProblem, checkUsername, setUsername, unameWait, findByUsername, signUpWithPassword, signInWithPassword, setPassword, hasPassword,
     setActivity, getPresence, listFriendsOf, unameProblem, UNAME_GAP,
     // الكتالوجات
     ACHIEVEMENTS, BANNERS, FRAMES, TITLES, RARITY, GAMES, AVATARS, AVATAR_GROUPS, COLORS,

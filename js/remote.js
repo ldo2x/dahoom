@@ -205,6 +205,7 @@
   $('#r-reg-go').onclick=()=>{
     const name=$('#r-name').value.trim();
     if(!name){ $('#r-reg-err').textContent='اكتب اسمك'; return; }
+    if(window.DahoomBad && window.DahoomBad.has(name)){ $('#r-reg-err').textContent='فيه كلمة ما تصلح — اختر اسم ثاني'; return; }
     $('#r-reg-err').textContent=''; vibe(30);
     const m=me()||{}; localStorage.setItem(meKey, JSON.stringify(Object.assign(m,{name, avatar:regAv})));
     send({t:'register', pid:m.pid, name, avatar:regAv});
