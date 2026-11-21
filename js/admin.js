@@ -49,7 +49,7 @@ async function boot(){
     async remove(col, ids){ const b=F.writeBatch(db); ids.forEach(id=>b.delete(F.doc(db,col,id))); await b.commit(); },
     signOut:()=>A.signOut(auth),
   };
-  $('#ad-signin').onclick = async ()=>{ $('#ad-login-err').textContent=''; try{ await A.signInWithPopup(auth, new A.GoogleAuthProvider()); }catch(e){ $('#ad-login-err').textContent='ما قدرنا ندخل: '+(e.code||e.message); } };
+  $('#ad-signin').onclick = async ()=>{ $('#ad-login-err').textContent=''; try{ const pv=new A.GoogleAuthProvider(); pv.setCustomParameters({ prompt:'select_account' }); await A.signInWithPopup(auth, pv); }catch(e){ $('#ad-login-err').textContent='ما قدرنا ندخل: '+(e.code||e.message); } };
   A.onAuthStateChanged(auth, user=>{
     if(!user){ $('#ad-app').classList.add('hidden'); $('#ad-login').classList.remove('hidden'); $('#ad-user').innerHTML=''; return; }
     startApp(user);
