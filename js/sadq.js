@@ -26,7 +26,7 @@ window.DahoomSadq = (function(){
   const roleChip = k => `<span class="sq-rchip" style="--rc:${RL(k).color}">${ic(RL(k).icon)}${esc(RL(k).name)}</span>`;
   const who = p => `<b class="sq-who" style="--c:${p.color}">${esc(p.name)}</b>`;
   const ART = k => (window.DahoomSqArt ? window.DahoomSqArt.portrait(k) : '');
-  const CARD = k => (window.DahoomSqArt ? window.DahoomSqArt.card(k, RL(k).name, RL(k).color) : `<b>${esc(RL(k).name)}</b>`);
+  const CARD = k => { const r=RL(k), A=AC(r.act); return window.DahoomSqArt ? window.DahoomSqArt.card(k, { name:r.name, color:r.color, icon:r.icon, move:A.name, desc:A.desc, block:r.block?AC(r.block).name:'' }) : `<b>${esc(r.name)}</b>`; };
   const BACK = () => (window.DahoomSqArt ? window.DahoomSqArt.back() : '');
   // الورقة الكبيرة بوسط السجادة
   const big = (k, cls='') => `<div class="sq-big lux ${cls}" style="--rc:${RL(k).color}">${CARD(k)}</div>`;
