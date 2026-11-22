@@ -215,7 +215,7 @@ window.DahoomSqArt = (function(){
       <g clip-path="url(#${u}c)"><rect width="100" height="140" fill="${b1}"/><rect width="100" height="140" fill="${b2}" opacity=".5"/>
         <use href="#${u}f"/><use href="#${u}f" transform="rotate(180 50 70)"/>
         <circle cx="50" cy="70" r="18.6" fill="#0B0908" opacity=".35"/><circle cx="50" cy="70" r="16.6" fill="#0B0908"/><circle cx="50" cy="70" r="16.6" fill="none" stroke="${CREAM}" stroke-width=".8"/><circle cx="50" cy="70" r="18.4" fill="none" stroke="${a}" stroke-width=".6"/>
-        ${iconSVG(ROLE_ICON[k], 50, 70, ICONS[ROLE_ICON[k]].st ? 20 : 23, WHITE)}
+        <g transform="translate(50 70) scale(.74) translate(-50 -70)">${SYM[R.sym](a)}</g>
         <rect width="100" height="140" fill="url(#${u}h)"/></g></svg>`;
   }
   const esc = s => String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
