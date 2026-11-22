@@ -263,9 +263,12 @@ window.DahoomNet = (function(){
   const regMsg = p => ({t:'registered', avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, pid:p.id, name:p.name, avatar:p.avatar, teamId:null, teamless:true, mode:D.session.mode});
   // المضيف وزّع الفرق أو حرّك لاعب: جوال كل لاعب ينتقل لفريقه الجديد بدون ما يسوي شي
   function seatSync(){
-    if(isLocked() || isSolo()) return;
+    if(isLocked()) return;
+    // فردي: كل جوال مكانه هو نفسه (لو رجعنا من لعبة فرق لازم نرجّعه، قبل كان يبقى على الفريق القديم والشاشة تحسبه بدون جوال)
+    const solo=isSolo();
     conns.forEach(c=>{ if(!c.open || !c.pid) return; const p=D.session.players.find(x=>x.id===c.pid); if(!p) return;
-      const tid=homeId(c.pid); if(tid===c.teamId) return;
+      const tid=solo ? p.id : homeId(c.pid); if(tid===c.teamId) return;
+      if(solo){ c.teamId=tid; try{ c.send({t:'registered', pid:p.id, name:p.name, avatar:p.avatar, teamId:p.id, mode:'solo'}); }catch(e){} push(c); return; }
       c.teamId=tid; try{ c.send(tid ? {t:'joined', teamId:tid, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true} : regMsg(p)); }catch(e){} push(c); });
   }
 
