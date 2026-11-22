@@ -102,7 +102,10 @@
     LG('نتصل بالغرفة (محاولة '+(st.retry+1)+')');
     status('نتصل بالشاشة…', true);
     try{ st.peer && st.peer.destroy(); }catch(e){}
-    const peer = st.peer = new window.Peer(Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
+    // st.sig: 0 = سيرفر الربط العام، 1 = الاحتياطي (لو ما لقينا الشاشة بالعام نجرّبه)
+    const BK = window.DAHOOM_ICE && window.DAHOOM_ICE.peerBackup; if(!BK) st.sig=0;
+    const peer = st.peer = new window.Peer(Object.assign({debug:0}, st.sig===1 && BK ? BK : {}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
+    if(st.sig===1) LG('نجرب السيرفر الاحتياطي');
     peer.on('open', ()=>{
       const conn = st.conn = peer.connect(PREFIX+st.room, {reliable:true});
       if(window.DAHOOM_ICE) window.DAHOOM_ICE.watch(conn, lost);
@@ -114,9 +117,12 @@
     });
     peer.on('error', e=>{
       LG('خطأ سيرفر الربط: '+(e&&e.type));
-      if(e.type==='peer-unavailable') return fail('الكود غلط أو الجلسة انقفلت. تأكد من الكود وجرب مرة ثانية.', true);
+      // ما لقينا الشاشة بهالسيرفر: نجرّب الثاني قبل ما نقول الكود غلط
+      if(e.type==='peer-unavailable'){ if(BK && st.sig===0){ st.sig=1; return connect(); } st.sig=0; return fail('الكود غلط أو الجلسة انقفلت. تأكد من الكود وجرب مرة ثانية.', true); }
       // انقطع سيرفر الربط بس واتصالنا بالشاشة شغال: نكمل عادي (قبل كنا نقطع الاتصال الشغال ونطلّع رسالة كل شوي)
       if(st.conn && st.conn.open && /network|server-error|socket-error|disconnected/.test(e.type||'')) return;
+      // سيرفر الربط نفسه ما يرد: المحاولة الجاية على السيرفر الثاني
+      if(BK && /network|server-error|socket-error/.test(e.type||'')) st.sig = st.sig===1 ? 0 : 1;
       lost(e);
     });
     peer.on('disconnected', ()=>{ if(st.conn && st.conn.open) setTimeout(()=>{ try{ if(peer.disconnected && !peer.destroyed && st.peer===peer) peer.reconnect(); }catch(err){} }, 3000); });

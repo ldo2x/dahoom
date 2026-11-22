@@ -29,6 +29,11 @@ window.DAHOOM_ICE = (function(){
   ];
   // ====================================================================
 
+  // ==== سيرفر الربط الاحتياطي (server/peer-backup على Cloudflare) — فاضي = مقفل ====
+  // الشاشة تسجّل فيه وبالعام سوا، والجوال يجرّبه لو ما لقى الشاشة بالعام
+  const PEER_BACKUP_HOST = '';
+  const peerBackup = PEER_BACKUP_HOST ? { host:PEER_BACKUP_HOST, port:443, path:'/', secure:true, key:'peerjs' } : null;
+
   // STUN: سيرفرين يكفون (كثرة السيرفرات تبطّئ تجميع المسارات)
   const STUN = [
     { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] },
@@ -128,5 +133,5 @@ window.DAHOOM_ICE = (function(){
     return { relay: found.length > 0, candidates: found, servers: iceServers.map(s => [].concat(s.urls).join(' ')) };
   }
 
-  return { iceServers, ready, why, reason, watch, diagnose, test, MSG };
+  return { iceServers, ready, why, reason, watch, diagnose, test, MSG, peerBackup };
 })();

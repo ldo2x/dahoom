@@ -9,6 +9,8 @@ window.DahoomNet = (function(){
   const PUBLIC_URL = 'https://ldo2x.github.io/dahoom/';
   const PREFIX = 'dahoom-v2-';
   let peer=null, code=null, ready=false, tries=0;
+  // سيرفر الربط الاحتياطي: نسجّل فيه بنفس الكود (لو العام طاح، الجوالات تلقانا هنا)
+  let peer2=null, ready2=false, code2=null;
   const conns=new Set();               // كل اتصال: conn.teamId
   let H = null;                        // معالجات اللعبة الحالية
   const pending=new Map();             // reqId -> {teamId, cb}
@@ -57,14 +59,9 @@ window.DahoomNet = (function(){
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
     peer.on('open', ()=>{ LG('الشاشة جاهزة بالكود '+code); ready=true; tries=0; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
-    peer.on('connection', c=>{
-      c.cid='c'+(++cidSeq);
-      c.on('open', ()=>{ conns.add(c); LG('جوال اتصل ('+c.cid+')'); });
-      c.on('data', d=>onMsg(c,d));
-      c.on('close', ()=>{ conns.delete(c); LG('انقطع '+who(c)); refreshUI(); });
-      c.on('error', e=>{ conns.delete(c); LG('خطأ اتصال '+who(c)+': '+(e&&e.type||e)); refreshUI(); if(e && e.type==='negotiation-failed' && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.MSG.host); });
-    });
-    peer.on('disconnected', ()=>{ LG('سيرفر الربط انقطع — نرجع نتصل'); ready=false; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
+    peer.on('connection', onConn);
+    peer.on('disconnected', ()=>{ LG('سيرفر الربط انقطع — نرجع نتصل'); ready=ready2; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
+    startBackup();
     peer.on('error', e=>{
       LG('خطأ سيرفر الربط: '+(e&&e.type));
       if(e.type==='unavailable-id'){ // الكود محجوز (غالبًا من تحديث الصفحة) — نعيد المحاولة ثم نغيّره
@@ -73,10 +70,30 @@ window.DahoomNet = (function(){
         setTimeout(start, 2000); return;
       }
       // سيرفر الربط يقطع كل شوي ونرجع نتصل لحالنا — الجوالات المتصلة ما تتأثر. ننبّه بس لو ما رجع خلال ٢٠ ثانية
-      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=false; refreshUI();
+      if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=ready2; refreshUI();
         if(!sigT) sigT=setTimeout(()=>{ sigT=0; if(!ready && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.why('signal')+' (اللي متصلين يكملون عادي — بس محد جديد يقدر يدخل)', 6000); }, 20000);
         setTimeout(()=>{ try{ if(peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(err){} }, 3000); }
     });
+  }
+
+  function onConn(c){
+    c.cid='c'+(++cidSeq);
+    c.on('open', ()=>{ conns.add(c); LG('جوال اتصل ('+c.cid+(c.viaBackup?'، عن طريق السيرفر الاحتياطي':'')+')'); });
+    c.on('data', d=>onMsg(c,d));
+    c.on('close', ()=>{ conns.delete(c); LG('انقطع '+who(c)); refreshUI(); });
+    c.on('error', e=>{ conns.delete(c); LG('خطأ اتصال '+who(c)+': '+(e&&e.type||e)); refreshUI(); if(e && e.type==='negotiation-failed' && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.MSG.host); });
+  }
+  function startBackup(){
+    const B = window.DAHOOM_ICE && window.DAHOOM_ICE.peerBackup; if(!B || !code || !window.Peer) return;
+    if(peer2 && code2===code && !peer2.destroyed) return;
+    try{ peer2 && peer2.destroy(); }catch(e){}
+    code2=code; ready2=false;
+    const p2 = peer2 = new window.Peer(PREFIX+code, Object.assign({debug:0}, B, {config:{ iceServers: window.DAHOOM_ICE.iceServers }}));
+    p2.on('open', ()=>{ if(p2!==peer2) return; ready2=true; LG('السيرفر الاحتياطي جاهز'); if(!ready){ ready=true; refreshUI(); publishRoom(); } });
+    p2.on('connection', c=>{ c.viaBackup=true; onConn(c); });
+    p2.on('disconnected', ()=>{ if(p2!==peer2) return; ready2=false; setTimeout(()=>{ try{ if(p2===peer2 && !p2.destroyed) p2.reconnect(); }catch(e){} }, 3000); });
+    p2.on('error', e=>{ if(p2!==peer2) return; LG('خطأ السيرفر الاحتياطي: '+(e&&e.type));
+      if(e && e.type==='unavailable-id'){ try{ p2.destroy(); }catch(err){} peer2=null; setTimeout(startBackup, 4000); } });
   }
 
   // ---------- الرسائل ----------
@@ -304,7 +321,7 @@ window.DahoomNet = (function(){
   function newCode(){
     if(window.DahoomLobby) window.DahoomLobby.close();
     conns.forEach(c=>{ try{ c.send({t:'ended', msg:'المضيف جدّد الجلسة — ادخل الكود الجديد'}); }catch(e){} });
-    setTimeout(()=>{ try{ peer && peer.destroy(); }catch(e){} peer=null; ready=false; conns.clear(); sessionStorage.removeItem('dahoom_room'); code=null; refreshUI(); start(); }, 300);
+    setTimeout(()=>{ try{ peer && peer.destroy(); }catch(e){} try{ peer2 && peer2.destroy(); }catch(e){} peer=null; peer2=null; ready=false; ready2=false; conns.clear(); sessionStorage.removeItem('dahoom_room'); code=null; refreshUI(); start(); }, 300);
   }
   function newSession(){
     const ss=D.session; ss.players=[]; ss.teams.forEach(t=>t.members=[]); ss.save();

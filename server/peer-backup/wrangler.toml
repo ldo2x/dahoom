@@ -1,0 +1,13 @@
+# سيرفر الربط الاحتياطي لدحوم — Cloudflare Workers (الخطة المجانية)
+# النشر: من هالمجلد  →  npx wrangler login  ثم  npx wrangler deploy
+name = "dahoom-peer"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "Hub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hub"]
