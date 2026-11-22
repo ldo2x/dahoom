@@ -221,7 +221,7 @@ window.DahoomSqArt = (function(){
       <rect width="100" height="140" fill="${CREAM}"/><g clip-path="url(#${u}c)"><rect width="100" height="140" fill="#3A0F1C"/>
         ${[16,26].map(x=>`<circle cx="50" cy="70" r="${x}" fill="none" stroke="#E3B95A" stroke-width=".5" opacity=".7"/>`).join('')}
         <circle cx="50" cy="70" r="12" fill="${CREAM}"/><circle cx="50" cy="70" r="9.6" fill="none" stroke="#3A0F1C" stroke-width=".8"/>
-        <text x="50" y="75.5" text-anchor="middle" font-size="14" fill="#3A0F1C" style="font-family:Lalezar,'IBM Plex Sans Arabic',sans-serif">ص</text>
+        <text x="50" y="71.6" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#3A0F1C" style="font-family:Lalezar,'IBM Plex Sans Arabic',sans-serif">ص</text>
         <rect width="100" height="140" fill="url(#${u}h)"/></g></svg></span>`;
   }
   return { portrait, card, back, has:k=>!!ROLES[k] };
