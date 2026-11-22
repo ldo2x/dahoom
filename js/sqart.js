@@ -63,43 +63,43 @@ window.DahoomSqArt = (function(){
   const arm = (pts, f, w=7) => `<path d="M${pts}" stroke="${f}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
 
   // ---------- الجسم ----------
-  const torso = f => `<path d="M10 78Q12 50 30 45L44 40.6H56L70 45Q88 50 90 78Z" fill="${f}"/>`;
+  const torso = f => `<path d="M21 80Q23 53 35 47.6L44.6 42.4H55.4L65 47.6Q77 53 79 80Z" fill="${f}"/>`;
   const neck = k => `<rect x="${cx-3.6}" y="${cy+9}" width="7.2" height="9" rx="2.4" fill="${SKIN[k][1]}"/>`;
   const thobeV = `<path d="M43 41.6L50 60L57 41.6Z" fill="${WHITE}"/><path d="M50 41.6L50 60L57 41.6Z" fill="${WSH}"/>`;
-  const bishtTrim = c => `<path d="M43 41.6L47.6 78M57 41.6L52.4 78" stroke="${c}" stroke-width="1.5"/>`;
+  const bishtTrim = c => `<path d="M43.4 42.4L47.6 80M56.6 42.4L52.4 80" stroke="${c}" stroke-width="1.5"/>`;
 
   // ---------- الشخصيات ----------
   const ROLES = {
     // التاجر: يقدّم الريالات بكفه، واليد الثانية على صدره، وابتسامة واثقة
-    tajer:{ sym:'coin', draw:k=>torso('#1D1712')+`<path d="M58 41L90 78H70Z" fill="#2A211A"/>`+neck(k)+thobeV+bishtTrim('#E8B04A')
-        + arm('31 47Q22 44 18 34', '#1D1712')+arm('68 48Q66 58 58 60', '#1D1712')
+    tajer:{ sym:'coin', draw:k=>torso('#1D1712')+`<path d="M57 42.4L79 80H67Z" fill="#2A211A"/>`+neck(k)+thobeV+bishtTrim('#E8B04A')
+        + arm('36 49Q24 44 18 34', '#1D1712')+arm('64 49Q66 44 58 39', '#1D1712')
         + ghutra(WHITE, WSH)+face(k,{beard:'#251A12', mous:'#251A12', mouth:'grin', brows:[-.4,-.4]})+ghutraFront(WHITE)+igal
         + hand(k, 18, 31, 0, 'open', 1, 1.05) + [0,1,2,3].map(i=>`<ellipse cx="18" cy="${24-i*2}" rx="4.4" ry="1.5" fill="#F2C14E" stroke="#8C5C14" stroke-width=".5"/>`).join('')
         // رزمة ريالات بيضا مفرودة قدام فمه
         + [-16,-6,4].map(r=>`<g transform="rotate(${r} 52 38)"><rect x="41" y="29" width="21" height="8.4" rx=".6" fill="${WHITE}"/><rect x="42.6" y="30.6" width="17.8" height="5.2" fill="none" stroke="${WSH}" stroke-width=".55"/><circle cx="51.5" cy="33.2" r="1.7" fill="none" stroke="${WSH}" stroke-width=".55"/></g>`).join('')
         + hand(k, 58, 38, -70, 'fist', 1, 1) },
     // الواسطة: الجوال على أذنها، ويدها الثانية تأشر «أعرف واحد»
-    wasta:{ sym:'key', draw:k=>torso('#120E16')+`<path d="M58 41L90 78H70Z" fill="#221A28"/>`+`<path d="M44 41L48 78M56 41L52 78" stroke="${GOLD}" stroke-width=".9"/>`
-        + arm('32 47Q23 42 20 30', '#120E16')+arm('68 47Q68 40 63 33', '#120E16')
+    wasta:{ sym:'key', draw:k=>torso('#120E16')+`<path d="M57 42.4L79 80H67Z" fill="#221A28"/>`+`<path d="M44.6 42.4L48 80M55.4 42.4L52 80" stroke="${GOLD}" stroke-width=".9"/>`
+        + arm('36 49Q24 42 20 30', '#120E16')+arm('64 49Q68 40 63 33', '#120E16')
         + hood('#16111C','#251D2D')+face(k,{shades:true, mouth:'lips', brows:[-.6,.6]})+hoodFront('#16111C')
         + hand(k, 20, 27, -8, 'point', 1, 1.05)+`<path d="M17 33.4L23 32.6" stroke="${GOLD}" stroke-width=".9"/>`
         // جوال أبيض كبير على خدها
         + `<g transform="rotate(12 59 22)"><rect x="53.4" y="12" width="9" height="19" rx="2" fill="${WHITE}"/><rect x="54.9" y="14.4" width="6" height="13" rx=".8" fill="${WSH}"/><circle cx="57.9" cy="29.4" r=".7" fill="${WSH}"/></g>`
         + hand(k, 61.4, 31, -160, 'fist', 1, 1)+`<path d="M58.4 35.8L64.4 34.8" stroke="${GOLD}" stroke-width=".9"/>` },
     // المحامي: «اعتراض!» بإصبع مرفوع، وماسك الملف عند صدره
-    muhami:{ sym:'scales', draw:k=>torso('#1A1C24')+`<path d="M58 41L90 78H70Z" fill="#262A35"/>`+neck(k)+thobeV+bishtTrim('#C9CED8')
-        + arm('69 47Q79 42 81 30', '#1A1C24')+arm('32 48Q30 58 38 62', '#1A1C24')
+    muhami:{ sym:'scales', draw:k=>torso('#1A1C24')+`<path d="M57 42.4L79 80H67Z" fill="#262A35"/>`+neck(k)+thobeV+bishtTrim('#C9CED8')
+        + arm('64 49Q79 42 81 30', '#1A1C24')+arm('32 48Q30 58 38 62', '#1A1C24')
         + ghutra(WHITE, WSH)+face(k,{beard:'#2E2218', mouth:'flat', brows:[.8,-.8]})+ghutraFront(WHITE)+igal
         + `<circle cx="${cx-4.1}" cy="${cy-1}" r="3" fill="rgba(255,255,255,.12)" stroke="${GOLD}" stroke-width=".55"/><circle cx="${cx+4.1}" cy="${cy-1}" r="3" fill="rgba(255,255,255,.12)" stroke="${GOLD}" stroke-width=".55"/><path d="M${cx-1.1} ${cy-1.2}H${cx+1.1}" stroke="${GOLD}" stroke-width=".5"/>`
         + hand(k, 81, 27, 8, 'point', -1, 1.1)
         // وثيقة بيضا مختومة قدام فمه
         + `<g transform="rotate(-9 50 33)"><rect x="37" y="28.6" width="25" height="9.4" rx=".6" fill="${WHITE}"/><path d="M40 31.6H59M40 34.4H55" stroke="${WSH}" stroke-width=".6"/><path d="M60 28.6L62 30.6V38H60Z" fill="${WSH}"/></g><circle cx="38.4" cy="34.6" r="2.6" fill="#B8323A"/><circle cx="38.4" cy="34.6" r="1.4" fill="#8E2229"/>`
-        + arm('32 48Q30 44 40 40', '#1A1C24') + hand(k, 41, 39, -30, 'fist', 1, 1) },
+        + arm('36 49Q30 44 40 40', '#1A1C24') + hand(k, 41, 39, -30, 'fist', 1, 1) },
     // الحرامي: طاقية، لثام على عيونه، بلوزة مخططة، «شششش» بإصبعه، والكيس على كتفه
     harami:{ sym:'sack', draw:(k,u)=>`<defs><pattern id="${u}st" width="6" height="3.4" patternUnits="userSpaceOnUse"><rect width="6" height="3.4" fill="#1F2438"/><rect width="6" height="1.5" fill="#D9DDE8"/></pattern></defs>`
         + `<path d="M58 24C74 14 90 22 88 40C87 50 76 52 70 46Z" fill="#B88A55"/><path d="M60 24C66 20 72 20 76 23" stroke="#7A5832" stroke-width="1.2" fill="none"/><path d="M71 30L78 37" stroke="#7A5832" stroke-width=".8"/>`
         + torso(`url(#${u}st)`)+neck(k)
-        + arm('68 47Q70 38 66 32', `url(#${u}st)`)+arm('31 48Q32 42 43 38', `url(#${u}st)`)
+        + arm('64 49Q70 38 66 32', `url(#${u}st)`)+arm('36 49Q32 44 43 40', `url(#${u}st)`)
         + face(k,{ears:true, stubble:true, mouth:'smirk', brows:[-.9,.9], look:1})
         + `<path d="M${cx-10.6} ${cy-3.6}L${cx+10.6} ${cy-4.2}L${cx+10.4} ${cy+1.4}L${cx-10.4} ${cy+1.8}Z" fill="${INK}"/>`
         + [-4.1,4.1].map(dx=>`<path d="M${cx+dx-2.3} ${cy-1}Q${cx+dx} ${cy-2.9} ${cx+dx+2.3} ${cy-1}Q${cx+dx} ${cy+.6} ${cx+dx-2.3} ${cy-1}Z" fill="#FBF6EC"/><circle cx="${cx+dx+1}" cy="${cy-1.05}" r="1.1" fill="${INK}"/>`).join('')
@@ -108,9 +108,9 @@ window.DahoomSqArt = (function(){
         + `<path d="M46 29C43 29 42 32 43.4 33.6C38 35 37.6 42 42 44C46 46 54 46 57 43.4C60 40.4 58 34.6 53.6 33.6C55 32 54 29 51 29Z" fill="${WHITE}"/><path d="M44 33.6H55.4" stroke="${WSH}" stroke-width="1"/><circle cx="50" cy="39.2" r="2.4" fill="none" stroke="${WSH}" stroke-width=".6"/>`
         + hand(k, 43, 40, -30, 'fist', 1, 1)+hand(k, 66, 31, 170, 'fist', 1, 1) },
     // الشرطي: يرفع كفه «وقف!»، والدفتر بيده الثانية
-    shurti:{ sym:'shield', draw:k=>torso('#2D5C8F')+`<path d="M58 41L90 78H70Z" fill="#234A75"/>`+neck(k)+`<path d="M44 41.4L50 50L56 41.4Z" fill="#E9EEF5"/>`
-        + `<path d="M25 47L37 43.4L37.8 46L26 49.6Z M75 47L63 43.4L62.2 46L74 49.6Z" fill="${GOLD}"/><circle cx="50" cy="56" r=".9" fill="${GOLD}"/><circle cx="50" cy="63" r=".9" fill="${GOLD}"/><circle cx="50" cy="70" r=".9" fill="${GOLD}"/>`
-        + arm('69 47Q80 44 82 32', '#2D5C8F')+arm('31 48Q30 44 40 41', '#2D5C8F')
+    shurti:{ sym:'shield', draw:k=>torso('#2D5C8F')+`<path d="M57 42.4L79 80H67Z" fill="#234A75"/>`+neck(k)+`<path d="M44 41.4L50 50L56 41.4Z" fill="#E9EEF5"/>`
+        + `<path d="M33 48.6L41 45L41.8 47.4L34 51Z M67 48.6L59 45L58.2 47.4L66 51Z" fill="${GOLD}"/><circle cx="50" cy="56" r=".9" fill="${GOLD}"/><circle cx="50" cy="63" r=".9" fill="${GOLD}"/><circle cx="50" cy="70" r=".9" fill="${GOLD}"/>`
+        + arm('64 49Q80 44 82 32', '#2D5C8F')+arm('36 49Q30 44 40 41', '#2D5C8F')
         + face(k,{ears:true, mous:'#1F150E', mouth:'flat', brows:[1,1]})
         + `<path d="M${cx-11} ${cy-9}Q${cx-11} ${cy-20} ${cx} ${cy-20}Q${cx+11} ${cy-20} ${cx+11} ${cy-9}Z" fill="#1A2B4C"/><rect x="${cx-11}" y="${cy-10}" width="22" height="3.6" fill="#0F1A30"/><path d="M${cx-12.4} ${cy-6.6}Q${cx} ${cy-3.4} ${cx+12.4} ${cy-6.6}L${cx+11.6} ${cy-5}Q${cx} ${cy-2} ${cx-11.6} ${cy-5}Z" fill="${INK}"/>`
         + `<path d="M${cx} ${cy-17.4}L${cx+1.1} ${cy-15}L${cx+3.6} ${cy-14.8}L${cx+1.7} ${cy-13.2}L${cx+2.3} ${cy-10.8}L${cx} ${cy-12.1}L${cx-2.3} ${cy-10.8}L${cx-1.7} ${cy-13.2}L${cx-3.6} ${cy-14.8}L${cx-1.1} ${cy-15}Z" fill="${GOLD}"/>`
@@ -119,18 +119,18 @@ window.DahoomSqArt = (function(){
         + `<g transform="rotate(-8 49 33)"><rect x="40.6" y="27.4" width="17" height="12" rx=".6" fill="${WHITE}"/><rect x="40.6" y="27.4" width="17" height="2.8" fill="#C8323A"/><path d="M43 32.6H55M43 35H53M43 37.2H51" stroke="${WSH}" stroke-width=".55"/></g>` + hand(k, 42, 40, -30, 'fist', 1, 1) },
     // المخبر: يده ورا أذنه يتسمّع، وعيونه تلتفت، والمكبّر بيده الثانية
     faddah:{ sym:'eye', draw:(k,u)=>`<defs><pattern id="${u}sh" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#C42F36"/><rect width="1.2" height="1.2" fill="#F4E9E0"/></pattern></defs>`
-        + torso('#1D1418')+`<path d="M58 41L90 78H70Z" fill="#2B1F25"/>`+neck(k)+thobeV+bishtTrim('#FF7EC7')
-        + arm('69 47Q72 36 64 24', '#1D1418')+arm('31 48Q28 40 40 32', '#1D1418')
+        + torso('#1D1418')+`<path d="M57 42.4L79 80H67Z" fill="#2B1F25"/>`+neck(k)+thobeV+bishtTrim('#FF7EC7')
+        + arm('64 49Q72 36 64 24', '#1D1418')+arm('36 49Q28 40 40 32', '#1D1418')
         + ghutra(`url(#${u}sh)`, 'rgba(0,0,0,.25)')+face(k,{mous:'#2A1C12', mouth:'smirk', brows:[-1.2,.8], look:-1.1, lids:true})+ghutraFront(`url(#${u}sh)`)+igal
         + hand(k, 63, 19, -150, 'cup', 1, 1.1)
         // كاميرا بيضا على عينه اليمين، والثانية تلتفت
         + `<g transform="rotate(-8 45 22)"><rect x="35.4" y="17.6" width="15.6" height="10.4" rx="1.3" fill="${WHITE}"/><rect x="37.4" y="15.6" width="4.4" height="2.4" fill="${WHITE}"/><rect x="35.4" y="25" width="15.6" height="3" fill="${WSH}"/><circle cx="45.6" cy="22.6" r="3.8" fill="${INK}"/><circle cx="45.6" cy="22.6" r="2.3" fill="#3B3346"/><circle cx="44.7" cy="21.7" r=".8" fill="#fff"/><rect x="47.8" y="18.6" width="2.2" height="1.4" fill="#FFD166"/></g>`
         + `<path d="M32 9L33.2 13.2L37.2 12.6L34 15.4L36.2 18.8L32.4 17L29.4 20L30 16L26.2 14.6L30.4 13.6Z" fill="#FFD166"/>` + hand(k, 40, 31, -60, 'fist', 1, 1) },
     // الدلّالة: ترفع لفّة القماش عالي، ويدها عند فمها تنادي
-    dallal:{ sym:'tag', draw:k=>torso('#15101A')+`<path d="M58 41L90 78H70Z" fill="#241B2A"/>`
+    dallal:{ sym:'tag', draw:k=>torso('#15101A')+`<path d="M57 42.4L79 80H67Z" fill="#241B2A"/>`
         + `<path d="M15 14C11 26 22 34 18 48C16 56 22 62 20 70" stroke="#E2563F" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M19 14C18 26 28 34 25 46C23 54 28 60 27 66" stroke="#F2C14E" stroke-width="3" fill="none" stroke-linecap="round"/>`
         + `<rect x="9" y="8.6" width="16" height="6" rx="2.4" fill="#2E9E5B"/><path d="M11 8.6V14.6M15 8.6V14.6M19 8.6V14.6M23 8.6V14.6" stroke="#1E7A44" stroke-width=".6"/>`
-        + arm('32 47Q22 40 18 20', '#15101A')+arm('68 47Q68 40 61 34', '#15101A')
+        + arm('36 49Q22 40 18 20', '#15101A')+arm('64 49Q68 40 61 34', '#15101A')
         + hood('#1C1520','#2B2130')+face(k,{mouth:'shout', brows:[-1,-1]})
         + `<g fill="#E7B53E" stroke="#8C5C14" stroke-width=".3"><path d="M${cx-9.4} ${cy-5}H${cx+9.4}V${cy-3}H${cx-9.4}Z"/><path d="M${cx-1.1} ${cy-3}H${cx+1.1}V${cy+5}H${cx-1.1}Z"/><path d="M${cx-9} ${cy+1}H${cx-1.1}V${cy+5.4}Q${cx-6.4} ${cy+5.6} ${cx-9} ${cy+1}Z"/><path d="M${cx+9} ${cy+1}H${cx+1.1}V${cy+5.4}Q${cx+6.4} ${cy+5.6} ${cx+9} ${cy+1}Z"/></g>`
         + hoodFront('#1C1520')
@@ -161,11 +161,37 @@ window.DahoomSqArt = (function(){
       out+=`<path d="M${x} ${y}L${(x+L*Math.cos(t)).toFixed(1)} ${(y+L*Math.sin(t)).toFixed(1)}" stroke="${i%3?a:b}" stroke-width="${[.3,.45,.6][i%3]}" opacity=".6"/>`; }
     return out + [10,18,27].map(r=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${r===10?b:a}" stroke-width=".45" opacity=".55"/>`).join('');
   }
+  const SCENE = {
+    // سوق: أقواس وفوانيس
+    tajer:a=>[-6,20,46,72].map(x=>`<path d="M${x} 84V54Q${x+14} 34 ${x+28} 54V84Z" fill="rgba(0,0,0,.24)"/><path d="M${x+4} 84V56Q${x+14} 41 ${x+24} 56" stroke="${a}" stroke-width=".4" fill="none" opacity=".5"/>`).join('')
+      + [[12,0,20],[88,0,16]].map(([x,y,l])=>`<path d="M${x} ${y}V${l}" stroke="${a}" stroke-width=".4"/><path d="M${x-3} ${l}H${x+3}L${x+2} ${l+7}H${x-2}Z" fill="${a}"/><circle cx="${x}" cy="${l+3.6}" r="5" fill="${a}" opacity=".18"/>`).join(''),
+    // إشارات اتصال من الزاوية
+    wasta:a=>[16,28,40,52,64,76].map((r,i)=>`<path d="M${100-r} 0A${r} ${r} 0 0 0 100 ${r}" stroke="${a}" stroke-width="${1.6-i*.15}" fill="none" opacity="${.5-i*.06}"/>`).join('')
+      + [[14,14],[22,40],[8,58],[30,8]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="${a}" opacity=".6"/>`).join(''),
+    // محكمة: أعمدة وسقف مثلث
+    muhami:a=>`<path d="M-2 16L50 2L102 16Z" fill="rgba(255,236,200,.07)" stroke="${a}" stroke-width=".4" opacity=".7"/>`
+      + [4,16,74,86].map(x=>`<rect x="${x}" y="18" width="8" height="70" fill="rgba(255,236,200,.07)"/><rect x="${x-1}" y="17" width="10" height="2.4" fill="rgba(255,236,200,.12)"/><path d="M${x+2.6} 20V88M${x+5.4} 20V88" stroke="rgba(0,0,0,.2)" stroke-width=".5"/>`).join(''),
+    // ليل: قمر بدر ونجوم وسطوح نجدية
+    harami:a=>{ let m='M-2 84V64'; for(let x=-2;x<104;x+=10) m+=`L${x+2.5} 64L${x+5} 58L${x+7.5} 64L${x+10} 64`; m+='V84Z';
+      return `<circle cx="82" cy="15" r="8.4" fill="#F3E6BF" opacity=".9"/><circle cx="80" cy="13" r="1.6" fill="#D9CBA0"/><circle cx="85" cy="18" r="1.1" fill="#D9CBA0"/><circle cx="82" cy="15" r="13" fill="#F3E6BF" opacity=".08"/>`
+        + [[12,12],[24,6],[30,20],[8,34],[94,36],[68,6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".8" fill="#F3E6BF"/>`).join('') + `<path d="${m}" fill="rgba(0,0,0,.32)"/>`; },
+    // ضوء أحمر وأزرق من فوق
+    shurti:a=>`<path d="M0 0H42L-4 66Z" fill="#FF4D4D" opacity=".26"/><path d="M100 0H58L104 66Z" fill="#6FC3FF" opacity=".32"/><circle cx="0" cy="0" r="10" fill="#FF4D4D" opacity=".35"/><circle cx="100" cy="0" r="10" fill="#6FC3FF" opacity=".4"/>`,
+    // لوحة تحقيق: قصاصات مثبتة بخيط أحمر، وسبوت لايت
+    faddah:a=>`<path d="M40 0H60L86 84H14Z" fill="rgba(255,255,255,.06)"/>`
+      + `<g transform="rotate(-10 14 40)"><rect x="4" y="32" width="18" height="14" fill="#EFE6CF" opacity=".85"/><path d="M6.4 36H19.6M6.4 39H18M6.4 42H19.6" stroke="#8a7f6a" stroke-width=".6"/></g><g transform="rotate(8 86 52)"><rect x="77" y="45" width="17" height="13" fill="#EFE6CF" opacity=".85"/><rect x="79" y="47" width="6" height="5" fill="#8a7f6a"/><path d="M87 48H92M87 51H91" stroke="#8a7f6a" stroke-width=".6"/></g>`
+      + `<path d="M13 33L50 12L86 46" stroke="#E0475B" stroke-width=".5" fill="none"/><circle cx="13" cy="33" r="1.3" fill="#E0475B"/><circle cx="86" cy="46" r="1.3" fill="#E0475B"/><circle cx="50" cy="12" r="1" fill="#E0475B"/>`,
+    // سوق القماش: أعلام مثلثة وأقمشة مخططة معلّقة
+    dallal:a=>{ const c=['#F2C14E','#2E9E5B','#F4EFE5','#5AB4FF','#E2563F']; let f='';
+      for(let i=0;i<9;i++){ const x=-2+i*13, y=6+Math.sin(i/8*Math.PI)*5; f+=`<path d="M${x} ${y}L${x+11} ${y+1}L${x+5.5} ${y+10}Z" fill="${c[i%5]}" opacity=".85"/>`; }
+      return `<path d="M-4 5Q50 18 104 5" stroke="#F4EFE5" stroke-width=".5" fill="none" opacity=".6"/>${f}`
+        + [[86,18],[93,18]].map(([x,y],i)=>`<rect x="${x}" y="${y}" width="6" height="60" fill="${['#2E9E5B','#F2C14E'][i]}" opacity=".35"/><path d="M${x} ${y+8}H${x+6}M${x} ${y+20}H${x+6}M${x} ${y+32}H${x+6}" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>`).join(''); },
+  };
   function portrait(k){
     const R=ROLES[k]; if(!R) return '';
     const u='sqc'+(++N), [b1,b2]=BG[k], a=ACC[k];
     const sparks=[[14,10],[86,12],[92,32],[8,40],[80,6]].map(([x,y],i)=>`<path d="M${x} ${y-1.8}L${x+.5} ${y-.5}L${x+1.8} ${y}L${x+.5} ${y+.5}L${x} ${y+1.8}L${x-.5} ${y+.5}L${x-1.8} ${y}L${x-.5} ${y-.5}Z" fill="${a}" opacity="${.5+i%2*.3}"/>`).join('');
-    const half = `<rect width="100" height="140" fill="${b2}"/>${rays(k, 22, 46)}<circle cx="${cx}" cy="${cy}" r="21" fill="${a}" opacity=".2"/><circle cx="${cx}" cy="${cy}" r="21" fill="none" stroke="${a}" stroke-width=".5" opacity=".7"/><circle cx="${cx}" cy="${cy}" r="25" fill="none" stroke="${a}" stroke-width=".3" opacity=".45"/>${sparks}${R.draw(k, u)}`;
+    const half = `<rect width="100" height="140" fill="${b2}"/>${SCENE[k](a)}<circle cx="${cx}" cy="${cy}" r="21" fill="${a}" opacity=".2"/><circle cx="${cx}" cy="${cy}" r="21" fill="none" stroke="${a}" stroke-width=".5" opacity=".7"/><circle cx="${cx}" cy="${cy}" r="25" fill="none" stroke="${a}" stroke-width=".3" opacity=".45"/>${R.draw(k, u)}`;
     return `<svg class="sq-art" viewBox="0 0 100 140" role="img" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><defs>
         <pattern id="${u}h" width="1.6" height="1.6" patternUnits="userSpaceOnUse"><circle cx=".8" cy=".8" r=".26" fill="rgba(0,0,0,.2)"/></pattern>
         <clipPath id="${u}c"><rect x="4" y="4" width="92" height="132" rx="5"/></clipPath>
@@ -174,7 +200,9 @@ window.DahoomSqArt = (function(){
       <rect width="100" height="140" fill="${CREAM}"/>
       <g clip-path="url(#${u}c)"><rect width="100" height="140" fill="${b1}"/>
         <use href="#${u}f"/><use href="#${u}f" transform="rotate(180 50 70)"/>
-        <path d="M-5 82L105 58" stroke="${CREAM}" stroke-width=".7" opacity=".8"/>${SYM[R.sym](a)}
+        <path d="M-5 82L105 58" stroke="${CREAM}" stroke-width=".7" opacity=".8"/>
+        <circle cx="50" cy="70" r="18.6" fill="#0B0908" opacity=".35"/><circle cx="50" cy="70" r="16.6" fill="#0B0908"/><circle cx="50" cy="70" r="16.6" fill="none" stroke="${CREAM}" stroke-width=".8"/><circle cx="50" cy="70" r="18.4" fill="none" stroke="${a}" stroke-width=".6"/>
+        <g transform="translate(50 70) scale(.74) translate(-50 -70)">${SYM[R.sym](a)}</g>
         <rect width="100" height="140" fill="url(#${u}h)"/></g></svg>`;
   }
   const esc = s => String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
