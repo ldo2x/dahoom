@@ -53,17 +53,23 @@ window.DahoomNet = (function(){
   const baseUrl = () => /^https?:/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.href.replace(/[^/]*([?#].*)?$/,'') : PUBLIC_URL;
   const joinUrl = () => baseUrl()+'remote.html?room='+code;
 
-  let sigT=0;
+  let sigT=0, rcT=0, rcWait=1500;
+  // نرجع نتصل بسيرفر الربط العام بمهلة تكبر (1.5ث ← 3 ← 6 … لين 30ث) بدل كل ثانية — والاحتياطي شغال بالوقت هذا
+  function reconnectLater(){
+    if(rcT) return;
+    rcT=setTimeout(()=>{ rcT=0; try{ if(peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(e){} }, rcWait);
+    rcWait=Math.min(rcWait*2, 30000);
+  }
   function start(){
     if(peer || !window.Peer) return;
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
-    peer.on('open', ()=>{ LG('الشاشة جاهزة بالكود '+code); ready=true; tries=0; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
+    peer.on('open', ()=>{ LG('الشاشة جاهزة بالكود '+code); ready=true; tries=0; rcWait=1500; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
     peer.on('connection', onConn);
-    peer.on('disconnected', ()=>{ LG('سيرفر الربط انقطع — نرجع نتصل'); ready=ready2; refreshUI(); setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} },1500); });
+    peer.on('disconnected', ()=>{ if(rcWait<=1500) LG('سيرفر الربط انقطع — نرجع نتصل'); ready=ready2; refreshUI(); reconnectLater(); });
     startBackup();
     peer.on('error', e=>{
-      LG('خطأ سيرفر الربط: '+(e&&e.type));
+      if(rcWait<=3000) LG('خطأ سيرفر الربط: '+(e&&e.type));
       if(e.type==='unavailable-id'){ // الكود محجوز (غالبًا من تحديث الصفحة) — نعيد المحاولة ثم نغيّره
         peer.destroy(); peer=null; ready=false;
         if(++tries>=4){ sessionStorage.removeItem('dahoom_room'); tries=0; }
@@ -72,7 +78,7 @@ window.DahoomNet = (function(){
       // سيرفر الربط يقطع كل شوي ونرجع نتصل لحالنا — الجوالات المتصلة ما تتأثر. ننبّه بس لو ما رجع خلال ٢٠ ثانية
       if(e.type==='network' || e.type==='server-error' || e.type==='socket-error'){ ready=ready2; refreshUI();
         if(!sigT) sigT=setTimeout(()=>{ sigT=0; if(!ready && window.DAHOOM_ICE) toast(window.DAHOOM_ICE.why('signal')+' (اللي متصلين يكملون عادي — بس محد جديد يقدر يدخل)', 6000); }, 20000);
-        setTimeout(()=>{ try{ if(peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(err){} }, 3000); }
+        reconnectLater(); }
     });
   }
 
