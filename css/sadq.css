@@ -426,3 +426,5 @@
 .rl-sqcards .rl-sqt{padding:2px 4px}
 .sqc .sqc-num b{background:none;padding:0;width:auto;position:relative;text-align:center}
 .sqc .sqc-plate{width:auto}
+/* ورق اللعب: الرقم بالزاوية عشان ما يغطي الراس */
+.sqc.court .sqc-num{left:9.5cqw;top:6.5cqw;transform:none}
