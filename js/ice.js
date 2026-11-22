@@ -31,7 +31,7 @@ window.DAHOOM_ICE = (function(){
 
   // ==== سيرفر الربط الاحتياطي (server/peer-backup على Cloudflare) — فاضي = مقفل ====
   // الشاشة تسجّل فيه وبالعام سوا، والجوال يجرّبه لو ما لقى الشاشة بالعام
-  const PEER_BACKUP_HOST = '';
+  const PEER_BACKUP_HOST = 'dahoom-peer.peer-backup.workers.dev';
   const peerBackup = PEER_BACKUP_HOST ? { host:PEER_BACKUP_HOST, port:443, path:'/', secure:true, key:'peerjs' } : null;
 
   // STUN: سيرفرين يكفون (كثرة السيرفرات تبطّئ تجميع المسارات)
