@@ -10,7 +10,7 @@ window.DAHOOM_DATA.sadq = {
     muhami: { name:'المحامي', icon:'sq-scales',    color:'#8A5A2B', act:'istishara', block:'fadiha',    line:'عنده مخرج لكل ورطة' },
     harami: { name:'الحرامي', icon:'ninja',       color:'#5E6680', act:'nashl',     block:'mubadala',  line:'خفيف يد وما ينضحك عليه' },
     shurti: { name:'الشرطي',  icon:'sq-shield',    color:'#2478C8', act:'mukhalafa', block:'nashl',     line:'يحب يكتب مخالفات' },
-    faddah: { name:'المخبر',  icon:'sq-eye',   color:'#D5489A', act:'fadiha',    block:null,        line:'يعرف أسرار الكل' },
+    faddah: { name:'المخبرة', icon:'sq-eye',   color:'#D5489A', act:'fadiha',    block:null,        line:'تعرف أسرار الكل' },
     dallal: { name:'الدلّالة', icon:'sq-tag', color:'#E2563F', act:'mubadala',  block:null,        line:'تبيعك الشي وتشتريه منك' },
   },
   order: ['tajer','wasta','muhami','harami','shurti','faddah','dallal'],
