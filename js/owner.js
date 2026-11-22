@@ -13,7 +13,7 @@ window.DahoomOwner = (function(){
   const dock = () => $('#own-dock'), wrap = () => $('#own');
   const JUDGED = ['alf'];   // ألعاب المضيف فيها حَكَم (يضغط صح/غلط) — تحتاج لوحة الحكم
   const scrNow = () => (document.querySelector('.screen.active')||{}).id||'';
-  // الشريط فوق: الشعار (يرجّعك للرئيسية) + كود الجلسة + نسخ الدعوة + عامة/خاصة.
+  // الشريط فوق: الشعار (يرجّعك للرئيسية) + كود الجلسة. نسخ الدعوة وعامة/خاصة بس لما لوحة «جلستك» مو ظاهرة (الطاولة أو وقت اللعب) — لأنها فيها نفس الأزرار.
   // أثناء اللعب بس: زر «لوحة الحكم» (ألف نقطة وخلية الحروف) أو «شاشة العرض» (للتلفزيون) — والإدارة نفسها صارت بشاشتك.
   function render(){
     const n=NET(), code=n && n.ready ? n.code : '…', scr=scrNow();
@@ -27,8 +27,8 @@ window.DahoomOwner = (function(){
       : `<button class="own-b sw" data-own="toggle">${ic('phone')}<span>رجوع لشاشتي</span></button>`;
     dock().innerHTML = `<div class="own-l"><button class="own-brand" data-own="home" title="الرئيسية"><span class="brand-mark">د</span><span>دحوم</span></button>
         <span class="own-code" title="كود الجلسة">${ic('team')}<b>${esc(code)}</b></span>
-        <button class="own-b" data-own="copy">${ic('share')}<span>انسخ رابط الدعوة</span></button>
-        <button class="own-b own-pub ${pub?'on':''}" data-own="pub" aria-pressed="${pub}" title="${pub?'أي أحد يشوفها بقائمة الجلسات ويدخل — اضغط عشان تخليها خاصة':'ما يدخلها إلا اللي معه الكود — اضغط عشان تخليها عامة'}">${ic(pub?'eye':'padlock')}<span>الجلسة: <b>${pub?'عامة':'خاصة'}</b></span></button></div>
+        ${mode==='me' && !playing ? '' : `<button class="own-b" data-own="copy">${ic('share')}<span>انسخ رابط الدعوة</span></button>
+        <button class="own-b own-pub ${pub?'on':''}" data-own="pub" aria-pressed="${pub}" title="${pub?'أي أحد يشوفها بقائمة الجلسات ويدخل — اضغط عشان تخليها خاصة':'ما يدخلها إلا اللي معه الكود — اضغط عشان تخليها عامة'}">${ic(pub?'eye':'padlock')}<span>الجلسة: <b>${pub?'عامة':'خاصة'}</b></span></button>`}</div>
       <div class="own-r">${view}</div>`;
   }
   function ensureFrame(){

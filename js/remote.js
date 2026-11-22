@@ -197,6 +197,8 @@
 
   // ---------- تسجيل اللاعب ----------
   let regAv=null;
+  // اللاعب عنده حساب (مسجّل أو ضيف) → اسمه وصورته من الحساب، وما نعرض تعديلهم هنا
+  function hasAcct(){ try{ const A=window.DahoomAccount, c=A && A.current && A.current(); return !!(c && c.name); }catch(e){ return false; } }
   function openReg(){
     if(!st.avatars.length) st.avatars=AV_FALLBACK.slice();
     const A=window.DahoomAccount && window.DahoomAccount.current();
@@ -264,7 +266,7 @@
     document.body.style.setProperty('--team', t.color);
     if(S.myTurn && !st.wasTurn && !S.final) sfx('turn'); st.wasTurn=!!S.myTurn;
     const m=me();
-    $('#r-head').innerHTML=`${m&&m.avatar?`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
+    $('#r-head').innerHTML=`${m&&m.avatar?(hasAcct()?`<span class="r-me"><img src="${avSrc(m.avatar)}" alt=""></span>`:`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`):''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
       ${t.id==='ref' ? '' : `<span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>`}
       ${S.myTurn?`<span class="r-turn">${st.mode==='solo'?'دورك':'دوركم'}</span>`:''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=()=>{ if(S.locked){ status('تعديل الاسم والصورة بعد ما تخلص المباراة'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),2500); return; } openReg(); };
@@ -362,7 +364,7 @@
   function renderSess(){
     const I=st.info; if(!I) return;
     const m=me()||{}, n=I.players.length, on=I.players.filter(p=>p.on).length;
-    const host = I.host || 'المضيف';
+    const host = I.host || 'المضيف', lobby = !st.S || !!st.S.waiting;
     $('#r-sess-sum').innerHTML=`<span class="rs-game">${esc(I.gameName||'دحوم')}</span><span class="rs-code">${esc(I.code||st.room||'')}</span><span class="rs-n">${n} ${n===1?'لاعب':'لاعبين'}</span>`;
     const pl = p => `<div class="rs-p ${p.on?'on':''} ${p.id===m.pid?'me':''}" style="--c:${p.tc||p.color}"><img src="${avSrc(p.avatar)}" alt=""><span><b>${esc(p.name)}${p.own?` <em class="rs-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</b>${p.team&&I.mode!=='solo'?`<small>${esc(p.team)}</small>`:''}</span>${p.rd&&!I.locked?`<strong class="rs-rd" title="مستعد">${ic('check')}</strong>`:''}<em title="${p.on?'متصل':'مو متصل'}"></em></div>`;
     let list='';
@@ -375,8 +377,8 @@
         <div><span>الطريقة</span><b>${I.mode==='solo'?'كل واحد لحاله':'فرق'}</b></div>
         <div><span>متصلين</span><b>${on} من ${n}</b></div></div>
       <div class="rs-where k-${esc(I.where.k)}"><i></i>${esc(I.where.x)}</div>
-      <div class="rs-list">${list||'<p class="muted small">ما فيه لاعبين للحين</p>'}</div>
-      <div class="rs-acts">${rulesBtn(I.game)}${!I.locked && st.registeredRoom?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}${OWNER?'':'<button class="btn ghost small" data-leave>اطلع من الغرفة</button>'}</div>`;
+      ${lobby ? '' : `<div class="rs-list">${list||'<p class="muted small">ما فيه لاعبين للحين</p>'}</div>`}
+      <div class="rs-acts">${lobby ? '' : rulesBtn(I.game)}${!I.locked && st.registeredRoom && !hasAcct()?'<button class="btn small" data-edit>عدّل اسمي وصورتي</button>':''}${OWNER?'':'<button class="btn ghost small" data-leave>اطلع من الغرفة</button>'}</div>`;
     const e=$('#r-sess-body [data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
     bindRoster($('#r-sess-body'));
     const lv=$('#r-sess-body [data-leave]'); if(lv) lv.onclick=()=>{ if(!confirm('تطلع من الغرفة؟')) return; try{ send({t:'leave'}); }catch(err){} st.room=null; try{ st.peer && st.peer.destroy(); }catch(err){} localStorage.removeItem('dahoom_last_room'); localStorage.removeItem(teamKey()); history.replaceState(null,'','remote.html'); show('r-join'); };
@@ -503,7 +505,7 @@
       ${needTeam?'<p class="rw-pick">اختر فريقك من القائمة تحت</p>':''}
       ${(I.over||[]).length && !I.locked ? `<p class="rw-note">${(I.over||[]).includes(m.name) ? `اللعبة تكفي ${I.cap} لاعبين — انت تتفرج هالمرة وتلعب الجاية` : `اللعبة تكفي ${I.cap} لاعبين — يتفرجون هالمرة: ${esc(I.over.join('، '))}`}</p>` : ''}
       ${rosterHTML(I, true)}
-      <div class="rw-acts">${canInvite()?`<button type="button" class="btn ghost small" data-invfr>${ic('acc-user-plus')} ادعُ صديق</button>`:''}${!I.locked?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
+      <div class="rw-acts">${canInvite()?`<button type="button" class="btn ghost small" data-invfr>${ic('acc-user-plus')} ادعُ صديق</button>`:''}${!I.locked && !hasAcct()?`<button type="button" class="btn ghost small" data-edit>${ic('pencil')} عدّل اسمك وصورتك</button>`:''}</div>
     </section>`;
     const w=$('#r-wait'); bindRoster(w);
     const e=w.querySelector('[data-edit]'); if(e) e.onclick=()=>{ vibe(10); openReg(); };
@@ -511,7 +513,7 @@
   }
   function renderMe(){
     const m=me()||{}, t=(st.teams||[]).find(x=>x.id===st.teamId)||{};
-    $('#r-head').innerHTML=`${m.avatar?`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`:''}<span class="r-who"><span class="r-team">${esc(m.name||'')}</span>${t.name&&st.mode!=='solo'?`<small>${esc(t.name)}</small>`:''}</span>`;
+    $('#r-head').innerHTML=`${m.avatar?(hasAcct()?`<span class="r-me"><img src="${avSrc(m.avatar)}" alt=""></span>`:`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`):''}<span class="r-who"><span class="r-team">${esc(m.name||'')}</span>${t.name&&st.mode!=='solo'?`<small>${esc(t.name)}</small>`:''}</span>`;
     const b=$('#r-me'); if(b) b.onclick=()=>openReg();
   }
 
@@ -1244,7 +1246,12 @@
     $$('#r-rooms [data-room]').forEach(b=>b.onclick=()=>{ vibe(15); join(b.dataset.room); });
   }
   setInterval(loadRooms, 8000);
-  { const A=window.DahoomAccount, el=$('#acc-badge'); if(A){ A.init().then(()=>{ const c=A.current(); if(c && !me()) { try{ localStorage.setItem(meKey, JSON.stringify({ name:c.name, avatar:c.avatar })); }catch(e){} } }); if(el) A.mountBadge(el); } }
+  { const A=window.DahoomAccount, el=$('#acc-badge');
+    const syncAcct = () => { const c=A.current(); if(!c || !c.name) return; const m=me();
+      if(m && m.name===c.name && m.avatar===c.avatar) return;
+      try{ localStorage.setItem(meKey, JSON.stringify(Object.assign({}, m||{}, { name:c.name, avatar:c.avatar }))); }catch(e){}
+      if(m && m.pid && st.registeredRoom && st.room && st.conn && st.conn.open){ try{ send({t:'register', pid:m.pid, name:c.name, avatar:c.avatar}); }catch(e){} } };
+    if(A){ A.init().then(()=>{ syncAcct(); if(A.onChange) A.onChange(syncAcct); }); if(el) A.mountBadge(el); } }
   const q=new URLSearchParams(location.search).get('room');
   if(q) join(q); else { const last=localStorage.getItem('dahoom_last_room'); if(last) $('#r-code').value=last; loadRooms(); }
 })();
