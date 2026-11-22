@@ -428,3 +428,6 @@
 .sqc .sqc-plate{width:auto}
 /* ورق اللعب: الرقم بالزاوية عشان ما يغطي الراس */
 .sqc.court .sqc-num{left:9.5cqw;top:6.5cqw;transform:none}
+
+/* ورق اللعب: الاسم تحت الرمز بالنص، عشان ما يغطي وجه الشخصية المقلوبة */
+.sqc.court .sqc-plate{bottom:auto;top:65%}
