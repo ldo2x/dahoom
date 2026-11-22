@@ -431,3 +431,27 @@
 
 /* ورق اللعب: الاسم تحت الرمز بالنص، عشان ما يغطي وجه الشخصية المقلوبة */
 .sqc.court .sqc-plate{bottom:auto;top:65%}
+
+/* ===== بلاطة «ما أصدقك» بالرئيسية: مروحة بطاقات اللعبة ===== */
+.sq .gt-art{background:repeating-conic-gradient(from -8deg at 50% 78%,rgba(227,185,90,.16) 0 3deg,transparent 3deg 11deg),radial-gradient(70% 90% at 50% 80%,#6E1A30,#2A0812 75%)}
+.sq .gt-art::before{opacity:.06}
+.gt-mark.mk-sq{position:relative;width:min(250px,92%);aspect-ratio:250/150;display:block;background:none;box-shadow:none;transform:none}
+.gt-mark.mk-sq::before,.gt-mark.mk-sq::after{display:none}
+.mk-sq .sqt{position:absolute;bottom:-4%;left:50%;width:30%;aspect-ratio:5/7;transform-origin:50% 120%;transition:transform .45s cubic-bezier(.2,1.2,.3,1);filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+.mk-sq .sqt .sqc{width:100%;height:100%}
+.mk-sq .c1{transform:translateX(-50%) rotate(-30deg)}
+.mk-sq .c2{transform:translateX(-50%) rotate(-15deg)}
+.mk-sq .c3{transform:translateX(-50%) translateY(-6%);z-index:3}
+.mk-sq .c4{transform:translateX(-50%) rotate(15deg);z-index:2}
+.mk-sq .c5{transform:translateX(-50%) rotate(30deg);z-index:1}
+.game-tile.sq:hover .mk-sq .c1,.game-tile.sq:focus-visible .mk-sq .c1{transform:translateX(-50%) rotate(-40deg)}
+.game-tile.sq:hover .mk-sq .c2,.game-tile.sq:focus-visible .mk-sq .c2{transform:translateX(-50%) rotate(-20deg)}
+.game-tile.sq:hover .mk-sq .c3,.game-tile.sq:focus-visible .mk-sq .c3{transform:translateX(-50%) translateY(-14%) scale(1.06)}
+.game-tile.sq:hover .mk-sq .c4,.game-tile.sq:focus-visible .mk-sq .c4{transform:translateX(-50%) rotate(20deg)}
+.game-tile.sq:hover .mk-sq .c5,.game-tile.sq:focus-visible .mk-sq .c5{transform:translateX(-50%) rotate(40deg)}
+@media (prefers-reduced-motion:reduce){ .mk-sq .sqt{transition:none} }
+/* الجوال: البلاطة صغيرة، فنصغّر المروحة بنص الصورة */
+@media (max-width:599px){
+  .gt-mark.mk-sq{position:absolute;left:50%;top:44%;width:210px;transform:translate(-50%,-50%) scale(.62)}
+  .game-tile.sq:hover .gt-mark.mk-sq{transform:translate(-50%,-50%) scale(.65)}
+}
