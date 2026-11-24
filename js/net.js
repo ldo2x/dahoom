@@ -226,6 +226,8 @@ window.DahoomNet = (function(){
   const teamName = id => id==='ref' ? 'الحكم' : ((H?H.teams():D.competitors()).find(t=>t.id===id)||{}).name || '';
   const phonesOf = id => [...conns].filter(c=>c.open && c.teamId===id);
   const hasPhone = id => phonesOf(id).length>0;
+  // جواله متصل وصفحة اللعبة قدامه (مو طالع منها أو مقفل الشاشة)
+  const isOnline = id => phonesOf(id).some(alive);
   const cidOpen = cid => [...conns].some(c=>c.open && c.cid===cid);
   function send(teamId, msg){ phonesOf(teamId).forEach(c=>{ try{ c.send(msg); }catch(e){} }); }
   function push(c){ if(!c.teamId){ if(c.pid && c.open){ try{ c.send({t:'state', waiting:true, teamless:true, locked:isLocked()}); }catch(e){} } return; } if(!H){ try{ c.send({t:'state', waiting:true, locked:false}); }catch(e){} return; } try{ c.send(Object.assign({t:'state', locked:isLocked()}, H.state(c.teamId, c.cid, c.pid))); }catch(e){} }
@@ -378,5 +380,5 @@ window.DahoomNet = (function(){
   // للاختبارات المحلية بس: نعتبر كل المتصلين مستعدين
   const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   return { _conns: isLocal ? ()=>[...conns].map(c=>({pid:c.pid, open:c.open, hb:!!c.hb, away:!!c.away, age:Date.now()-(c.seen||0)})) : undefined, _readyAll: isLocal ? ()=>{ onlinePids().forEach(id=>RD.add(id)); infoAll(); } : undefined,
-    get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, waitingFor:()=>waitingFor().map(p=>p.name), forceReady, isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
+    get ownerPid(){ const c=ownerConn(); return c?c.pid:null; }, waitingFor:()=>waitingFor().map(p=>p.name), forceReady, isPublic, setPublic, phones:id=>phonesOf(id).map(c=>({ cid:c.cid, pid:c.pid })), newCode, newSession, info:()=>infoAll(), refresh:()=>refreshUI(), cidOpen, start, use, ask, cancel, notify, hasPhone, isOnline, pushAll, send, openPanel, joinUrl, get code(){ return code; }, get ready(){ return ready; } };
 })();

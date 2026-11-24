@@ -19,6 +19,9 @@ window.DahoomSadq = (function(){
   const byId = id => G.players.find(p=>p.id===id);
   const hidden = p => p.cards.filter(c=>!c.up);
   const phoneOf = p => { const n=NET(); return !!(n && n.hasPhone && n.hasPhone(p.id)); };
+  const onlineOf = p => { const n=NET(); return !!(n && (n.isOnline ? n.isOnline(p.id) : n.hasPhone && n.hasPhone(p.id))); };
+  // اللاعب اللي فصل نته أو طلع: ننتظره شوي، ولو ما رجع نمشّي دوره بدل ما الكل ينتظر الوقت كامل
+  const ABSENT_MS = 15000;
   const pushAll = () => { const n=NET(); if(n) n.pushAll(); };
   const ev = id => !!(G && G.event && G.event.id===id);
   const tardCost = () => ev('takhfid') ? DATA.tardSale : DATA.tardCost;
@@ -122,10 +125,18 @@ window.DahoomSadq = (function(){
   function askOne(p, spec, ms, def){
     return new Promise(res=>{
       const n=NET(); let done=false, rid=null, tm=null;
-      const finish=v=>{ if(done) return; done=true; clearTimeout(tm); if(rid && n) n.cancel(rid); res(v); };
+      let iv=null, gone=0, saved=null;
+      const finish=v=>{ if(done) return; done=true; clearTimeout(tm); clearInterval(iv); if(rid && n) n.cancel(rid); res(v); };
       if(!G || G.over || p.out){ return finish(def); }
       if(n && phoneOf(p)) rid=n.ask(p.id, Object.assign({ sq:true, ms:ms||0 }, spec), v=>finish(v==null||v<0 ? def : (spec.options[v]||{}).v));
       if(ms) tm=setTimeout(()=>finish(def), FAST()?5:ms);
+      if(ms && n && !FAST()) iv=setInterval(()=>{
+        if(done || !G || G.over) return;
+        if(onlineOf(p)){ if(gone){ gone=0; if(G.wait===saved.now) wait(saved.old && saved.old.label, saved.old ? Math.max(1000, saved.old.until-Date.now()) : 0); } return; }
+        gone+=1000;
+        if(gone===1000){ saved={ old:G.wait }; wait(`${p.name} مو متصل — ننتظره شوي`, ABSENT_MS); saved.now=G.wait; }
+        if(gone>=ABSENT_MS){ log(p, 'ما رجع اتصاله — مشّينا دوره تلقائي', 'ev', 'phone'); finish(def); }
+      }, 1000);
       G.finishers.push(()=>finish(def));
     });
   }
