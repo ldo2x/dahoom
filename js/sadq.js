@@ -66,10 +66,6 @@ window.DahoomSadq = (function(){
       s.style.left=(W/2+d*c).toFixed(1)+'px'; s.style.top=(H/2+d*sn).toFixed(1)+'px'; });
   }
   window.addEventListener('resize', ()=>{ if(G) layoutSeats(); });
-  function claimsHTML(p){
-    const e=Object.entries(p.claims||{}).sort((a,b)=>b[1]-a[1]); if(!e.length) return '';
-    return `<div class="sq-claims"><small>ادّعى</small>${e.map(([k,n])=>`<span class="sq-cl" style="--rc:${RL(k).color}">${esc(RL(k).name)}${n>1?`<i>×${n}</i>`:''}</span>`).join('')}</div>`;
-  }
 
   // ---------- السجل ----------
   function log(p, x, k, ic2){
@@ -80,7 +76,7 @@ window.DahoomSadq = (function(){
   function renderLog(){
     const el=$('#sq-log'); if(!el||!G) return;
     el.innerHTML = G.log.slice(-26).reverse().map(e=>`<div class="sq-lg ${e.k}" style="--c:${e.c||'transparent'}">${e.ic?`<i>${ic(e.ic)}</i>`:''}<span>${e.n?`<b>${esc(e.n)}</b> `:''}${esc(e.x)}</span></div>`).join('')
-      || '<div class="sq-lg"><span>هنا يطلع كل شي: مين ادّعى وش، ومين كشف مين</span></div>';
+      || '<div class="sq-lg"><span>هنا يطلع كل شي: وش صار بالمجلس، ومين كشف مين</span></div>';
   }
 
   // ---------- الكومة ----------
@@ -110,7 +106,7 @@ window.DahoomSadq = (function(){
       el.innerHTML=G.players.map((p,i)=>{ const [x,y]=seatPos(i, G.players.length); return `<div class="sq-seat ${p===cur()&&!G.over?'turn':''} ${p.out?'out':''} ${G.act&&G.act.target===p.id?'aim':''}" style="--c:${p.color};--x:${x.toFixed(1)};--y:${y.toFixed(1)}">
         <div class="sq-sh">${p.avatar?`<img src="${D.avatarSrc(p.avatar)}" alt="">`:''}<b>${esc(p.name)}</b>${phoneOf(p)?'':`<em class="sq-nophone">${ic('phone')} ما اتصل</em>`}</div>
         <div class="sq-cards">${p.cards.map(c=>cardHTML(c)).join('')}</div>
-        <div class="sq-sf"><span class="sq-coins">${ic('coins')}<b>${p.coins}</b></span>${p.loan?`<span class="sq-tag bad">${ic('hm-cash')} عليه سلفة</span>`:''}${p.out?`<span class="sq-tag">${ic('skull')} طلع</span>`:''}</div>${claimsHTML(p)}</div>`; }).join('');
+        <div class="sq-sf"><span class="sq-coins">${ic('coins')}<b>${p.coins}</b></span>${p.loan?`<span class="sq-tag bad">${ic('hm-cash')} عليه سلفة</span>`:''}${p.out?`<span class="sq-tag">${ic('skull')} طلع</span>`:''}</div></div>`; }).join('');
       layoutSeats();
     }
     const chest=$('#sq-chest'); if(chest && chest.dataset.n!==String(G.pot)){ chest.dataset.n=G.pot; chest.innerHTML=chestHTML(G.pot); }
@@ -280,7 +276,7 @@ window.DahoomSadq = (function(){
     G.act={ by:p.id, k:a.k, target:t?t.id:null, claim:A.role, stage:'declare' };
     const cost = a.k==='tard' ? tardCost() : (A.cost||0);
     if(cost){ p.coins-=cost; G.pot+=cost; }
-    if(A.role){ if(!hidden(p).some(c=>c.r===A.role)) p.stats.lies++; else p.stats.truths++; p.claims[A.role]=(p.claims[A.role]||0)+1; }
+    if(A.role){ if(!hidden(p).some(c=>c.r===A.role)) p.stats.lies++; else p.stats.truths++; }
     play('card',{volume:.6});
     if(A.role || t || cost) log(p, `${A.role?`يقول إنه ${RL(A.role).name} ويسوي `:''}${A.name}${t?` على ${t.name}`:''}${cost?` (دفع ${cost} للصندوق)`:''}`, 'act', A.icon);
     stage(A.role ? claimHTML(p, A.role, `${esc(A.name)}${t?` على ${who(t)}`:''}`) : `<div class="sq-msg">${who(p)} <b>${esc(A.name)}</b>${t?` على ${who(t)}`:''}</div>`);
@@ -297,7 +293,6 @@ window.DahoomSadq = (function(){
       if(b){
         G.act.blocker=t.id; G.act.stage='blocked';
         if(!hidden(t).some(c=>c.r===A.blockedBy)) t.stats.lies++; else t.stats.truths++;
-        t.claims[A.blockedBy]=(t.claims[A.blockedBy]||0)+1;
         log(t, `صد الحركة — يقول إنه ${RL(A.blockedBy).name}`, 'act', RL(A.blockedBy).icon);
         stage(claimHTML(t, A.blockedBy, `يصد ${esc(A.name)}`)); play('fx_deny',{volume:.5}); render(); await sleep(800);
         const r=await challengeWindow(t, A.blockedBy, true);
@@ -386,7 +381,7 @@ window.DahoomSadq = (function(){
     const n=NET(); const noPhone=comps.filter(c=>!(n && n.hasPhone(c.id)));
     if(noPhone.length && !window.DAHOOM_SQ_FAST){ toast(`الأوراق سرية — لازم كل لاعب يدخل من جواله: ${noPhone.map(c=>c.name).join('، ')}`, 5000); return; }
     $('#overlay-root').innerHTML='';
-    G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], coins:S.startCoins, cards:[], out:false, loan:false, claims:{},
+    G={ players:shuffle(comps.map(c=>({ id:c.id, name:c.name, color:c.color, avatar:c.avatar||((c.players||[])[0]||{}).avatar||'', players:c.players||[], coins:S.startCoins, cards:[], out:false, loan:false,
           stats:{ lies:0, truths:0, liesCaught:0, truthCaught:0, chWon:0, chLost:0, witRight:0, witWrong:0, taken:0, lost:0, earned:0 } }))),
         deck:newDeck(), pot:DATA.potStart, turn:0, round:1, event:null, act:null, log:[], outOrder:[], finishers:[], stageHtml:'', wait:null, over:false, t0:Date.now() };
     G.players.forEach(p=>{ p.cards=[{ r:draw(), up:false }, { r:draw(), up:false }]; });
@@ -456,7 +451,7 @@ window.DahoomSadq = (function(){
       scores:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, score:x.coins, turn:!G.over && x===cur() })),
       sq:{ me:p.id, cards:p.cards.map(c=>({ r:c.r, up:c.up })), coins:p.coins, loan:p.loan, out:p.out, pot:G.pot, deck:G.deck.length, round:G.round,
         event:G.event?{ name:G.event.name, desc:G.event.desc, icon:G.event.icon }:null, events:S.events,
-        pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan, claims:x.claims||{} })),
+        pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan })),
         act:actView(), wait:G.wait?{ label:G.wait.label, left:Math.max(0,G.wait.until-Date.now()), ms:G.wait.ms }:null,
         log:G.log.slice(-30), roles:ROLES_STATIC(), forceAt:DATA.forceAt } };
     if(G.over && G.final){ const r=G.final.indexOf(p.id)+1; st.final={ rank:r, of:G.players.length, mid:G.t0, stats:{ caught:p.stats.chWon|0, lies:p.stats.lies|0, wit:p.stats.witRight|0 }, awards:[], all:finalAll(p), rows:[['كذبات',String(p.stats.lies)],['انفضح',String(p.stats.liesCaught)],['كشف صح',String(p.stats.chWon)],['شهادات صح',String(p.stats.witRight)]] }; }
