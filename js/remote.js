@@ -460,7 +460,7 @@
     { const o=$('#ow-over'), ov=I.over||[]; if(o){ o.classList.toggle('hidden', !ov.length); o.textContent = ov.length ? `${G.name} تكفي ${I.cap} لاعبين — يتفرجون هالمرة: ${ov.join('، ')}` : ''; } }
     const tb=$('#ow-teams'); if(tb){
       const sig2=JSON.stringify([I.players,I.teams,solo,A.phoneTeams(),I.canCreate]);
-      if(tb.dataset.sig!==sig2){ tb.dataset.sig=sig2;
+      if(tb.dataset.sig!==sig2 && !editingName()){ tb.dataset.sig=sig2;
         tb.innerHTML = rosterHTML(Object.assign({}, I, { mode: solo?'solo':'teams' }), !solo) + (solo ? '' : `
           <div class="ow-trow"><button type="button" class="btn small" data-auto>${ic('recycle')} وزّع الفرق عشوائي</button><label class="ow-sw"><input type="checkbox" data-pt ${A.phoneTeams()?'checked':''}><i></i><span>اللاعبين يقدرون يسوون فرق جديدة</span></label></div>`);
         bindRoster(tb);
@@ -480,7 +480,9 @@
     if(solo) return P.length ? `<ul class="rr-list">${P.map(pl).join('')}</ul>` : '<p class="rr-empty">ما فيه لاعبين للحين — أرسلوا رابط الدعوة</p>';
     const myT=(P.find(p=>p.id===m.pid)||{}).tid;
     let h=(I.teams||[]).map(t=>{ const mem=P.filter(p=>p.tid===t.id), mine=!!myT && t.id===myT;
-      return `<div class="rr-team ${mine?'mine':''}" style="--c:${t.color}"><div class="rr-th"><i></i><b>${esc(t.name)}</b><small>${mem.length}</small>
+      // اسم الفريق ينضغط ويتعدّل: صاحب الجلسة أي فريق، واللاعب فريقه بس (قبل المباراة)
+      const canName = !I.locked && !!m.pid && (OWNER || mine);
+      return `<div class="rr-team ${mine?'mine':''}" style="--c:${t.color}"><div class="rr-th"><i></i>${canName?`<b class="rr-tn" data-tname="${esc(t.id)}" role="button" tabindex="0" title="اضغط عشان تعدّل الاسم"><span>${esc(t.name)}</span>${ic('pencil')}</b>`:`<b>${esc(t.name)}</b>`}<small>${mem.length}</small>
         ${mine?'<span class="rr-mine">فريقك</span>':(!I.locked && canJoin && m.pid?`<button type="button" class="btn small rr-join" data-join="${esc(t.id)}">${myT?'انتقل له':'انضم'}</button>`:'')}</div>
         <ul class="rr-list">${mem.map(pl).join('')||'<li class="rr-empty">فاضي</li>'}</ul></div>`; }).join('');
     if(I.ref){ const rf=P.filter(p=>p.tid==='ref'), mine=myT==='ref';
@@ -498,11 +500,24 @@
     if(!root) return;
     $$('[data-join]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'team', id:b.dataset.join}); });
     $$('[data-ref]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'ref'}); });
+    $$('[data-tname]', root).forEach(b=>{ const edit=()=>{
+        const id=b.dataset.tname, lbl=b.querySelector('span'), old=lbl.textContent.trim(), inp=document.createElement('input');
+        inp.className='rr-tin'; inp.value=old; inp.maxLength=16; inp.setAttribute('aria-label','اسم الفريق'); inp.enterKeyHint='done';
+        b.replaceWith(inp); inp.focus(); inp.select(); vibe(8);
+        let done=false; const fin=save=>{ if(done) return; done=true; const v=inp.value.trim();
+          if(save && v && v!==old){ send({t:'tname', id, name:v}); sfx('coin'); lbl.textContent=v; }
+          inp.replaceWith(b); };
+        inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); fin(true); } else if(e.key==='Escape') fin(false); };
+        inp.onblur=()=>fin(true); };
+      b.onclick=edit; b.onkeydown=e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); edit(); } }; });
     const nt=root.querySelector('[data-newteam]'); if(nt) nt.onclick=()=>{ const n=prompt('اسم الفريق؟'); if(n===null) return; vibe(15); send({t:'newteam', name:n}); };
     $$('[data-rules]', root).forEach(b=>b.onclick=()=>{ vibe(8); const g=b.dataset.rules; if(window.DahoomRules && g) window.DahoomRules.open(g); });
   }
   const rulesBtn = g => g && window.DahoomRules ? `<button type="button" class="btn ghost small rr-rules" data-rules="${esc(g)}">${ic('book')} طريقة اللعب</button>` : '';
+  // لا نعيد رسم القائمة وهو يكتب اسم الفريق (كانت تمسح اللي يكتبه)
+  const editingName = () => !!(document.activeElement && document.activeElement.classList.contains('rr-tin'));
   function renderWait(){
+    if(editingName()) return;
     if(OWNER && renderOwnerPanel($('#r-wait'))) return;
     const I=st.info||{players:[],teams:[]}, m=me()||{}, P=I.players||[], mine=P.find(p=>p.id===m.pid);
     const rd=!!(mine && mine.rd), solo=I.mode==='solo', needTeam=!solo && !I.locked && !!mine && !mine.tid;

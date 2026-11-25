@@ -1087,3 +1087,11 @@ body.is-owner .r-bar{display:none}
 .r-invl small{color:var(--mute);font-size:.8rem;font-weight:600}
 .r-invl small.on{color:var(--ok-ink)}
 .r-invl .btn{flex:none;min-width:5.5em}
+
+/* اسم الفريق: ينضغط ويتعدّل */
+.rr-tn{cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:2px 6px;margin:-2px -6px}
+.rr-tn .ic{width:16px;height:16px;color:var(--mute);opacity:.85}
+.rr-tn:hover,.rr-tn:focus-visible{background:color-mix(in srgb,var(--c,var(--brand)) 14%,transparent);outline:none}
+.rr-tn:hover .ic{opacity:1}
+.rr-tin{font:inherit;font-weight:800;color:var(--text);background:var(--surface);border:2px solid var(--c,var(--brand));border-radius:8px;padding:4px 8px;width:min(190px,48vw);min-width:0}
+.rr-tin:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--brand)) 30%,transparent)}

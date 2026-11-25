@@ -171,6 +171,14 @@ window.DahoomNet = (function(){
       if(!p || !t || D.session.mode!=='teams'){ c.send(lobbyMsg()); return; }
       D.joinPlayer({pid:p.id, name:p.name, avatar:p.avatar, teamId:t.id}); c.teamId=t.id;
       c.send({t:'joined', teamId:t.id, mode:D.session.mode, avatars:D.AVATARS, avatarGroups:D.AVATAR_GROUPS, teams:teamList(), known:true}); push(c); refreshUI(); return; }
+    // تعديل اسم الفريق من الجوال: صاحب الجلسة أي فريق، واللاعب فريقه بس — قبل المباراة
+    if(d.t==='tname'){
+      const t=D.session.teams.find(x=>x.id===d.id), name=String(d.name||'').trim().slice(0,16);
+      if(!t || !name || isLocked()) return;
+      if(!(c.owner || homeId(c.pid)===t.id)){ c.send({t:'notice', msg:'تقدر تعدّل اسم فريقك بس'}); return; }
+      if(window.DahoomBad && window.DahoomBad.has(name)){ c.send({t:'notice', msg:'الاسم فيه كلمة ما تصلح — اختر غيره'}); infoAll(); return; }
+      if(D.session.teams.some(x=>x!==t && x.name===name)){ c.send({t:'notice', msg:'فيه فريق بنفس الاسم'}); infoAll(); return; }
+      t.name=name; D.session.save(); if(D.refreshLobby) D.refreshLobby(); pushAll(); refreshUI(); infoAll(); return; }
     // لاعب ينشئ فريق من جواله (لو المضيف مفعّل الخيار) — وينتقل له لو كان مسجّل
     if(d.t==='newteam' && window.DahoomBad && window.DahoomBad.has(d.name)){ c.send({t:'notice', msg:'اسم الفريق فيه كلمة ما تصلح — اختر غيره'}); return; }
     if(d.t==='newteam' && !isLocked()){
