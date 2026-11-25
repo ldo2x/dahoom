@@ -138,6 +138,7 @@ window.DahoomNet = (function(){
       return;
     }
     if(d.t==='logrep'){ const w=logWait.get(d.id); if(w && !w.got.some(g=>g.c===c)) w.got.push({ c, who:who(c), dump:String(d.dump||'').slice(0,9000) }); return; }
+    if((d.t==='register' || d.t==='hello') && typeof d.uid==='string' && /^[\w-]{4,128}$/.test(d.uid) && !/^g_/.test(d.uid)) c.uid=d.uid;
     if(!NOLOG[d.t]) LG(`من ${who(c)}: ${d.t} ${brief(d)}`);
     // فردي: الجوال = لاعب. يسجّل اسمه وصورته وبس — بدون فرق
     if(d.t==='hello'){ c.pid = c.pid || d.pid || null; if(d.owner) c.owner=true; sendInfo(c); }
@@ -319,7 +320,8 @@ window.DahoomNet = (function(){
     return { t:'info', code, game:ss.game, gameName:GAME_AR[ss.game]||'', host:hostName(), mode:solo?'solo':'teams', where:where(), locked:isLocked(),
       ref: refOn ? { color:D.REF_COLOR } : null,
       players: ss.players.map(p=>{ const rf=refOn && isRefPid(p.id), tm=solo||rf?null:teamOf(p.id); const oc=ownerConn();
-        return { id:p.id, name:p.name, avatar:p.avatar, color:p.color, team:rf?'الحكم':tm?tm.name:null, tid:rf?'ref':tm?tm.id:null, tc:rf?D.REF_COLOR:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id), rd:isReady(p.id) }; }),
+        const uc=[...conns].find(x=>x.pid===p.id && x.uid);
+        return { id:p.id, uid:uc?uc.uid:'', name:p.name, avatar:p.avatar, color:p.color, team:rf?'الحكم':tm?tm.name:null, tid:rf?'ref':tm?tm.id:null, tc:rf?D.REF_COLOR:tm?tm.color:null, on:online.has(p.id), own:!!(oc && oc.pid===p.id), rd:isReady(p.id) }; }),
       teams: solo ? [] : ss.teams.map(t=>({ id:t.id, name:t.name, color:t.color, n:t.members.length })), phones:[...conns].filter(c=>c.open).length,
       canCreate:canCreate(), maxTeams: ss.game==='khaliya' ? 2 : 6, pub:isPublic(), wait:waitingFor().map(p=>p.name),
       cap: solo && CAP[ss.game] || 0, over: overCap() };

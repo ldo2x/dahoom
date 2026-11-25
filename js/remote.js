@@ -136,7 +136,10 @@
     status(I && ((why && typeof why!=='function') || st.retry>=2) ? I.why(why || 'ice') : 'انقطع الاتصال… نرجع نتصل', true);
     clearTimeout(st.rt); st.rt=setTimeout(()=>{ if(!st.conn || !st.conn.open) connect(); }, Math.min(8000, 1500*(++st.retry)));
   }
-  function send(msg){ if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
+  // رقم الحساب (المسجّل بس، مو الضيف) يروح مع التسجيل — عشان اللاعبين يضغطون عليك ويشوفون ملفك
+  const acctUid = () => { try{ const A=window.DahoomAccount; if(!A || A.mode!=='user') return ''; const c=A.current(); return c && c.uid && !c.guest ? c.uid : ''; }catch(e){ return ''; } };
+  function send(msg){ if(msg && (msg.t==='register' || msg.t==='hello')){ const u=acctUid(); if(u) msg.uid=u; }
+    if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
   // نبض: الشاشة تعرف إن الجوال لسا معها. بدونه الجوال اللي انقفل أو طلع يبقى «متصل» ويوقف البداية
   const beatConn = t => { try{ if(st.conn && st.conn.open) st.conn.send(t==='hb' ? {t, ts:Math.round(performance.now())} : {t}); }catch(e){} };
   setInterval(()=>{ if(document.visibilityState==='visible') beatConn('hb'); }, 4000);
@@ -477,7 +480,7 @@
   // ---------- قائمة الانتظار: الفرق واللاعبين وحالة «مستعد» (للاعب ولصاحب الجلسة) ----------
   function rosterHTML(I, canJoin){
     const m=me()||{}, P=I.players||[], solo=I.mode==='solo';
-    const pl = p => `<li class="rr-p ${p.rd?'rd':''} ${p.on?'':'off'} ${p.id===m.pid?'me':''}"><img src="${avSrc(p.avatar)}" alt="">
+    const pl = p => `<li class="rr-p ${p.rd?'rd':''} ${p.on?'':'off'} ${p.id===m.pid?'me':''}" data-pp="${esc(p.id)}" role="button" tabindex="0" aria-label="ملف ${esc(p.name)}"><img src="${avSrc(p.avatar)}" alt="">
       <span class="rr-n">${esc(p.name)}${p.own?` <em class="rr-own" title="صاحب الجلسة">${ic('crown')}</em>`:''}${p.id===m.pid?' <i>(انت)</i>':''}</span>
       <span class="rr-st">${!p.on?'<span>مو متصل</span>':p.rd?`${ic('check')}<span>مستعد</span>`:'<span>ينتظر</span>'}</span></li>`;
     if(solo) return P.length ? `<ul class="rr-list">${P.map(pl).join('')}</ul>` : '<p class="rr-empty">ما فيه لاعبين للحين — أرسلوا رابط الدعوة</p>';
@@ -503,6 +506,8 @@
     if(!root) return;
     $$('[data-join]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'team', id:b.dataset.join}); });
     $$('[data-ref]', root).forEach(b=>b.onclick=()=>{ vibe(15); sfx('coin'); send({t:'ref'}); });
+    $$('[data-pp]', root).forEach(li=>{ const go=e=>{ if(e && e.target.closest('button,input,a')) return; playerCard(li.dataset.pp); };
+      li.onclick=go; li.onkeydown=e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); go(); } }; });
     $$('[data-tname]', root).forEach(b=>{ const edit=()=>{
         const id=b.dataset.tname, lbl=b.querySelector('span'), old=lbl.textContent.trim(), inp=document.createElement('input');
         inp.className='rr-tin'; inp.value=old; inp.maxLength=16; inp.setAttribute('aria-label','اسم الفريق'); inp.enterKeyHint='done';
@@ -515,6 +520,26 @@
       b.onclick=edit; b.onkeydown=e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); edit(); } }; });
     const nt=root.querySelector('[data-newteam]'); if(nt) nt.onclick=()=>{ const n=prompt('اسم الفريق؟'); if(n===null) return; vibe(15); send({t:'newteam', name:n}); };
     $$('[data-rules]', root).forEach(b=>b.onclick=()=>{ vibe(8); const g=b.dataset.rules; if(window.DahoomRules && g) window.DahoomRules.open(g); });
+  }
+  // نافذة مصغرة لملف اللاعب: الصورة والاسم واللقب والمستوى والإحصائيات + فتح الملف وإضافة صديق
+  async function playerCard(pid){
+    const I=st.info||{}, p=(I.players||[]).find(x=>x.id===pid); if(!p) return;
+    const A=window.DahoomAccount, mine=(me()||{}).pid===pid, seq=(st.ppSeq=(st.ppSeq||0)+1);
+    const head = x => `<div class="pp-head" style="--c:${esc(p.tc||p.color||'var(--brand)')}"><img src="${avSrc((x&&x.avatar)||p.avatar)}" alt=""><div><b>${esc((x&&x.name)||p.name)}${mine?' <i>(انت)</i>':''}</b>
+        <small>${x&&x.username?`<span dir="ltr">@${esc(x.username)}</span> · `:''}${x?esc(x.titleName||''):(p.uid?'':'ضيف — ما عنده حساب')}</small>
+        <span class="pp-st">${p.own?`${ic('crown')} صاحب الجلسة · `:''}${p.team?esc(p.team)+' · ':''}${p.on?'متصل':'مو متصل'}</span></div></div>`;
+    const body = x => !x ? (p.uid ? '<p class="pp-load muted center">نجيب ملفه…</p>' : '') : `<div class="pp-lv"><span>مستوى</span><b>${x.level|0}</b><i style="--p:${Math.round(((x.levelInfo||{}).pct||0)*100)}%"></i></div>
+        <div class="pp-stats"><div><b>${x.games|0}</b><span>مباراة</span></div><div><b>${x.wins|0}</b><span>فوز</span></div><div><b>${x.games?Math.round((x.wins|0)/x.games*100):0}%</b><span>نسبة الفوز</span></div></div>`;
+    const acts = x => `<div class="r-actions">${x?`<a class="btn" href="profile.html?u=${encodeURIComponent(p.uid)}" target="_blank" rel="noopener">${ic('person')} افتح ملفه</a>`:''}${x && !mine && A && A.mode==='user' ? `<button class="btn btn-hype" data-ppadd>${ic('plus')} أضف صديق</button>`:''}<button class="btn ghost" data-x>إغلاق</button></div>`;
+    const draw = x => { sheet(`<div class="pp">${head(x)}${body(x)}${acts(x)}</div>`); $('#r-sheet [data-x]').onclick=closeSheet;
+      const ad=$('#r-sheet [data-ppadd]'); if(ad) ad.onclick=async()=>{ ad.disabled=true; vibe(15); const ok=await A.sendFriendRequest(p.uid); ad.textContent = ok ? 'انرسل طلب الصداقة' : 'ما زبط — جرّب بعدين'; if(ok) sfx('good'); }; };
+    vibe(8); draw(null);
+    if(!p.uid || !A || !A.getProfile) return;
+    const x=await A.getProfile(p.uid).catch(()=>null); if(seq!==st.ppSeq || $('#r-sheet').classList.contains('hidden')) return;
+    if(!x){ const l=$('#r-sheet .pp-load'); if(l) l.textContent='ما قدرنا نجيب ملفه الحين'; return; }
+    draw(x);
+    // صديق من قبل؟ نشيل الزر
+    if(!mine && A.mode==='user' && A.listFriends){ const fr=await A.listFriends().catch(()=>[]); if(seq!==st.ppSeq) return; if((fr||[]).some(f=>(f.id||f.uid)===p.uid)){ const ad=$('#r-sheet [data-ppadd]'); if(ad){ ad.disabled=true; ad.innerHTML=`${ic('check')} صديقك`; } } }
   }
   const rulesBtn = g => g && window.DahoomRules ? `<button type="button" class="btn ghost small rr-rules" data-rules="${esc(g)}">${ic('book')} طريقة اللعب</button>` : '';
   // لا نعيد رسم القائمة وهو يكتب اسم الفريق (كانت تمسح اللي يكتبه)

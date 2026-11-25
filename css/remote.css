@@ -1104,3 +1104,24 @@ body.is-owner .r-bar{display:none}
 .rr-tin{font:inherit;font-weight:800;color:var(--text);background:var(--surface);border:2px solid var(--c,var(--brand));border-radius:8px;padding:4px 8px;width:min(190px,48vw);min-width:0}
 .rr-tin:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--brand)) 30%,transparent)}
 .r-khleg em{font-style:normal;color:var(--c);font-weight:800}
+
+/* نافذة ملف اللاعب المصغرة (من قائمة الانتظار) */
+.rr-p[data-pp]{cursor:pointer;transition:background .15s}
+.rr-p[data-pp]:hover,.rr-p[data-pp]:focus-visible{background:color-mix(in srgb,var(--brand) 10%,var(--surface-2));outline:none}
+.pp{display:flex;flex-direction:column;gap:14px}
+.pp-head{display:flex;align-items:center;gap:14px}
+.pp-head img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--c);flex:none;background:var(--surface-2)}
+.pp-head b{display:block;font-size:1.35rem;line-height:1.2}
+.pp-head b i{font-style:normal;font-size:.85rem;color:var(--mute);font-weight:600}
+.pp-head small{display:block;color:var(--mute);font-weight:600;margin-top:2px}
+.pp-st{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:.8rem;font-weight:700;color:var(--c)}
+.pp-st .ic{width:14px;height:14px}
+.pp-lv{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:8px;background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.pp-lv span{color:var(--mute);font-weight:700;font-size:.85rem}
+.pp-lv b{font-family:var(--num);font-size:1.4rem}
+.pp-lv i{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--brand) var(--p),var(--surface-3) var(--p))}
+.pp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pp-stats div{background:var(--surface-2);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.pp-stats b{font-family:var(--num);font-size:1.3rem}
+.pp-stats span{color:var(--mute);font-size:.78rem;font-weight:700}
+.pp-load{margin:0}
