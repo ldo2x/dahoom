@@ -124,7 +124,7 @@ window.DahoomSadq = (function(){
       let iv=null, gone=0, saved=null;
       const finish=v=>{ if(done) return; done=true; clearTimeout(tm); clearInterval(iv); if(rid && n) n.cancel(rid); res(v); };
       if(!G || G.over || p.out){ return finish(def); }
-      if(n && phoneOf(p)) rid=n.ask(p.id, Object.assign({ sq:true, ms:ms||0 }, spec), v=>finish(v==null||v<0 ? def : (spec.options[v]||{}).v));
+      if(n && phoneOf(p)) rid=n.ask(p.id, Object.assign({ sq:true, ms:ms||0 }, spec), v=>finish(v===-1 && spec.cancel ? null : v==null||v<0 ? def : (spec.options[v]||{}).v));
       if(ms) tm=setTimeout(()=>finish(def), FAST()?5:ms);
       if(ms && n && !FAST()) iv=setInterval(()=>{
         if(done || !G || G.over) return;
@@ -220,8 +220,11 @@ window.DahoomSadq = (function(){
       stage(revealHTML(claimer, role, true)); play('correct',{volume:.6});
       log(claimer, `كان صادق — عنده ${RL(role).name}`, 'good', RL(role).icon);
       // الورقة ترجع للكومة ويسحب بدالها
-      claimer.cards.splice(claimer.cards.indexOf(card),1); toDeck(role); claimer.cards.push({ r:draw(), up:false });
-      tell(claimer, 'ورقتك رجعت للكومة وسحبت ورقة جديدة');
+      // نفس المكان (قبل كانت الجديدة تنحط آخر شي وترتيب أوراقه يتغيّر)، وتنعلّم «جديدة» شوي عشان يعرف وش صار
+      const ci=claimer.cards.indexOf(card); toDeck(role); const nc={ r:draw(), up:false, fresh:true }; claimer.cards.splice(ci,1,nc);
+      setTimeout(()=>{ nc.fresh=false; if(G) pushAll(); }, 9000);
+      log(claimer, 'رجّع ورقته للكومة وسحب بدالها — عشان ما تنعرف', 'info', 'recycle');
+      tell(claimer, `صدقت! ${RL(role).name} انكشفت للكل، فرجعت للكومة وسحبت بدالها: ${RL(nc.r).name}`);
       render(); await sleep(1600); G.act.reveal=null;
       if(ev('taftish') && ch.coins>=2){ ch.coins-=2; G.pot+=2; log(ch, 'حملة تفتيش: دفع 2 للصندوق بدل ما يخسر ورقة', 'bad', 'search'); render(); await sleep(900); }
       else { claimer.stats.taken++; await loseCard(ch, `كشف ${claimer.name} وطلع صادق`); }
@@ -449,7 +452,7 @@ window.DahoomSadq = (function(){
     const st={ game:'sadq', team:{ id:p.id, name:p.name, color:p.color, score:p.coins }, myTurn:!G.over && cur()===p,
       phase: G.over ? '' : p.out ? 'طلعت من المجلس — تابع الباقين' : cur()===p ? 'دورك' : `دور ${cur().name}`,
       scores:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, score:x.coins, turn:!G.over && x===cur() })),
-      sq:{ me:p.id, cards:p.cards.map(c=>({ r:c.r, up:c.up })), coins:p.coins, loan:p.loan, out:p.out, pot:G.pot, deck:G.deck.length, round:G.round,
+      sq:{ me:p.id, cards:p.cards.map(c=>({ r:c.r, up:c.up, nw:c.fresh?1:0 })), coins:p.coins, loan:p.loan, out:p.out, pot:G.pot, deck:G.deck.length, round:G.round,
         event:G.event?{ name:G.event.name, desc:G.event.desc, icon:G.event.icon }:null, events:S.events,
         pl:G.players.map(x=>({ id:x.id, name:x.name, color:x.color, av:x.avatar||'', coins:x.coins, hid:hidden(x).length, up:x.cards.filter(c=>c.up).map(c=>c.r), out:x.out, turn:!G.over && x===cur(), loan:x.loan })),
         act:actView(), wait:G.wait?{ label:G.wait.label, left:Math.max(0,G.wait.until-Date.now()), ms:G.wait.ms }:null,

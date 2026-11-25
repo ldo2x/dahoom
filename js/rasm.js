@@ -43,7 +43,7 @@
     if(all.includes(g)) return 2;
     if(all.some(x=>x.length>=3 && g.length<=x.length+8 && g.includes(x))) return 2;
     if(all.some(x=>x.length>=5 && lev(x,g)<=1)) return 2;
-    if(all.some(x=>x.length>=3 && lev(x,g)<=2)) return 1;
+    if(all.some(x=>x.length>=3 && Math.abs(x.length-g.length)<=2 && lev(x,g) <= (x.length>=5 ? 2 : 1))) return 1;
     return 0;
   }
 

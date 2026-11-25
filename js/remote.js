@@ -875,7 +875,7 @@
     const ck=JSON.stringify(Q.cards);
     const ce=$('#sq-rcards'); if(force || ce.dataset.k!==ck){ ce.dataset.k=ck;
       ce.innerHTML = Q.cards.map(c=>{ const r=sqRole(Q,c.r);
-        return `<div class="sq-hc ${c.up?'dead':''}" style="--rc:${r.color}">${c.up?'':`<div class="sq-hc-cov"><span class="sq-hc-cb">${SQBACK()}</span><span>مغطاة</span></div>`}<div class="sq-hc-art">${SQCARD(r)}</div><small>${esc(r.line)}</small>
+        return `<div class="sq-hc ${c.up?'dead':''} ${c.nw?'fresh':''}" style="--rc:${r.color}">${c.nw?'<span class="sq-hc-new">جديدة</span>':''}${c.up?'':`<div class="sq-hc-cov"><span class="sq-hc-cb">${SQBACK()}</span><span>مغطاة</span></div>`}<div class="sq-hc-art">${SQCARD(r)}</div><small>${esc(r.line)}</small>
           <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
     // اللاعبين
     $('#sq-rpl').innerHTML=Q.pl.map(x=>`<div class="sq-rp ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" style="--c:${x.color}">

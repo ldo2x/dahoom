@@ -60,12 +60,21 @@
   function lev(a,b){ const m=Array.from({length:b.length+1},(_,j)=>j);
     for(let i=1;i<=a.length;i++){ let prev=m[0]; m[0]=i; for(let j=1;j<=b.length;j++){ const t=m[j]; m[j]=Math.min(m[j]+1, m[j-1]+1, prev+(a[i-1]===b[j-1]?0:1)); prev=t; } }
     return m[b.length]; }
+  // «بي إم دبليو (BMW)» = جوابين: اللي برا القوسين واللي داخلها (وكذا «/» و«أو»)
   function check(answer, text){
+    const full=String(answer||''), alts=[full, full.replace(/\([^)]*\)/g,' '), ...(full.match(/\(([^)]*)\)/g)||[]).map(x=>x.slice(1,-1))];
+    alts.slice().forEach(x=>x.split(/\s*[\/،]\s*|\s+أو\s+/).forEach(y=>{ if(y && y!==x) alts.push(y); }));
+    return alts.some(x=>check1(x, text));
+  }
+  // الحروف الطويلة بنص الكلمة (رمال = رمل، جبال = جبل)
+  const skel = w => w[0] + w.slice(1).replace(/[اوي]/g,'');
+  function check1(answer, text){
     const a=norm(answer), g=norm(text); if(!g || !a) return false;
     const a0=a.replace(/ /g,''), g0=g.replace(/ /g,'');
     if(a0===g0) return true;
     if(a0.length>=4 && g0.includes(a0) && g0.length<=a0.length+10) return true;     // «ايرين ييغر» = «ايرين»
     if(g0.length>=4 && a.split(' ').some(w=>w.length>=4 && w===g0)) return true;      // كلمة من الجواب الطويل
+    if(!a.includes(' ') && !g.includes(' ') && Math.min(a0.length,g0.length)>=3 && Math.abs(a0.length-g0.length)<=2 && skel(a0)===skel(g0) && skel(a0).length>=3) return true;
     const tol = a0.length>=8 ? 2 : a0.length>=5 ? 1 : 0;
     return tol>0 && lev(a0,g0)<=tol;
   }
@@ -254,6 +263,13 @@
     const i=G.teams.findIndex(t=>t.id===id), t=G.teams[i];
     if(!t && !isRef) return { game:'khaliya', waiting:true };
     const me = isRef ? { id:'ref', name:'الحكم', color:D.REF_COLOR, score:'' } : { id:t.id, name:t.name, color:t.color, score:t.wins };
+    // خلصت المباراة: الجوالات تعرض مين فاز (قبل كانت تبقى على شاشة الجرس وكأنها معلّقة)
+    if(G.over && G.matchOver && !isRef){
+      const sorted=[...G.teams].sort((x,y)=>y.wins-x.wins), scores=G.teams.map(x=>({id:x.id,name:x.name,color:x.color,score:x.wins}));
+      const o=(G.stats||[])[i]||{};
+      return { game:'khaliya', team:me, scores, final:{ rank:sorted.indexOf(t)+1, of:sorted.length, mid:G.log.t0, awards:[],
+        rows:[['جولات فزتوها', t.wins], ['خلايا أخذتوها', o.cells||0], ['أجوبة صح', o.ok||0]], stats:{ cells:o.cells|0, ok:o.ok|0 } } };
+    }
     const mineBz = (G.blog||[]).find(o=>o.pid && o.pid===pid), teamBz = (G.blog||[]).find(o=>o.i===i);
     const l=order(), rank = mineBz ? l.indexOf(mineBz)+1 : 0;
     const bzOpen = !isRef && ['buzz','answer','open'].includes(G.phase);
