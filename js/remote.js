@@ -885,14 +885,14 @@
   function buildSQ(){
     $('#r-sq').innerHTML=`<div class="sq-r">
       <div class="sq-rmain">
-        <div class="sq-rtop"><span class="sq-chip" id="sq-rround"></span><span class="sq-chip pot">${ic('hm-building-bank')} الصندوق <b id="sq-rpot"></b></span><span class="sq-chip" id="sq-rdeck"></span></div>
+        <section class="sq-mt" id="sq-mt" aria-label="الطاولة"><div class="sq-mt-rug"><div class="sq-mt-c"><b class="sq-mt-turn" id="sq-mt-turn"></b><span class="sq-mt-claim" id="sq-mt-claim"></span>
+          <span class="sq-mt-meta"><span id="sq-rround"></span> · ${ic('hm-building-bank')} <b id="sq-rpot"></b> · <span id="sq-rdeck"></span></span></div></div><div class="sq-mt-seats" id="sq-mt-seats"></div></section>
         <div class="sq-rev" id="sq-rev"></div>
         <div class="sq-ract" id="sq-ract"></div>
         <div class="sq-rask" id="sq-rask"></div>
       </div>
       <div class="sq-rside">
         <section class="sq-rhand"><div class="sq-rhh"><b>أوراقك</b><span id="sq-rme"></span><button type="button" class="btn ghost small" id="sq-rhide"></button></div><div class="sq-rcards cover" id="sq-rcards"></div><p class="sq-rhint" id="sq-rhint">اضغط مطوّل على أوراقك تشوفها — وارفع إصبعك تتغطى</p></section>
-        <section class="sq-rpl" id="sq-rpl"></section>
         <details class="sq-rref"><summary>${ic('book')} الشخصيات وحركاتها</summary><div id="sq-rref"></div></details>
         <section class="sq-rlogw"><div class="lbl">وش صار</div><div class="sq-rlog" id="sq-rlog"></div></section>
       </div></div>`;
@@ -908,7 +908,8 @@
   function renderSQ(Q, force){
     if(!sq.built || !$('#sq-rcards')) buildSQ();
     sq.Q=Q;
-    $('#sq-rround').textContent='اللفة '+Q.round; $('#sq-rpot').textContent=Q.pot; $('#sq-rdeck').innerHTML=`${ic('cards')} الكومة ${Q.deck}`;
+    $('#sq-rround').textContent='اللفة '+Q.round; $('#sq-rpot').textContent=Q.pot; $('#sq-rdeck').innerHTML=`${ic('cards')} ${Q.deck}`;
+    renderSQTable(Q);
     const E=Q.event; $('#sq-rev').innerHTML = Q.events ? (E ? `<span class="sq-evi">${ic(E.icon)}</span><span><small>حدث المجلس</small><b>${esc(E.name)}</b> <em>${esc(E.desc)}</em></span>` : `<span class="sq-evi">${ic('star')}</span><span><small>حدث المجلس</small><b>اللفة الأولى</b> <em>الأحداث تبدأ من اللفة الثانية</em></span>`) : '';
     $('#sq-rev').classList.toggle('r-hide', !Q.events);
     // الحركة الحالية
@@ -928,15 +929,29 @@
       ce.innerHTML = Q.cards.map(c=>{ const r=sqRole(Q,c.r);
         return `<div class="sq-hc ${c.up?'dead':''} ${c.nw?'fresh':''}" style="--rc:${r.color}">${c.nw?'<span class="sq-hc-new">جديدة</span>':''}${c.up?'':`<div class="sq-hc-cov"><span class="sq-hc-cb">${SQBACK()}</span><span>مغطاة</span></div>`}<div class="sq-hc-art">${SQCARD(r)}</div><small>${esc(r.line)}</small>
           <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
-    // اللاعبين
-    $('#sq-rpl').innerHTML=Q.pl.map(x=>`<div class="sq-rp ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" style="--c:${x.color}">
-      ${x.av?`<img src="${avSrc(x.av)}" alt="">`:'<i class="sq-rp-av"></i>'}<span class="sq-rp-n"><b>${esc(x.name)}${x.id===Q.me?' <i>(انت)</i>':''}</b><small>${x.out?`${ic('skull')} طلع`:`${ic('coins')} ${x.coins}${x.loan?` · ${ic('hm-cash')} سلفة`:''}`}</small></span>
-      <span class="sq-rp-c">${Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('')}${x.up.map(k=>{ const r=sqRole(Q,k); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('')}</span>
-      </div>`).join('');
     if(!$('#sq-rref').innerHTML) $('#sq-rref').innerHTML=`<div class="sq-ref">${(Q.roles||[]).map(r=>`<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rart">${SQART(r.k)}</div><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small><div class="sq-rl"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}</div>`).join('')}</div>`;
     const lg=(Q.log||[]).slice().reverse(), lk=lg.length+(lg[0]?lg[0].ts:'');
     const le=$('#sq-rlog'); if(le.dataset.k!==String(lk)){ le.dataset.k=lk; le.innerHTML=lg.map(e=>`<div class="sq-lg ${e.k}" style="--c:${e.c||'var(--line)'}">${e.ic?`<i>${ic(e.ic)}</i>`:''}<span>${e.n?`<b>${esc(e.n)}</b> `:''}${esc(e.x)}</span></div>`).join(''); }
     renderSQAsk();
+  }
+  // ---------- طاولة المجلس بالجوال: نفس طاولة الشاشة مصغّرة — انت تحت، والباقين حولك بالترتيب ----------
+  // (قبل كانت الطاولة تطلع لصاحب الجلسة بس على الشاشة، واللاعبين يشوفون قائمة)
+  function renderSQTable(Q){
+    const box=$('#sq-mt'); if(!box) return;
+    // صاحب الجلسة وجنبه الطاولة الكبيرة على شاشته: ما نكررها
+    let split=false; try{ split = OWNER && window.parent!==window && window.parent.document.body.classList.contains('own-split'); }catch(e){}
+    box.classList.toggle('r-hide', split);
+    const n=Q.pl.length, mi=Math.max(0, Q.pl.findIndex(x=>x.id===Q.me)), turnP=Q.pl.find(x=>x.turn), A=Q.act;
+    const seats=Q.pl.map((x,i)=>{ const k=(i-mi+n)%n, a=Math.PI/2 + k*2*Math.PI/n, lx=50+39*Math.cos(a), ty=50+40*Math.sin(a);
+      const cards=Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('') + x.up.map(r0=>{ const r=sqRole(Q,r0); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('');
+      return `<button type="button" class="sq-mts ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" data-pp="${esc(x.id)}" style="--c:${x.color};left:${lx.toFixed(1)}%;top:${ty.toFixed(1)}%" aria-label="${esc(x.name)}، ${x.coins} ريال${x.turn?'، دوره':''}">
+        <span class="sq-mts-av">${x.av?`<img src="${avSrc(x.av)}" alt="">`:''}</span><b>${esc(x.id===Q.me?'انت':x.name)}</b>
+        <span class="sq-mts-i">${x.out?`${ic('skull')} طلع`:`${ic('coins')}${x.coins}${x.loan?` ${ic('hm-cash')}`:''}`}</span><span class="sq-mts-c">${cards}</span></button>`; }).join('');
+    const sk=JSON.stringify([Q.pl, Q.me]); const se=$('#sq-mt-seats');
+    if(se.dataset.k!==sk){ se.dataset.k=sk; se.innerHTML=seats; $$('[data-pp]', se).forEach(b=>b.onclick=()=>playerCard(b.dataset.pp)); }
+    const me0=Q.pl[mi]||{};
+    $('#sq-mt-turn').innerHTML = turnP ? (turnP.id===Q.me ? '<span style="--c:'+esc(me0.color||'var(--sq-brass)')+'">دورك</span>' : `دور <span style="--c:${esc(turnP.color)}">${esc(turnP.name)}</span>`) : '';
+    $('#sq-mt-claim').innerHTML = A && A.claim ? `${ic(A.icon)} يقول إنه <b style="color:${esc(A.claimC)}">${esc(A.claim)}</b>${A.ch?` · ${esc(A.ch)}: ما أصدقك!`:''}` : A && A.name ? `${ic(A.icon)} ${esc(A.name)}` : '';
   }
   // القرار: مكانه ثابت فوق الأوراق (ما يدف شي). لو ما فيه قرار يطلع وش ننتظر
   function renderSQAsk(){
