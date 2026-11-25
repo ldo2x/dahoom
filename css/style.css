@@ -1188,3 +1188,9 @@ label.sm-row,.sm-link{cursor:pointer}
 .kh-wait{font-size:1.4rem;color:var(--mute)}
 .ref-box .head{gap:10px;flex-wrap:wrap}
 .ref-t{font-family:var(--display);font-weight:400;font-size:1.35rem;display:inline-flex;align-items:center;gap:6px}
+
+/* تنبيه الجلسة الخاملة (الشاشة والجوال) */
+.idle-warn{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:120;width:min(92vw,440px);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;background:var(--surface);color:var(--text);border:1px solid var(--line);border-top:4px solid var(--warn,#E3A43A);border-radius:var(--r-m,16px);padding:16px 18px;box-shadow:var(--shadow-2,0 12px 30px rgba(0,0,0,.25))}
+.idle-warn b{font-size:1.15rem}
+.idle-warn span{color:var(--mute);font-weight:600}
+.idle-warn i{font-style:normal;font-family:var(--num);color:var(--text);font-weight:800}

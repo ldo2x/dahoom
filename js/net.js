@@ -62,6 +62,7 @@ window.DahoomNet = (function(){
   }
   function start(){
     if(peer || !window.Peer) return;
+    poke();
     code = sessionStorage.getItem('dahoom_room') || genCode();
     peer = new window.Peer(PREFIX+code, Object.assign({debug:0}, window.DAHOOM_ICE ? {config:{ iceServers: window.DAHOOM_ICE.iceServers }} : {}));
     peer.on('open', ()=>{ LG('الشاشة جاهزة بالكود '+code); ready=true; tries=0; rcWait=1500; clearTimeout(sigT); sigT=0; sessionStorage.setItem('dahoom_room',code); refreshUI(); publishRoom(); });
@@ -125,6 +126,8 @@ window.DahoomNet = (function(){
   function onMsg(c, d){
     if(!d || typeof d!=='object') return;
     { const was=alive(c); c.seen=Date.now();
+      if(!IDLE_SKIP[d.t]) poke();
+      if(d.t==='here') return;
       if(d.t==='hb' || d.t==='away'){ c.hb=true; c.away = d.t==='away'; if(was!==alive(c)){ LG(who(c)+(alive(c)?' رجع':' طلع من الصفحة')); infoAll(); } return; }
       if(c.away){ c.away=false; } if(!was) infoAll(); }
     // طلب سجل: جوال يبلّغ ويبي سجل الشاشة (و all=سجلات باقي الجوالات بعد)
@@ -322,6 +325,40 @@ window.DahoomNet = (function(){
   let infoT=0;
   function infoAll(){ if(infoT) return; infoT=setTimeout(()=>{ infoT=0; seatSync(); const m=infoMsg(); conns.forEach(c=>{ if(c.open){ try{ c.send(m); }catch(e){} } }); publishRoom(); if(window.DahoomOwner) window.DahoomOwner.render(); }, 150); }
   document.addEventListener('dahoom:screen', ()=>{ infoAll(); });
+
+  // ---------- الجلسة الخاملة ----------
+  // ربع ساعة بدون ما أحد يلمس شي (لا الشاشة ولا جوال): تنبيه قبلها بدقيقة، وبعدها تنقفل الجلسة
+  // (قبل كان واحد يفتح جلسة ويتركها، وتبقى شغالة وطالعة بقائمة الجلسات)
+  const IDLE_MS = window.DAHOOM_IDLE_MS || 15*60000, WARN_MS = Math.min(60000, IDLE_MS/3);
+  const IDLE_SKIP = { hb:1, away:1, logreq:1, logrep:1 };   // نبض الجوال تلقائي — مو حركة من اللاعب
+  let lastAct=Date.now(), idleWarn=false;
+  function poke(){ lastAct=Date.now(); if(idleWarn){ idleWarn=false; const b=document.getElementById('idle-warn'); if(b) b.remove(); conns.forEach(c=>{ try{ c.send({t:'idlewarn', on:false}); }catch(e){} }); } }
+  ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, ()=>{ if(code) poke(); }, { capture:true, passive:true }));
+  function warnIdle(left){
+    let b=document.getElementById('idle-warn');
+    if(!b){ b=document.createElement('div'); b.id='idle-warn'; b.className='idle-warn'; b.setAttribute('role','alertdialog');
+      b.innerHTML=`<b>الجلسة خاملة</b><span>ما أحد لعب من ربع ساعة تقريباً — بتنقفل بعد <i id="idle-left"></i> ثانية</span><button type="button" class="btn btn-hype">${ic('check')} أنا هنا، كمّلوا</button>`;
+      b.querySelector('button').onclick=()=>poke(); document.body.appendChild(b); }
+    const l=document.getElementById('idle-left'); if(l) l.textContent=Math.max(0, Math.ceil(left/1000));
+  }
+  function closeIdle(){
+    LG('الجلسة خاملة ربع ساعة — قفلناها');
+    conns.forEach(c=>{ try{ c.send({t:'ended', msg:'انقفلت الجلسة لأن ما أحد لعب فيها ربع ساعة. اطلب من صاحبها يفتح جلسة جديدة.'}); }catch(e){} });
+    try{ window.DahoomLobby && window.DahoomLobby.close(); }catch(e){}
+    try{ sessionStorage.removeItem('dahoom_room'); sessionStorage.removeItem('dahoom_owner'); sessionStorage.setItem('dahoom_idle_closed','1'); }catch(e){}
+    // نعيد تحميل الصفحة: كذا أي لعبة كانت شغالة تتوقف بنظافة وترجع للرئيسية
+    setTimeout(()=>{ try{ peer && peer.destroy(); }catch(e){} try{ peer2 && peer2.destroy(); }catch(e){} location.replace(location.pathname); }, 600);
+  }
+  setInterval(()=>{
+    if(!code || !peer) return;
+    const left=IDLE_MS-(Date.now()-lastAct);
+    if(left<=0) return closeIdle();
+    if(left<=WARN_MS){
+      if(!idleWarn){ idleWarn=true; play('notify',{volume:.6}); conns.forEach(c=>{ try{ c.send({t:'idlewarn', on:true}); }catch(e){} }); }
+      warnIdle(left);
+    }
+  }, window.DAHOOM_IDLE_MS ? 250 : 1000);
+  document.addEventListener('DOMContentLoaded', ()=>{ try{ if(sessionStorage.getItem('dahoom_idle_closed')){ sessionStorage.removeItem('dahoom_idle_closed'); setTimeout(()=>toast('قفلنا جلستك لأن ما أحد لعب فيها ربع ساعة', 6000), 600); } }catch(e){} });
   document.addEventListener('dahoom:session', ()=>{ infoAll(); });
   // سجل الأحداث: آخر 60 حدث، ينرسل للجوالات أول بأول
   const FEED=[];

@@ -180,6 +180,13 @@
     if(d.t==='feed'){ st.feed.push(d.f); if(st.feed.length>60) st.feed.shift(); renderFeed(true); return; }
     if(d.t==='feedall'){ st.feed=(d.list||[]).slice(-60); renderFeed(false); return; }
     if(d.t==='feedreset'){ st.feed=[]; renderFeed(false); return; }
+    // الجلسة خاملة: تنبيه وزر «أنا هنا» (أي ضغطة منه ترجّع العداد)
+    if(d.t==='idlewarn'){ let b=$('#r-idle');
+      if(!d.on){ if(b) b.remove(); return; }
+      if(!b){ b=document.createElement('div'); b.id='r-idle'; b.className='idle-warn'; b.setAttribute('role','alertdialog');
+        b.innerHTML=`<b>الجلسة خاملة</b><span>ما أحد لعب من ربع ساعة تقريباً — بتنقفل بعد دقيقة</span><button type="button" class="btn btn-hype">${ic('check')} أنا هنا، كمّلوا</button>`;
+        b.querySelector('button').onclick=()=>{ vibe(15); send({t:'here'}); b.remove(); }; document.body.appendChild(b); vibe([60,40,60]); }
+      return; }
     if(d.t==='ended'){ st.room=null; try{ st.peer && st.peer.destroy(); }catch(e){} localStorage.removeItem('dahoom_last_room'); history.replaceState(null,'','remote.html'); $('#r-code').value=''; $('#r-err').textContent=d.msg||''; show('r-join'); return; }
     if(d.t==='notice'){ status(d.msg); vibe([40,30,40]); sfx(/صح|وافق|فزت|طلعت!|\+/.test(d.msg) ? 'good' : /رفض|ما زبطت|نشل|أخذ منك|خسر/.test(d.msg) ? 'bad' : 'coin'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),3500); return; }
   }
