@@ -51,7 +51,10 @@ body.remote::before{height:10px;background-size:23px 10px}
 .r-buzz.pressed{transform:translate3d(0,8px,0) scale(.97)}
 .r-buzz.won{background:var(--ok);color:var(--ink);box-shadow:0 10px 0 #0E7A4D,0 22px 30px -10px rgba(0,0,0,.4)}
 .r-buzz.lost{background:var(--surface-2);color:var(--mute)}
-.r-buzz:disabled{cursor:default}
+.r-buzz:disabled{cursor:default;pointer-events:none}
+.r-buzz.cool{filter:saturate(.4);animation:bzCool .35s ease-in-out 2}
+@keyframes bzCool{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.r-buzz.cool{animation:none}}
 @keyframes buzzPulse{50%{transform:scale(1.035)}}
 
 /* اليد */
@@ -1100,3 +1103,4 @@ body.is-owner .r-bar{display:none}
 .rr-tn:hover .ic{opacity:1}
 .rr-tin{font:inherit;font-weight:800;color:var(--text);background:var(--surface);border:2px solid var(--c,var(--brand));border-radius:8px;padding:4px 8px;width:min(190px,48vw);min-width:0}
 .rr-tin:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--brand)) 30%,transparent)}
+.r-khleg em{font-style:normal;color:var(--c);font-weight:800}

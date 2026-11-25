@@ -284,7 +284,7 @@
       letter: G.sel ? G.sel.l : null,
       timer: G.deadline ? { ms:Math.max(0,G.deadline-Date.now()), total:G.dur } : null,
       kb: G.over && !isRef ? null : { n:S.size, can:kbCan, edit:isRef && G.edit, sel: G.sel ? G.cells.indexOf(G.sel) : -1,
-        cells: G.cells.map(k=>[k.l, k.owner==null ? -1 : k.owner]), colors: G.teams.map(x=>x.color), names: G.teams.map(x=>x.name), dirs: G.teams.map(x=>x.dir) },
+        cells: G.cells.map(k=>[k.l, k.owner==null ? -1 : k.owner]), colors: G.teams.map(x=>x.color), names: G.teams.map(x=>x.name), dirs: G.teams.map(x=>x.dir), ids: G.teams.map(x=>x.id) },
       kh: khView(i, pid, isRef),
       item: !isRef && window.DAHOOM_ITEM ? { kind:'l', id:window.DAHOOM_ITEM.id, label:window.DAHOOM_ITEM.text } : null,
       phase: G.over ? '' : G.phase==='pick' ? `دور ${cur().name} يختار حرف` : (PH_AR[G.phase]||'') };

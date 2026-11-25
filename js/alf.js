@@ -467,6 +467,14 @@
       </div>`);
     G.canPlayNow=true;
     renderHand(t, canPlayCard(t));
+    { const rb=$('#btn-roll'), usable=t.hand.some(c=>c.kind!=='reaction' && c.fx!=='none');
+      if(rb && !npc && phoneOf(t) && canPlayCard(t) && usable){
+        const lbl=rb.innerHTML; let n=5; rb.disabled=true;
+        try{ NET().send(t.id, {t:'notice', msg:'دوركم — تقدرون تلعبون بطاقة الحين قبل ما تنسحب الخانة'}); }catch(e){}
+        const tick=()=>{ if(!document.body.contains(rb)) return;
+          if(n<=0 || !G.canPlayNow || t.playedCard){ rb.disabled=false; rb.innerHTML=lbl; return; }
+          rb.innerHTML=`${ic('cards')} فرصة البطاقات… ${n}`; n--; setTimeout(tick, 1000); };
+        tick(); } }
     $('#btn-roll').onclick=()=>{ if(npc){ rollSection('t'); } else if(choose){ delete t.fx.choose; pickSection(); } else rollSection(); };
   }
   const canPlayCard = t => S.cardsEnabled && !t.playedCard && !t.fx.noCard;
@@ -725,13 +733,15 @@
     G.round++; G.turn=0;
     const prev=G.order;
     G.order=[...prev].sort((a,b)=> G.teams[b].score-G.teams[a].score || prev.indexOf(a)-prev.indexOf(b));
+    // اللي لعب آخر اللفة اللي فاتت ما يبدأ هذي (قبل كان ممكن يلعب دورين ورا بعض)
+    if(G.order.length>1 && G.order[0]===prev[prev.length-1]) [G.order[0], G.order[1]] = [G.order[1], G.order[0]];
     G.teams.forEach(t=>{ t.drew=false;
       ['immune','fullsteal','yasalam'].forEach(k=>{ if(t.fx[k]!=null && t.fx[k]<G.round) delete t.fx[k]; });
       if(t.fx.noSteal!=null && t.fx.noSteal<G.round) delete t.fx.noSteal;
       if(t.fx.brake!=null && t.fx.brake<G.round) delete t.fx.brake;
     });
     renderBoard(); renderHand(null);
-    stage(`<div class="eyebrow">لفة جديدة</div><div class="big">اللفة ${G.round}</div><p class="muted">الترتيب حسب النقاط:</p>
+    stage(`<div class="eyebrow">لفة جديدة</div><div class="big">اللفة ${G.round}</div><p class="muted">الترتيب حسب النقاط (واللي لعب آخر واحد ما يبدأ):</p>
       <div class="roller">${G.order.map((idx,i)=>`<div class="slot" style="--c:${G.teams[idx].color}"><span class="ord">${i+1}</span><span>${esc(G.teams[idx].name)}</span></div>`).join('')}</div>
       ${S.cardsEnabled && G.round===S.noCardRounds+1 ? `<span class="banner">${ic('cards')} من هذي اللفة تبدأ البطاقات</span>`:''}
       <div class="row center mt-s"><button class="btn btn-hype big" id="btn-go-round">يلا ${ic('next')}</button></div>`);

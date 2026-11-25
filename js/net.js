@@ -128,6 +128,7 @@ window.DahoomNet = (function(){
     { const was=alive(c); c.seen=Date.now();
       if(!IDLE_SKIP[d.t]) poke();
       if(d.t==='here') return;
+      if(d.t==='hb' && typeof d.ts==='number'){ try{ c.send({t:'hbk', ts:d.ts}); }catch(e){} }
       if(d.t==='hb' || d.t==='away'){ c.hb=true; c.away = d.t==='away'; if(was!==alive(c)){ LG(who(c)+(alive(c)?' رجع':' طلع من الصفحة')); infoAll(); } return; }
       if(c.away){ c.away=false; } if(!was) infoAll(); }
     // طلب سجل: جوال يبلّغ ويبي سجل الشاشة (و all=سجلات باقي الجوالات بعد)

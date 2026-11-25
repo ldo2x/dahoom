@@ -138,7 +138,7 @@
   }
   function send(msg){ if(st.conn && st.conn.open){ st.conn.send(msg); return true; } lost(); return false; }
   // نبض: الشاشة تعرف إن الجوال لسا معها. بدونه الجوال اللي انقفل أو طلع يبقى «متصل» ويوقف البداية
-  const beatConn = t => { try{ if(st.conn && st.conn.open) st.conn.send({t}); }catch(e){} };
+  const beatConn = t => { try{ if(st.conn && st.conn.open) st.conn.send(t==='hb' ? {t, ts:Math.round(performance.now())} : {t}); }catch(e){} };
   setInterval(()=>{ if(document.visibilityState==='visible') beatConn('hb'); }, 4000);
   document.addEventListener('visibilitychange', ()=>beatConn(document.visibilityState==='visible' ? 'hb' : 'away'));
   window.addEventListener('pagehide', ()=>beatConn('away'));
@@ -180,6 +180,7 @@
     if(d.t==='feed'){ st.feed.push(d.f); if(st.feed.length>60) st.feed.shift(); renderFeed(true); return; }
     if(d.t==='feedall'){ st.feed=(d.list||[]).slice(-60); renderFeed(false); return; }
     if(d.t==='feedreset'){ st.feed=[]; renderFeed(false); return; }
+    if(d.t==='hbk'){ const s=performance.now()-d.ts; if(s>=0 && s<5000) st.rtt = st.rtt ? Math.round(st.rtt*.7+s*.3) : Math.round(s); return; }
     // الجلسة خاملة: تنبيه وزر «أنا هنا» (أي ضغطة منه ترجّع العداد)
     if(d.t==='idlewarn'){ let b=$('#r-idle');
       if(!d.on){ if(b) b.remove(); return; }
@@ -317,6 +318,8 @@
     else if(z.first){ b.classList.add('lost'); sub.textContent=`${z.first} سبقكم`; }
     else if(z.open){ sub.textContent='مو متاح لكم الحين'; }
     else sub.textContent='البز يفتح لما يجي وقته';
+    // ضغط البز قبل ما يفتح = ثانية انتظار (عقاب السبام)
+    if(Date.now()<(st.buzzCool||0)){ b.disabled=true; b.classList.remove('live'); b.classList.add('cool'); sub.textContent='بدري! استنى ثانية'; clearTimeout(st.coolT); st.coolT=setTimeout(()=>{ if(st.S) renderMain(); }, st.buzzCool-Date.now()+20); }
     // ألف نقطة: البز "قريب يفتح" لما فريق ثاني يجاوب سؤال على الشاشة (لو غلط تفتح السرقة)
     const isAlf = S.game==='alf', scoresL = S.scores||[];
     const soon = isAlf && !S.myTurn && !z.open && !!(S.view && S.view.kind==='q' && !S.view.answer);
@@ -560,7 +563,8 @@
   let tmr={ end:0, total:1, raf:0 };
   function setTimer(T){
     if(!T){ stopTimer(); return; }
-    const end=Date.now()+T.ms;
+    // نطرح نص زمن الرحلة (الرسالة تاخذ وقت لين توصل) — كذا الجوال البطيء ما يشوف وقت أكثر من اللي ضده
+    const end=Date.now()+T.ms-Math.round((st.rtt||0)/2);
     if(!tmr.end || Math.abs(end-tmr.end)>350 || tmr.total!==T.total){ tmr.end=end; tmr.total=T.total||1; }
     tog('#r-timer', true);
     if(!tmr.raf) tmr.raf=requestAnimationFrame(timerFrame);
@@ -1074,8 +1078,14 @@
       $('#ch-claim').onclick=()=>{ vibe([40,20,40]); send({t:'claim'}); };
     }
   }
+  // البز مقفل والسؤال على وشك يطلع (خلية الحروف): الضغطة تجيب ثانية انتظار — الزر المقفل ما يستقبل ضغط، فنسمعها من اللي حوله
+  $('#r-buzz').parentElement.addEventListener('pointerdown', e=>{
+    const b=$('#r-buzz'), r=b.getBoundingClientRect(); if(!b.disabled || e.clientX<r.left || e.clientX>r.right || e.clientY<r.top || e.clientY>r.bottom) return;
+    const S=st.S||{}; if(S.game!=='khaliya' || !S.kh || S.kh.phase!=='ready' || (S.buzz||{}).open) return;
+    st.buzzCool=Date.now()+1000; vibe(80); sfx('bad'); renderMain();
+  });
   $('#r-buzz').addEventListener('pointerdown', e=>{
-    const b=e.currentTarget; if(b.disabled) return;
+    const b=e.currentTarget; if(b.disabled || Date.now()<(st.buzzCool||0)) return;
     const now=Date.now(); if(now-buzzSent<400) return; buzzSent=now;
     vibe([60,30,60]); b.classList.add('pressed'); setTimeout(()=>b.classList.remove('pressed'),250);
     const S=st.S||{}, q=st.khQ;
@@ -1086,7 +1096,7 @@
   function preview(i){
     const S=st.S, c=C(S.hand[i]); if(!c) return;
     const can = S.canPlay && c.kind!=='reaction' && c.fx!=='none';
-    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'رد فعل: تطلع لكم لحالها لما خصمكم يلعب بطاقة دعم' : c.fx==='wow' ? 'رد فعل: تطلع لكم لحالها لما فريق يكسب 200 أو أكثر بدور واحد' : 'رد فعل: تطلع لكم لحالها لما أحد يهاجمكم') : c.fx==='none' ? 'سودا — ما تنلعب. ادمجوها أو ارموها بـ"خذ وهات"' : !S.canPlay ? 'البطاقات تنلعب بداية دوركم' : '';
+    const why = c.kind==='reaction' ? (c.fx==='envy' ? 'رد فعل: تطلع لكم لحالها لما خصمكم يلعب بطاقة دعم' : c.fx==='wow' ? 'رد فعل: تطلع لكم لحالها لما فريق يكسب 200 أو أكثر بدور واحد' : 'رد فعل: تطلع لكم لحالها لما أحد يهاجمكم') : c.fx==='none' ? 'سودا — ما تنلعب. ادمجوها أو ارموها بـ"خذ وهات"' : !S.canPlay ? (S.myTurn ? 'فاتت فرصتها هالدور — البطاقات تنلعب أول الدور قبل ما تنسحب الخانة' : 'البطاقات تنلعب أول دوركم، قبل ما تنسحب الخانة') : '';
     sheet(`<div class="r-big">${cardHTML(c,{size:'big',anim:true})}</div>${why?`<p class="muted center">${why}</p>`:''}
       <div class="r-actions">${can?`<button class="btn btn-hype big" data-play>العبها</button>`:''}<button class="btn ghost" data-x>${can?'تراجع':'إغلاق'}</button></div>`);
     const p=$('#r-sheet [data-play]'); if(p) p.onclick=()=>{ vibe(40); send({t:'play', idx:i}); closeSheet(); };
@@ -1121,7 +1131,7 @@
       <rect class="kx-edge" x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" rx="26"/>${back}${cells}</svg>`;
     // مين يوصل وين: لون الإطار نفسه + سطر واضح
     const dirTxt = d => d==='v' ? 'من فوق لتحت' : 'من اليمين لليسار';
-    const legend = (kb.names||[]).length===2 ? `<div class="r-khleg">${kb.names.map((n,i)=>`<span style="--c:${kb.colors[i]}"><i></i><b>${esc(n)}</b> ${dirTxt((kb.dirs||['v','h'])[i])}</span>`).join('')}</div>` : '';
+    const legend = (kb.names||[]).length===2 ? `<div class="r-khleg">${kb.names.map((n,i)=>`<span style="--c:${kb.colors[i]}"><i></i><b>${esc(n)}</b>${kb.ids && kb.ids[i]===st.teamId ? ' <em>(فريقك)</em>' : ''} ${dirTxt((kb.dirs||['v','h'])[i])}</span>`).join('')}</div>` : '';
     box.classList.toggle('can', !!kb.can);
     const isRef = st.teamId==='ref';
     const hint = kb.edit ? 'اضغط أي خلية تغيّر لونها' : isRef ? 'اختر حرف للفريق اللي عليه الدور' : `${st.mode==='solo'?'دورك':'دوركم'} — اختاروا حرف`;
