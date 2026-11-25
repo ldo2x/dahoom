@@ -279,7 +279,7 @@
     document.body.style.setProperty('--team', t.color);
     if(S.myTurn && !st.wasTurn && !S.final) sfx('turn'); st.wasTurn=!!S.myTurn;
     const m=me();
-    $('#r-head').innerHTML=`${m&&m.avatar?(hasAcct()?`<span class="r-me"><img src="${avSrc(m.avatar)}" alt=""></span>`:`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`):''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'?`<small>${esc(m.name)}</small>`:''}</span>
+    $('#r-head').innerHTML=`${m&&m.avatar?(hasAcct()?`<span class="r-me"><img src="${avSrc(m.avatar)}" alt=""></span>`:`<button class="r-me" id="r-me" aria-label="عدّل اسمك وصورتك"><img src="${avSrc(m.avatar)}" alt=""></button>`):''}<span class="r-who"><span class="r-team" style="--c:${t.color}">${esc(t.name)}</span>${m&&m.name&&st.mode!=='solo'&&m.name!==t.name?`<small>${esc(m.name)}</small>`:''}</span>
       ${t.id==='ref' ? '' : `<span class="r-score"><b>${t.score}</b><small>${S.game==='khaliya'?'جولات':S.game==='hawamir'?'كاش':S.game==='sadq'?'ريال':'نقطة'}</small></span>`}
       ${S.myTurn?`<span class="r-turn">${st.mode==='solo'?'دورك':'دوركم'}</span>`:''}`;
     const meBtn=$('#r-me'); if(meBtn) meBtn.onclick=()=>{ if(S.locked){ status('تعديل الاسم والصورة بعد ما تخلص المباراة'); clearTimeout(st.nt); st.nt=setTimeout(()=>status(''),2500); return; } openReg(); };

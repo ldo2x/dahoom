@@ -516,7 +516,9 @@ window.Dahoom = (function(){
   }
   function competitors(){
     if(session.mode==='solo' && session.game!=='khaliya') return session.players.map(p=>({id:p.id,name:p.name,color:p.color,avatar:p.avatar,players:[p]}));
-    return session.teams.filter(t=>t.members.length).map(t=>({id:t.id,name:t.name,color:t.color,players:t.members.map(id=>session.players.find(p=>p.id===id)).filter(Boolean)}));
+    // فريق فيه لاعب واحد بس: باللعب ينادى باسمه وصورته (ما له داعي اسم فريق) — اسم الفريق يبقى بشاشة التجهيز
+    return session.teams.filter(t=>t.members.length).map(t=>{ const players=t.members.map(id=>session.players.find(p=>p.id===id)).filter(Boolean);
+      return players.length===1 ? {id:t.id,name:players[0].name,teamName:t.name,color:t.color,avatar:players[0].avatar,players,single:true} : {id:t.id,name:t.name,color:t.color,players}; });
   }
 
   // ---------- بطاقات الزينة (البداية والرئيسية) ----------
