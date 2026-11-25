@@ -11,7 +11,9 @@ window.DahoomOwner = (function(){
   let on=false, mode='me', frameRoom=null;
 
   const dock = () => $('#own-dock'), wrap = () => $('#own');
-  const JUDGED = ['alf'];   // ألعاب المضيف فيها حَكَم (يضغط صح/غلط) — تحتاج لوحة الحكم
+  const JUDGED = ['alf'];
+  // ألعاب جوالها ما يعرض الطاولة (هوامير وخلية الحروف جوالها فيه اللوحة كاملة، وألف نقطة شاشتها فيها الأجوبة)
+  const SPLIT = ['sadq'];   // ألعاب المضيف فيها حَكَم (يضغط صح/غلط) — تحتاج لوحة الحكم
   const scrNow = () => (document.querySelector('.screen.active')||{}).id||'';
   // الشريط فوق: الشعار (يرجّعك للرئيسية) + كود الجلسة. نسخ الدعوة وعامة/خاصة بس لما لوحة «جلستك» مو ظاهرة (الطاولة أو وقت اللعب) — لأنها فيها نفس الأزرار.
   // أثناء اللعب بس: زر «لوحة الحكم» (ألف نقطة وخلية الحروف) أو «شاشة العرض» (للتلفزيون) — والإدارة نفسها صارت بشاشتك.
@@ -20,6 +22,9 @@ window.DahoomOwner = (function(){
     const playing = GAME_SCREENS.includes(scr), judged = JUDGED.includes(D.session.game);
     document.body.classList.toggle('own-on', on);
     document.body.classList.toggle('own-me', on && mode==='me');
+    // شاشة كبيرة وقت اللعب: جوالك على جنب والطاولة جنبه (قبل كانت شاشتك كلها واجهة الجوال والطاولة مخفية)
+    const split = on && mode==='me' && playing && SPLIT.includes(D.session.game) && innerWidth>=1200;
+    if(document.body.classList.contains('own-split')!==split){ document.body.classList.toggle('own-split', split); setTimeout(()=>window.dispatchEvent(new Event('resize')), 30); }
     if(!on) return;
     const pub = !n || n.isPublic();
     const view = mode==='me'
@@ -31,6 +36,7 @@ window.DahoomOwner = (function(){
         <button class="own-b own-pub ${pub?'on':''}" data-own="pub" aria-pressed="${pub}" title="${pub?'أي أحد يشوفها بقائمة الجلسات ويدخل — اضغط عشان تخليها خاصة':'ما يدخلها إلا اللي معه الكود — اضغط عشان تخليها عامة'}">${ic(pub?'eye':'padlock')}<span>الجلسة: <b>${pub?'عامة':'خاصة'}</b></span></button>`}</div>
       <div class="own-r">${view}</div>`;
   }
+  let rsT=0; window.addEventListener('resize', ()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ if(on) render(); }, 150); });
   function ensureFrame(){
     const n=NET(); if(!n || !n.ready) { setTimeout(ensureFrame, 500); return; }
     const f=$('#own-frame'); if(frameRoom===n.code && f.src) return;

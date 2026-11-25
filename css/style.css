@@ -859,6 +859,12 @@ body.own-me{overflow:hidden}
 .own-brand:focus-visible{outline:2px solid var(--brand)}
 /* صاحب الجلسة على شاشته: تنبيهات الطاولة (فلان دخل…) ما تطلع فوقها — شاشته فيها كل شي */
 body.own-me > .toast{display:none}
+/* جوالك على جنب والطاولة جنبه (شاشة كبيرة وقت اللعب) */
+body.own-split{--own-w:clamp(380px,31vw,470px);overflow:auto;padding-left:var(--own-w)}
+/* السجل والحدث موجودين بجوالك اللي على جنب — الطاولة تاخذ المساحة كلها */
+body.own-split .sq-side{display:none}
+body.own-split .sq-table-wrap{grid-template-columns:minmax(0,1fr)}
+body.own-split .own-frame{width:var(--own-w);border-right:1px solid var(--line);box-shadow:8px 0 24px rgba(0,0,0,.18)}
 
 /* خلية الحروف: السؤال هو أهم شي على الشاشة — يقرا من بعيد */
 .kh-q{font-size:clamp(1.6rem,2.3vw,2.7rem);line-height:1.5}

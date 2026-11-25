@@ -59,7 +59,7 @@ window.DahoomSadq = (function(){
     if(matchMedia('(max-width:1000px)').matches){ M.querySelectorAll('.sq-seat').forEach(s=>{ s.style.left=s.style.top=''; }); return; }
     const W=M.clientWidth, H=M.clientHeight, seats=[...M.querySelectorAll('.sq-seat')], n=seats.length; if(!n || !W) return;
     const gap=18, w=Math.max(...seats.map(s=>s.offsetWidth)), h=Math.max(...seats.map(s=>s.offsetHeight));
-    const R=Math.max(150, Math.min(W/2-w-gap-8, H/2-h-gap-8, 330));
+    const R=Math.max(document.body.classList.contains('own-split')?115:150, Math.min(W/2-w-gap-8, H/2-h-gap-8, 330));
     M.style.setProperty('--rr', R+'px');
     seats.forEach((s,i)=>{ const a=Math.PI/2 + i*2*Math.PI/n, c=Math.cos(a), sn=Math.sin(a);
       const d=R+gap+(s.offsetWidth/2)*Math.abs(c)+(s.offsetHeight/2)*Math.abs(sn);
