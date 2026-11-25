@@ -885,9 +885,9 @@
   function buildSQ(){
     $('#r-sq').innerHTML=`<div class="sq-r">
       <div class="sq-rmain">
+        <div class="sq-strip" aria-live="polite"><div class="sq-rev" id="sq-rev"></div><div class="sq-rlast" id="sq-rlast"></div></div>
         <section class="sq-mt" id="sq-mt" aria-label="الطاولة"><div class="sq-mt-rug"><div class="sq-mt-c"><b class="sq-mt-turn" id="sq-mt-turn"></b><span class="sq-mt-claim" id="sq-mt-claim"></span>
           <span class="sq-mt-meta"><span id="sq-rround"></span> · ${ic('hm-building-bank')} <b id="sq-rpot"></b> · <span id="sq-rdeck"></span></span></div></div><div class="sq-mt-seats" id="sq-mt-seats"></div></section>
-        <div class="sq-rev" id="sq-rev"></div>
         <div class="sq-ract" id="sq-ract"></div>
         <div class="sq-rask" id="sq-rask"></div>
       </div>
@@ -931,6 +931,8 @@
           <div class="sq-hc-r"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-hc-r"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}${c.up?'<div class="sq-hc-dead">انكشفت — خسرتها</div>':''}</div>`; }).join(''); }
     if(!$('#sq-rref').innerHTML) $('#sq-rref').innerHTML=`<div class="sq-ref">${(Q.roles||[]).map(r=>`<div class="sq-rcard" style="--rc:${r.color}"><div class="sq-rart">${SQART(r.k)}</div><div class="sq-rh">${ic(r.icon)}<b>${esc(r.name)}</b></div><small>${esc(r.line)}</small><div class="sq-rl"><span>حركته</span><b>${esc(r.act)}</b><em>${esc(r.actDesc)}</em></div>${r.block?`<div class="sq-rl blk"><span>يصد</span><b>${esc(r.block)}</b></div>`:''}</div>`).join('')}</div>`;
     const lg=(Q.log||[]).slice().reverse(), lk=lg.length+(lg[0]?lg[0].ts:'');
+    { const L=lg[0], el=$('#sq-rlast'), h=L ? `<span class="sq-lg ${L.k}" style="--c:${L.c||'var(--line)'}">${L.ic?`<i>${ic(L.ic)}</i>`:''}<span>${L.n?`<b>${esc(L.n)}</b> `:''}${esc(L.x)}</span></span>` : '';
+      if(el && el.dataset.h!==h){ el.dataset.h=h; el.innerHTML=h; el.classList.remove('sq-new'); void el.offsetWidth; if(h) el.classList.add('sq-new'); } }
     const le=$('#sq-rlog'); if(le.dataset.k!==String(lk)){ le.dataset.k=lk; le.innerHTML=lg.map(e=>`<div class="sq-lg ${e.k}" style="--c:${e.c||'var(--line)'}">${e.ic?`<i>${ic(e.ic)}</i>`:''}<span>${e.n?`<b>${esc(e.n)}</b> `:''}${esc(e.x)}</span></div>`).join(''); }
     renderSQAsk();
   }
@@ -942,21 +944,32 @@
     let split=false; try{ split = OWNER && window.parent!==window && window.parent.document.body.classList.contains('own-split'); }catch(e){}
     box.classList.toggle('r-hide', split);
     const n=Q.pl.length, mi=Math.max(0, Q.pl.findIndex(x=>x.id===Q.me)), turnP=Q.pl.find(x=>x.turn), A=Q.act;
-    const seats=Q.pl.map((x,i)=>{ const k=(i-mi+n)%n, a=Math.PI/2 + k*2*Math.PI/n, lx=50+39*Math.cos(a), ty=50+40*Math.sin(a);
-      const cards=Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('') + x.up.map(r0=>{ const r=sqRole(Q,r0); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('');
-      return `<button type="button" class="sq-mts ${x.turn?'turn':''} ${x.out?'out':''} ${x.id===Q.me?'me':''}" data-pp="${esc(x.id)}" style="--c:${x.color};left:${lx.toFixed(1)}%;top:${ty.toFixed(1)}%" aria-label="${esc(x.name)}، ${x.coins} ريال${x.turn?'، دوره':''}">
+    const seats=Q.pl.map((x,i)=>{ const k=(i-mi+n)%n, a=Math.PI/2 + k*2*Math.PI/n, lx=50+36*Math.cos(a), ty=50+(k===0?36:34)*Math.sin(a);
+      const isMe=x.id===Q.me;
+      const cards = isMe ? Q.cards.map(c=>{ const r=sqRole(Q,c.r); return c.up ? `<span class="sq-mc dead"><span class="f">${SQCARD(r)}</span></span>`
+          : `<span class="sq-mc ${c.nw?'fresh':''}"><span class="b">${SQBACK()}</span><span class="f">${SQCARD(r)}</span></span>`; }).join('')
+        : Array.from({length:x.hid},()=>'<span class="sq-mini back"></span>').join('') + x.up.map(r0=>{ const r=sqRole(Q,r0); return `<span class="sq-mini dead" style="--rc:${r.color}" title="${esc(r.name)}">${ic(r.icon)}</span>`; }).join('');
+      if(isMe) return `<div class="sq-mts me ${x.turn?'turn':''} ${x.out?'out':''} ${sq.open?'open':''}" style="--c:${x.color};left:${lx.toFixed(1)}%;top:${ty.toFixed(1)}%" id="sq-mtme" aria-label="أوراقك — اضغط مطوّل تشوفها">
+        <span class="sq-mts-c">${cards}</span><span class="sq-mts-i">${x.out?`${ic('skull')} طلعت`:`${ic('coins')}${x.coins}${x.loan?` ${ic('hm-cash')}`:''} · انت`}</span></div>`;
+      return `<button type="button" class="sq-mts ${x.turn?'turn':''} ${x.out?'out':''}" data-pp="${esc(x.id)}" style="--c:${x.color};left:${lx.toFixed(1)}%;top:${ty.toFixed(1)}%" aria-label="${esc(x.name)}، ${x.coins} ريال${x.turn?'، دوره':''}">
         <span class="sq-mts-av">${x.av?`<img src="${avSrc(x.av)}" alt="">`:''}</span><b>${esc(x.id===Q.me?'انت':x.name)}</b>
         <span class="sq-mts-i">${x.out?`${ic('skull')} طلع`:`${ic('coins')}${x.coins}${x.loan?` ${ic('hm-cash')}`:''}`}</span><span class="sq-mts-c">${cards}</span></button>`; }).join('');
-    const sk=JSON.stringify([Q.pl, Q.me]); const se=$('#sq-mt-seats');
-    if(se.dataset.k!==sk){ se.dataset.k=sk; se.innerHTML=seats; $$('[data-pp]', se).forEach(b=>b.onclick=()=>playerCard(b.dataset.pp)); }
+    const sk=JSON.stringify([Q.pl, Q.me, Q.cards, sq.open]); const se=$('#sq-mt-seats');
+    if(se.dataset.k!==sk){ se.dataset.k=sk; se.innerHTML=seats; $$('[data-pp]', se).forEach(b=>b.onclick=()=>playerCard(b.dataset.pp));
+      const mm=$('#sq-mtme'); if(mm){ const on=()=>{ if(!sq.open){ mm.classList.add('peek'); vibe(8); } }, off=()=>mm.classList.remove('peek');
+        mm.addEventListener('pointerdown', on); ['pointerup','pointercancel','pointerleave'].forEach(ev=>mm.addEventListener(ev, off)); mm.addEventListener('contextmenu', e=>e.preventDefault()); } }
     const me0=Q.pl[mi]||{};
     $('#sq-mt-turn').innerHTML = turnP ? (turnP.id===Q.me ? '<span style="--c:'+esc(me0.color||'var(--sq-brass)')+'">دورك</span>' : `دور <span style="--c:${esc(turnP.color)}">${esc(turnP.name)}</span>`) : '';
-    $('#sq-mt-claim').innerHTML = A && A.claim ? `${ic(A.icon)} يقول إنه <b style="color:${esc(A.claimC)}">${esc(A.claim)}</b>${A.ch?` · ${esc(A.ch)}: ما أصدقك!`:''}` : A && A.name ? `${ic(A.icon)} ${esc(A.name)}` : '';
+    const stg = A ? ({ ch:'أحد ما يصدقه؟', 'block-ch':'أحد ما يصدق الصد؟', block:`${A.t||''} يصد ولا لا؟`, blocked:`${A.blk||''} صدّها` }[A.stage]||'') : '';
+    $('#sq-mt-claim').innerHTML = A ? `${A.claim ? `${ic(A.icon)} يقول إنه <b style="color:${esc(A.claimC)}">${esc(A.claim)}</b>` : `${ic(A.icon)} ${esc(A.name)}`}${A.t?` على <b>${esc(A.t)}</b>`:''}`
+      + (A.ch ? `<em class="bad">${esc(A.ch)}: ما أصدقك!</em>` : A.reveal ? `<em class="good">طلع صادق</em>` : stg ? `<em>${esc(stg)}</em>` : '') : '';
   }
   // القرار: مكانه ثابت فوق الأوراق (ما يدف شي). لو ما فيه قرار يطلع وش ننتظر
   function renderSQAsk(){
     const box=$('#sq-rask'); if(!box) return;
     const A=st.sqAsk, Q=sq.Q;
+    // وقت القرار الطاولة تصغر شوي عشان الأزرار تطلع كلها بنفس الشاشة
+    { const r=box.closest('.sq-r'); if(r) r.classList.toggle('asking', !!A); }
     if(!A){ const W=Q&&Q.wait; const k='w:'+(W?W.label:'');
       if(box.dataset.k!==k){ box.dataset.k=k; box.className='sq-rask idle';
         box.innerHTML = W ? `<div class="sq-qw">${ic('hourglass')}<span>${esc(W.label)}</span></div><div class="sq-qbar"><i style="--ms:${W.left}ms;--from:${(W.left/W.ms).toFixed(3)}"></i></div>` : `<div class="sq-qw">${ic('hourglass')}<span>${Q&&Q.out?'طلعت — تابع اللي باقين':'استنى… القرار يطلع لك هنا'}</span></div>`; }

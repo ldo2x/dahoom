@@ -486,3 +486,79 @@
 .sq-mts.me{border-color:color-mix(in srgb,var(--c) 60%,var(--line))}
 .sq-mts.out{opacity:.5;filter:grayscale(.7)}
 @media (prefers-reduced-motion:reduce){.sq-mts{transition:none}}
+
+/* ===== ما أصدقك بالجوال: المهم كله بشاشة وحدة ===== */
+.sq-strip{display:flex;flex-direction:column;gap:6px}
+.sq-strip .sq-rev{padding:6px 10px;font-size:.82rem;gap:8px}
+.sq-strip .sq-rev .sq-evi{width:28px;height:28px}
+.sq-rlast:empty{display:none}
+.sq-rlast .sq-lg{margin:0}
+.sq-rlast.sq-new{animation:sqLast .6s ease-out}
+@keyframes sqLast{from{background:color-mix(in srgb,var(--gold) 30%,transparent)}}
+.sq-mt-claim{flex-direction:column}
+.sq-mt-claim em{font-style:normal;font-weight:800;color:#F6D58A}
+.sq-mt-claim em.bad{color:#FFB3A6}.sq-mt-claim em.good{color:#9FE8BD}
+.sq-ract{display:none}
+@media (max-width:999px){
+  #r-main.is-sq .r-head{display:none}
+  .sq-r,.sq-rmain,.sq-rside{gap:8px}
+  .sq-mt{aspect-ratio:1/.78;max-width:380px}
+  .sq-mt-rug{width:40%}
+  .sq-mts{width:clamp(70px,21cqi,92px);padding:4px 3px 4px}
+  .sq-mts-av{width:clamp(26px,8cqi,32px)}
+  /* القرار: لما ما فيه قرار يصير سطر صغير */
+  .sq-rask{min-height:0}
+  .sq-rask.idle{padding:8px 12px;gap:6px;flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .sq-rask.idle .sq-qbar{max-width:none}
+  /* أوراقك: الوجه بس (الحركات تحت بـ«الشخصيات وحركاتها»)، نفس المقاس مغطاة ومكشوفة */
+  .sq-rhand{padding:8px 10px;gap:6px}
+  .sq-rcards{grid-template-columns:repeat(2,minmax(0,118px));justify-content:center}
+  .sq-rcards .sq-hc{padding-bottom:0;gap:0}
+  .sq-rcards .sq-hc>small,.sq-rcards .sq-hc>.sq-hc-r{display:none}
+  .sq-hc-cov>span:last-child{top:auto;bottom:12px}
+  .sq-rhint{margin:0;font-size:.72rem}
+}
+
+/* كرسيك بالطاولة: أوراقك نفسها */
+.sq-mts.me{cursor:default;width:auto;min-width:clamp(104px,32cqi,140px);padding:6px 8px 5px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.sq-mts.me .sq-mts-c{gap:6px}
+.sq-mc{position:relative;display:block;width:clamp(44px,14cqi,60px);aspect-ratio:5/7;border-radius:5px;overflow:hidden}
+.sq-mc>span{position:absolute;inset:0;display:block}
+.sq-mc>span>*{width:100%;height:100%;display:block}
+.sq-mc .sqc{font-size:inherit;padding:2%}
+.sq-mc .f{visibility:hidden}
+.sq-mts.me.peek .sq-mc .f,.sq-mts.me.open .sq-mc .f,.sq-mc.dead .f{visibility:visible}
+.sq-mts.me.peek .sq-mc .b,.sq-mts.me.open .sq-mc .b{visibility:hidden}
+.sq-mc.dead{filter:grayscale(.85) brightness(.8)}
+.sq-mc.fresh{box-shadow:0 0 0 2px var(--sq-brass)}
+@media (max-width:999px){
+  .sq-mt{aspect-ratio:1/.84}
+  /* أزرار الحركات أصغر: سطر الشرح واحد */
+  .sq-qgrid{gap:6px}
+  .sq-qa{padding:6px 8px;gap:1px 7px}
+  .sq-qa-ic{width:28px;height:28px}
+  .sq-qa-t b{font-size:.92rem}
+  .sq-qa small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem}
+  .sq-qh b{font-size:1rem}
+  .sq-qh p{font-size:.8rem;margin-top:2px}
+  .sq-rask.on{padding:10px;gap:8px}
+}
+@media (max-width:999px){
+  .sq-r.asking .sq-mt{aspect-ratio:1/.7}
+  .sq-r.asking .sq-mt-rug{width:34%}
+  .sq-r.asking .sq-mts:not(.me) .sq-mts-c{display:none}
+  .sq-r.asking .sq-mt-meta{display:none}
+}
+/* شاشة كبيرة (لاعب على كمبيوتر): نفس الفكرة — الطاولة والقرار بدون نزول */
+@media (min-width:1000px){
+  #r-main.is-sq .r-head{display:none}
+  .sq-mt{aspect-ratio:1/.7;max-width:460px}
+  .sq-mt-rug{width:38%}
+  .sq-r.asking .sq-mt{aspect-ratio:1/.6}
+  .sq-r.asking .sq-mts:not(.me) .sq-mts-c{display:none}
+  .sq-r .sq-qgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sq-qa small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sq-rask{min-height:0}
+  .sq-rask.idle{padding:10px 14px}
+}
+@media (min-width:1000px){ .sq-strip{flex-direction:row;align-items:stretch} .sq-strip>*{flex:1;min-width:0} .sq-rlast{display:flex;align-items:center} .sq-rlast .sq-lg{width:100%} }
