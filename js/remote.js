@@ -1095,24 +1095,39 @@
 
   // ---------- أسئلة الشاشة ----------
   // خلية الحروف: اللوحة مصغّرة بالجوال — اللي عليهم الدور يضغطون الحرف بدل ما ينادون المضيف
+  // لوحة الحروف بالجوال: نفس رسمة الشاشة بالضبط (SVG، الصفوف الفردية مزاحة لليمين، والعمود الأول يسار)
+  // قبل كانت أزرار بصف من اليمين لليسار — الشكل ينعكس والخلايا تبان متجاورة وهي مو متجاورة باللعبة
   function renderKB(kb){
     let box=$('#r-khb');
     if(!box){ box=document.createElement('div'); box.id='r-khb'; box.className='r-khb'; $('#r-phase').after(box); }
     box.classList.toggle('hidden', !kb);
     if(!kb){ box.dataset.k=''; box.innerHTML=''; return; }
     const key=JSON.stringify(kb); if(box.dataset.k===key) return; box.dataset.k=key;
-    let rows='';
-    for(let r=0;r<kb.n;r++){
-      rows+=`<div class="r-khr ${r%2?'odd':''}">`;
-      for(let c=0;c<kb.n;c++){ const idx=r*kb.n+c, [l,o]=kb.cells[idx]||['',-1];
-        rows+=`<button type="button" class="r-khx ${o>=0?'taken':''} ${idx===kb.sel?'sel':''}" data-kx="${idx}" ${kb.can && (o<0 || kb.edit) ? '' : 'disabled'} ${o>=0?`style="--o:${kb.colors[o]}"`:''} aria-label="حرف ${esc(l)}">${esc(l)}</button>`; }
-      rows+='</div>';
+    const N=kb.n, Rr=40, w=Math.sqrt(3)*Rr, h=2*Rr, W=w*N+w/2+48, H=h*.75*(N-1)+h+48;
+    const A=kb.colors[0], B=kb.colors[1];
+    const pts=(cx,cy,r)=>[0,1,2,3,4,5].map(i=>{ const an=Math.PI/180*(60*i-30); return `${(cx+r*Math.cos(an)).toFixed(1)},${(cy+r*Math.sin(an)).toFixed(1)}`; }).join(' ');
+    const x0=4, y0=4, x1=W-4, y1=H-4, mx=W/2, my=H/2;
+    let back='', cells='';
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      const idx=r*N+c, [l,o]=kb.cells[idx]||['',-1], cx=24+w/2+c*w+(r%2?w/2:0), cy=24+Rr+r*h*.75;
+      const can=kb.can && (o<0 || kb.edit);
+      back+=`<polygon class="kx-gap" points="${pts(cx,cy,Rr*1.06)}"/>`;
+      cells+=`<g class="kx ${o>=0?'taken':''} ${idx===kb.sel?'sel':''} ${can?'can':''}" data-kx="${idx}" ${can?'role="button" tabindex="0"':''} aria-label="حرف ${esc(l)}" style="${o>=0?`--o:${kb.colors[o]};`:''}transform-origin:${cx.toFixed(1)}px ${cy.toFixed(1)}px"><polygon points="${pts(cx,cy,Rr*.95)}"/><text x="${cx.toFixed(1)}" y="${(cy+2).toFixed(1)}">${esc(l)}</text></g>`;
     }
+    const svg=`<svg class="r-khsvg" viewBox="-6 -6 ${(W+12).toFixed(0)} ${(H+12).toFixed(0)}" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="لوحة الحروف">
+      <defs><clipPath id="r-khclip"><rect x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" rx="26"/></clipPath></defs>
+      <g clip-path="url(#r-khclip)"><polygon points="${x0},${y0} ${x1},${y0} ${mx},${my}" fill="${A}"/><polygon points="${x0},${y1} ${x1},${y1} ${mx},${my}" fill="${A}"/>
+      <polygon points="${x0},${y0} ${x0},${y1} ${mx},${my}" fill="${B}"/><polygon points="${x1},${y0} ${x1},${y1} ${mx},${my}" fill="${B}"/></g>
+      <rect class="kx-edge" x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" rx="26"/>${back}${cells}</svg>`;
+    // مين يوصل وين: لون الإطار نفسه + سطر واضح
+    const dirTxt = d => d==='v' ? 'من فوق لتحت' : 'من اليمين لليسار';
+    const legend = (kb.names||[]).length===2 ? `<div class="r-khleg">${kb.names.map((n,i)=>`<span style="--c:${kb.colors[i]}"><i></i><b>${esc(n)}</b> ${dirTxt((kb.dirs||['v','h'])[i])}</span>`).join('')}</div>` : '';
     box.classList.toggle('can', !!kb.can);
     const isRef = st.teamId==='ref';
     const hint = kb.edit ? 'اضغط أي خلية تغيّر لونها' : isRef ? 'اختر حرف للفريق اللي عليه الدور' : `${st.mode==='solo'?'دورك':'دوركم'} — اختاروا حرف`;
-    box.innerHTML=`${kb.can?`<p class="r-khh">${hint}</p>`:''}<div class="r-khg">${rows}</div>`;
-    $$('[data-kx]', box).forEach(b=>b.onclick=()=>{ vibe(20); sfx('tick'); send({t:'khpick', i:+b.dataset.kx}); if(!kb.edit){ box.classList.remove('can'); $$('[data-kx]', box).forEach(x=>x.disabled=true); } });
+    box.innerHTML=`${kb.can?`<p class="r-khh">${hint}</p>`:''}${svg}${legend}`;
+    $$('[data-kx].can', box).forEach(g=>{ const pick=()=>{ vibe(20); sfx('tick'); send({t:'khpick', i:+g.dataset.kx}); if(!kb.edit){ box.classList.remove('can'); $$('[data-kx]', box).forEach(x=>{ x.classList.remove('can'); x.removeAttribute('tabindex'); }); } };
+      g.onclick=pick; g.onkeydown=e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); pick(); } }; });
   }
   // ---------- خلية الحروف: السؤال + ترتيب الجرس + الجواب + أزرار الحكم ----------
   // st.khQ: متى طلع السؤال بهالجوال — ضغطة الجرس تنقاس منه (عشان اللي نته أبطأ ما ينظلم)

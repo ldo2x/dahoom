@@ -1026,23 +1026,28 @@ body.is-owner .r-bar{display:none}
 /* خلية الحروف: اللوحة المصغّرة بالجوال */
 .r-khb{margin:10px auto 4px;max-width:340px;width:100%}
 .r-khh{margin:0 0 8px;text-align:center;font-weight:800;color:var(--team,var(--accent))}
-.r-khg{display:flex;flex-direction:column;gap:2px;align-items:center}
-.r-khr{display:flex;gap:3px}
-.r-khr.odd{transform:translateX(22px)}
-.r-khx{width:42px;height:46px;border:0;padding:0;font:inherit;font-weight:800;font-size:1.05rem;color:var(--text);cursor:pointer;
-  background:var(--surface-3);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);transition:transform .12s, background .12s}
-.r-khx:disabled{cursor:default}
-.r-khx:disabled{opacity:.7}
-.r-khb.can .r-khx:not(:disabled){background:color-mix(in srgb, var(--team,var(--brand)) 16%, var(--hex,var(--surface-2)))}
-.r-khb.can .r-khx:not(:disabled):active{transform:scale(.9);background:var(--team,var(--accent))}
-.r-khx.taken{background:var(--o);color:#fff;opacity:1}
-.r-khx.sel{background:var(--team,var(--brand));color:#fff;opacity:1}
-@media (max-width:360px){ .r-khx{width:36px;height:40px;font-size:.95rem} .r-khr.odd{transform:translateX(19px)} }
+.r-khsvg{display:block;width:100%;height:auto;direction:ltr;-webkit-tap-highlight-color:transparent}
+.r-khsvg .kx-edge{fill:none;stroke:var(--hex-gap);stroke-width:5}
+.r-khsvg .kx-gap{fill:var(--hex-gap);stroke:var(--hex-gap);stroke-width:4;stroke-linejoin:round}
+.r-khsvg .kx polygon{fill:var(--hex);stroke:var(--hex-gap);stroke-width:3;transition:fill .15s}
+.r-khsvg .kx text{font-family:var(--display);font-weight:400;font-size:36px;fill:var(--text);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.r-khsvg .kx.taken polygon{fill:var(--o)}
+.r-khsvg .kx.taken text{fill:#fff}
+.r-khsvg .kx.can{cursor:pointer}
+.r-khsvg .kx.can polygon{fill:color-mix(in srgb,var(--team,var(--brand)) 22%,var(--hex))}
+.r-khsvg .kx.can:active{transform:scale(.9)}
+.r-khsvg .kx.can:focus-visible{outline:none}
+.r-khsvg .kx.can:focus-visible polygon{stroke:var(--text);stroke-width:5}
+.r-khsvg .kx.sel polygon{fill:var(--team,var(--brand));stroke:#fff;stroke-width:5}
+.r-khsvg .kx.sel text{fill:#fff}
+.r-khleg{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.8rem;color:var(--mute);font-weight:600}
+.r-khleg span{display:inline-flex;align-items:center;gap:5px}
+.r-khleg i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.r-khleg b{color:var(--text)}
 
 /* ===== خلية الحروف: السؤال، ترتيب الجرس، الجواب، وأزرار الحكم ===== */
 .r-khb.mini{max-width:230px;opacity:.9}
-.r-khb.mini .r-khx{width:28px;height:31px;font-size:.78rem}
-.r-khb.mini .r-khr.odd{transform:translateX(15px)}
+.r-khb.mini .r-khleg{display:none}
 .r-kh{display:flex;flex-direction:column;gap:10px;margin:8px 0 4px}
 .r-khq{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
 .r-khq p{margin:0;font-size:1.15rem;font-weight:800;line-height:1.55;text-wrap:balance}
